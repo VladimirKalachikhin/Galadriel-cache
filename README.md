@@ -37,13 +37,13 @@ or, if you use nginx for serve files:
 where 192.168.1.1 - your server, /tileproxy/ - path to project, /tiles/ - path to file storage in the sense of a web server, and yasat.EPSG3395 - your custom map source name.
 
 ATTENTION! You MUST configure your MAP VIEWER for the use specific projection! 
-(`<projection>MERCATORELIPSOIDAL</projection>` in the example above) 
+(`<projection>MERCATORELIPSOIDAL</projection>` in the example above)<br> 
 Cache/proxy knows nothing about projections, it's store tiles only.
 
 ## Install&configure:
-You must have a web server with php support. Just copy.
-Paths and other set and describe in params.php
-Custom sources are in mapsources/
+You must have a web server with php support. Just copy.<br>
+Paths and other set and describe in params.php<br>
+Custom sources are in mapsources/<br>
 Help about map sources are in mapsources/mapsources.txt
 
 If you use nginx to serve cache, configure 404 helper to proxy:
