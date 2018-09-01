@@ -1,4 +1,4 @@
-This is a simple raster map tiles cache/proxy for use in a weak computers such as RaspberryPi or NAS. Author use it in a wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.
+This is a simple raster map tiles cache/proxy for use in a weak computers such as RaspberryPi or NAS. Author use it in a wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.<br>
 Cache/proxy can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice.
 Tiles stored on standard z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
 
@@ -58,11 +58,14 @@ http {
 	}
 }
 ```
-
-Prepare SD card to cache:
-`# mkfs.ext4 -i 4096 /dev/sdb1`
+## Prepare SD card to cache:
+```
+# mkfs.ext4 -i 4096 /dev/sdb1
+```
 it's increase i-nodes to max.
-`# une2fs -m 1 /dev/sdb1`
+```
+# une2fs -m 1 /dev/sdb1
+```
 it's reduce system area.
 /dev/sdb1 - your SD card
 
