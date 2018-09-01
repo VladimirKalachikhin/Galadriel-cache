@@ -42,9 +42,9 @@ Cache/proxy knows nothing about projections, it's store tiles only.
 
 ## Install&configure:
 You must have a web server with php support. Just copy.<br>
-Paths and other set and describe in params.php<br>
-Custom sources are in mapsources/<br>
-Help about map sources are in mapsources/mapsources.txt
+Paths and other set and describe in _params.php_<br>
+Custom sources are in _mapsources/_<br>
+Help about map sources are in _mapsources/mapsources.txt_
 
 If you use nginx to serve cache, configure 404 helper to proxy:
 nginx.conf:
