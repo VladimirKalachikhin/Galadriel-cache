@@ -1,4 +1,4 @@
-This is a simple raster map tiles cache/proxy for use in a weak computers such as RaspberryPi or NAS. Author use it in a wi-fi router/GSM modem under OpenWRT on his little sailboat.
+This is a simple raster map tiles cache/proxy for use in a weak computers such as RaspberryPi or NAS. Author use it in a wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.
 Cache/proxy can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice.
 Tiles stored on standard z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
 
