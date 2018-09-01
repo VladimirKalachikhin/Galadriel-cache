@@ -2,14 +2,14 @@ This is a simple raster map tiles cache/proxy for use in a weak computers such a
 Cache/proxy can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice.
 Tiles stored on standard z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
 
-##Features:
+## Features:
 1. User-defined map sources
 2. nginx support
 3. Dumb tile loader
 
 It's all. No versioning, no reprojection.
 
-##Usage:
+## Usage:
 OruxMaps source definition:
 ```
 	<onlinemapsource uid="1055">
@@ -40,7 +40,7 @@ ATTENTION! You MUST configure your MAP VIEWER for the use specific projection!
 (`<projection>MERCATORELIPSOIDAL</projection>` in the example above) 
 Cache/proxy knows nothing about projections, it's store tiles only.
 
-##Install&configure:
+## Install&configure:
 You must have a web server with php support. Just copy.
 Paths and other set and describe in params.php
 Custom sources are in mapsources/
@@ -60,13 +60,13 @@ http {
 ```
 
 Prepare SD card to cache:
-# mkfs.ext4 -i 4096 /dev/sdb1
+`# mkfs.ext4 -i 4096 /dev/sdb1`
 it's increase i-nodes to max.
-# une2fs -m 1 /dev/sdb1
+`# une2fs -m 1 /dev/sdb1`
 it's reduce system area.
 /dev/sdb1 - your SD card
 
-##Loader.
+## Loader.
 Cache/proxy includes dumb tile loader. Create a job file with map_source_name.zoom name and x,y strings as content and place it in loaderjobs/ directory. Start loaderSched.php in cli.
 For example:
 
