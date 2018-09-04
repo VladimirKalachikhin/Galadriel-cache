@@ -1,5 +1,6 @@
+# GaladrielCache
 This is a simple raster map tiles cache/proxy for use in a weak computers such as RaspberryPi or NAS. Author use it in a wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.<br>
-Cache/proxy can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice.<br>
+GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice.<br>
 Tiles stored on standard z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
 
 ## Features:
@@ -38,7 +39,7 @@ where 192.168.1.1 - your server, /tileproxy/ - path to project, /tiles/ - path t
 
 ATTENTION! You MUST configure your MAP VIEWER for the use specific projection! 
 (`<projection>MERCATORELIPSOIDAL</projection>` in the example above)<br> 
-Cache/proxy knows nothing about projections, it's store tiles only.
+GaladrielCache knows nothing about projections, it's store tiles only.
 
 ## Install&configure:
 You must have a web server with php support. Just copy.<br>
@@ -70,7 +71,7 @@ it's reduce system area.
 /dev/sdb1 - your SD card
 
 ## Loader.
-Cache/proxy includes dumb tile loader. Create a job file with map_source_name.zoom name and x,y strings as content and place it in loaderjobs/ directory. Start loaderSched.php in cli.
+GaladrielCache includes dumb tile loader. Create a job file with map_source_name.zoom name and x,y strings as content and place it in loaderjobs/ directory. Start loaderSched.php in cli.
 For example:
 
 navionics_layer.9
