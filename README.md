@@ -1,6 +1,6 @@
 # GaladrielCache
 This is a simple raster map tiles cache/proxy to use on a weak computers such as RaspberryPi or NAS. Author use it in the wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.<br>
-GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice.<br>
+GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) is a good choice too.<br>
 Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
 
 ## Features:
@@ -84,4 +84,5 @@ navionics_layer.9
 296,143
 ```
 
-Will be downloaded navionics_layer map within the specified tiles from zoom 9 to max zoom.
+Will be downloaded navionics_layer map within the specified tiles from zoom 9 to max zoom.<br>
+You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader.
