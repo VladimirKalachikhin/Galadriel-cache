@@ -164,14 +164,11 @@ $path_parts = pathinfo($jobName);
 $zoom = $path_parts['extension']; 	//
 $mapName = $path_parts['dirname'].'/'.$path_parts['filename'];
 //echo "mapName=$mapName; Zoom=$zoom;\n";
+global $jobsInWorkDir;
 do {
 	$zoom++;
 	$nextJobName="$mapName.$zoom";
 	//echo "nextJobName=$nextJobName\n";
-	if(file_exists($nextJobName)) { 	//echo " такой файл уже может обрабатываться по какой-то причине\n";
-		$nextJobName = NULL;
-		break;
-	}
 	$oldJob = fopen($jobName,'r');
 	if(!$oldJob) { 	//echo " другой поцесс убил файл?\n";
 		$nextJobName = NULL;
@@ -179,13 +176,17 @@ do {
 	}
 	flock($oldJob,LOCK_EX) or exit("loader.php Unable locking job file $jobName Error\n");
 	//echo "nextJobName=$nextJobName\n";
-	$newJob = fopen($nextJobName,'x'); 	// создадим новый файл только для записи, чтобы никто больше не трогал
+	if(file_exists($nextJobName)) { 	//echo " такой файл уже может обрабатываться по какой-то причине\n";
+		$runNextJobName = "$jobsInWorkDir/" . $path_parts['filename'] . ".$zoom";
+		if(file_exists($runNextJobName)) 		rename($runNextJobName, $nextJobName); 	// заменим существующий файл задания ещё не выполненной его частью, удалив часть из выполняемых
+	}
+	$newJob = fopen($nextJobName,'a'); 	// создадим новый - откроем старый файл только для записи, чтобы никто больше не трогал
 	while(($xy=fgetcsv($oldJob)) !== FALSE) {
 		if((!is_numeric($xy[0])) OR (!is_numeric($xy[1]))) continue; 	// вдруг в файле фигня
 		$xyS = nextZoom($xy);
 		//print_r($xyS);
 		foreach($xyS as $xy) {
-			fwrite($newJob,$xy[0].','.$xy[1]."\n") or exit("loaderSched.php createNextZoomLevel() write error\n");
+			fwrite($newJob,$xy[0].','.$xy[1]."\n") or exit("loaderSched.php createNextZoomLevel() write error\n"); 	// запишем файл / допишем в существующий
 		}
 	}
 	fclose($newJob);
