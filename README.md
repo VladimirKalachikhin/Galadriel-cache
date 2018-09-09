@@ -86,3 +86,5 @@ navionics_layer.9
 
 Will be downloaded navionics_layer map within the specified tiles from zoom 9 to max zoom.<br>
 You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader.
+### clearCache
+Use in cli _clearCache.php mapname_ to _mapname_ or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is may be a blanck tiles or .tne files from SAS.Planet
