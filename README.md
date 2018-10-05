@@ -71,7 +71,7 @@ it's reduce system area.
 /dev/sdb1 - your SD card
 
 ## Loader.
-GaladrielCache includes dumb tile loader. Create a job file with map_source_name.zoom name and x,y strings as content and place it in loaderjobs/ directory. Start loaderSched.php in cli.
+GaladrielCache includes dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in loaderjobs/ directory. Start loaderSched.php in cli.
 For example:
 
 navionics_layer.9
@@ -85,6 +85,8 @@ navionics_layer.9
 ```
 
 Will be downloaded navionics_layer map within the specified tiles from zoom 9 to max zoom.<br>
+
+Tile loader may use any number of threads to load, and use cron for robust download.<br>
 You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader.
 ### clearCache
 Use in cli _clearCache.php mapname_ to _mapname_ or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is may be a blanck tiles or .tne files from SAS.Planet

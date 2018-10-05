@@ -44,7 +44,7 @@ if ($functionGetURL AND ((!$fileNamePresent) OR (@filemtime($fileName) < (time()
 	$file_info = finfo_open(FILEINFO_MIME_TYPE);
 	do {
 		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
-		echo "Источник:<pre>"; print_r($uri); echo "</pre>";
+		//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 		if(is_array($uri))	list($uri,$opts) = $uri;
 		if(!$uri) break; 	// по каким-то причинам (например, нет токена для Navionics) не удалось получить uri тайла
 		if(!$opts['ssl']) { 	// откажемся от проверок ssl сертификатов, потому что сертификатов у нас нет

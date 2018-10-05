@@ -1,4 +1,11 @@
 <?php
+/*
+tileNum2degree - Tile numbers to lon./lat. left top corner
+tileNum2mercOrd - Tile numbers to linear coordinates left top corner on mercator ellipsoidal
+merc_x - Долготу в линейную координату x, Меркатор на эллипсоиде
+merc_y - Широту в линейную координату y, Меркатор на эллипсоиде
+nextZoom - Возвращает четыре номера тайлов следующего (большего) масштаба
+*/
 function tileNum2degree($zoom,$xtile,$ytile) {
 /* Tile numbers to lon./lat. left top corner
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
