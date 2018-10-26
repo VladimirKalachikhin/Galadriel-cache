@@ -4,6 +4,8 @@ $ttl = 86400*30*12*3; //cache timeout in seconds время, через кото
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 4;
 $maxZoom = 18;
+$trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
+);
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
 /* Алгоритм получения ссылки на тайл получен автором путем реверсинжиниринга. С клинингом, да

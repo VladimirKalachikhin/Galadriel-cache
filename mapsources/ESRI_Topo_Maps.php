@@ -6,6 +6,9 @@ $ext = 'jpg'; 	// tile image type/extension
 $ContentType = 'image/jpeg'; 	// if content type differ then file extension
 $minZoom = 0;
 $maxZoom = 19;
+$trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
+'3df36e26' 	// чистый голубой квадрат
+);
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
 /* Алгоритм получения ссылки на тайл заимствован из SAS.Planet

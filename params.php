@@ -16,6 +16,11 @@ $getTimeout = 10; 	// timeout tile source response, sec
 
 //$globalProxy = 'tcp://127.0.0.1:8123'; 	// Global Proxy. May be tor via Polipo, for example. If not defined - not used.
 
+$globalTrash = array( 	// crc32 of junk tiles
+'00000000',	// zero length file
+'0940c426' 	// empty png
+);
+
 // Tile loader
 // paths
 $jobsDir = 'loaderJobs'; 	// loader jobs directory, in filesystem. Check the user rights to this directory. Need to read/write for loaderSched.php

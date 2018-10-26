@@ -34,8 +34,13 @@ function clearMap($mapName) {
 /* Для указанной карты при наличии списка мусорных файлов ($trash)
 каждый файл проверяется по этому списку и удаляется, если есть в.
 */
-global $mapSourcesDir, $tileCacheDir;
+global $mapSourcesDir, $tileCacheDir, $globalTrash;
 @include("$mapSourcesDir/$mapName.php"); 	// а может, такой карты нет?
+if($globalTrash) { 	// имеется глобальный список ненужных тайлов
+	if($trash) $trash = array_merge($trash,$globalTrash);
+	else $trash = $globalTrash;
+}
+//echo "trash:<pre>"; print_r($trash); echo "</pre>\n";
 if(! @$trash) return "No trash list found";
 //echo "$tileCacheDir/$mapName/*\n";
 $zooms = preg_grep('~.[0-9]$~',glob("$tileCacheDir/$mapName/*",GLOB_ONLYDIR));

@@ -66,9 +66,14 @@ if ($functionGetURL) { 	// если есть функция получения �
 		//echo "url=$url;<br>\n";
 		$img = @file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
 		//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
+		if(!$http_response_header) break; 	// связи нет
 		$mime_type = finfo_buffer($file_info,$img);
 		//echo "mime_type=$mime_type<br>\n";		print_r($img);
 		if (substr($mime_type,0,5)=='image') {
+			if($globalTrash) { 	// имеется глобальный список ненужных тайлов
+				if($trash) $trash = array_merge($trash,$globalTrash);
+				else $trash = $globalTrash;
+			}
 			if($trash) { 	// имеется список ненужных тайлов
 				$imgHash = hash('crc32b',$img);
 				//echo "imgHash=$imgHash;<br>\n";
