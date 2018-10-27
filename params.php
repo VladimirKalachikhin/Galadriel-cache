@@ -13,6 +13,7 @@ $maxZoom = 19; 	// default max zoom
 $maxTry = 3; 	// number of tryes to download tile from source
 $tryTimeout = 3; 	// pause between try to download tile from source, sec
 $getTimeout = 10; 	// timeout tile source response, sec
+$noInternetTimeout = 20; 	// not try the source this time if no internet connection found, sec
 
 //$globalProxy = 'tcp://127.0.0.1:8123'; 	// Global Proxy. May be tor via Polipo, for example. If not defined - not used.
 

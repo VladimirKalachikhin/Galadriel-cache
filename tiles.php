@@ -1,4 +1,4 @@
-<?php session_start();
+<?php session_start(); 	// используется для хранения токена NAVIONICS
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /* Original source http://wiki.openstreetmap.org/wiki/ProxySimplePHP
 *	Modified to use directory structure matching the OSM urls and retries on a failure
@@ -37,12 +37,23 @@ $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 $img = null; $tries = 1;
 if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не протухают
 //clearstatcache(); 	// вопросы к файловой системе кешируются глобально или локально?
-$fileNamePresent = @is_file($fileName); 	// тайл есть?
-if ($functionGetURL AND ((!$fileNamePresent) OR (@filemtime($fileName) < (time()-$ttl)))) { 	// если есть функция получения тайла, и нет в кэше или файл протух
-//if (function_exists('GetURL') AND ((!$fileNamePresent) OR (@filemtime($fileName) < (time()-$ttl)))) { 	// если есть функция получения тайла, и нет в кэше или файл протух // В loaderSched файлы источников загружаются по очереди, поэтому нельзя require_once
+//$fileNamePresent = @is_file($fileName); 	// тайл есть?
+$tile = @file_get_contents($fileName); 	// попробуем взять тайл из кеша
+if ($functionGetURL AND ((!$tile) OR ((time()-filemtime($fileName)-$ttl) > 0))) { 	// если есть функция получения тайла, и нет в кэше или файл протух
 	eval($functionGetURL); 	// создадим функцию GetURL
 	$file_info = finfo_open(FILEINFO_MIME_TYPE);
 	do {
+		if($_SESSION['noInternetTimeStart']) { 	// ранее было обнаружено отсутствие интернета
+			if((time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
+				//echo "связи нет, ждём/пропускаем ".(time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)." секунд <br>\n";
+				if($runCLI) { 	// если спрашивали из загрузчика - будем вечно стоять в ожидании связи
+					sleep($tryTimeout);
+					continue;
+				}
+				else break; 	 // если спрашивали из браузера - не будем спрашивать тайл, и поедем дальше
+			}
+		}
+		$img = NULL;
 		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
 		//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 		if(is_array($uri))	list($uri,$opts) = $uri;
@@ -60,13 +71,23 @@ if ($functionGetURL AND ((!$fileNamePresent) OR (@filemtime($fileName) < (time()
 			);
 		}
 		if(!$opts['http']['timeout']) { 
-			$opts['http']['timeout'] = $getTimeout;	// таймаут ожидания получения тайла, сек
+			if($runCLI) $opts['http']['timeout'] = (float)(5*$getTimeout);
+			else 	$opts['http']['timeout'] = (float)$getTimeout;	// таймаут ожидания получения тайла, сек
 		}
 		//echo "opts :<pre>"; print_r($opts); echo "</pre>";
 		$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 		$img = @file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
 		//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
-		if(!$http_response_header) break; 	// связи нет
+		//print_r($img);
+		if(!$http_response_header) { 	 //echo "связи нет<br>\n";
+			$_SESSION['noInternetTimeStart'] = time(); 	// 
+			$img = NULL;
+			if($runCLI) { 	// если спрашивали из загрузчика - будем вечно стоять в ожидании связи
+				sleep($tryTimeout);
+				continue;
+			}
+			else break; 	 // если спрашивали из браузера - не будем спрашивать тайл, и поедем дальше
+		}
 		$mime_type = finfo_buffer($file_info,$img);
 		//echo "mime_type=$mime_type<br>\n";		//print_r($img);
 		if (substr($mime_type,0,5)=='image') {
@@ -82,16 +103,20 @@ if ($functionGetURL AND ((!$fileNamePresent) OR (@filemtime($fileName) < (time()
 					break;
 				}
 			}
+			// теперь тайл получен
+			$tile = $img; unset($img);
 			$umask = umask(0); 	// сменим и запомним
 			//@mkdir(dirname($fileName), 0755, true);
 			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 			//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
 			//echo "Кешируем $fileName<br>\n";
+			
 			$fp = fopen($fileName, "w");
-			fwrite($fp, $img);
+			fwrite($fp, $tile);
 			fclose($fp);
 			chmod($fileName,0777); 	// чтобы запуск от другого юзера
+			
 			//echo "Тайл получен с $tries попытки <br>\n";
 			break; 	// тайл получили
 		}
@@ -108,25 +133,17 @@ if ($functionGetURL AND ((!$fileNamePresent) OR (@filemtime($fileName) < (time()
 		}
 		sleep($tryTimeout);
 	} while (TRUE); 	// Будем пробовать получить, пока не получим
-	if($fileNamePresent AND (! $img)) {
-		$img = file_get_contents($fileName); 	// если получить не удалось, но был старый файл
-		$mime_type = finfo_buffer($file_info,$img);
-	}
 } 
-else {
-	$img = file_get_contents($fileName);
-}
 //print_r($img);
 if($runCLI) return; 	// не будем отдавать картинку в cli
 //return;
 // отдадим тайл
-if($img) {
-	if ($fileNamePresent) {
-		$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
-		$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT";
-		header("Expired: " . $exp_gmt);
-		header("Last-Modified: " . $mod_gmt);
-	}
+if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
+	$mime_type = finfo_buffer($file_info,$tile);
+	$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
+	header("Expired: " . $exp_gmt);
+	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
+	//header("Last-Modified: " . $mod_gmt);
 	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
 	if($mime_type) header ("Content-Type: $mime_type");
 	else header ("Content-Type: image/$ext");
@@ -137,7 +154,7 @@ else {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 }
 ob_clean(); 	// очистим, если что попало в буфер, но заголовки выше должны отправиться
-echo $img;
+echo $tile;
 $content_lenght = ob_get_length();
 header("Content-Length: $content_lenght");
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию

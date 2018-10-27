@@ -37,12 +37,19 @@ require_once("$mapSourcesDir/$mapSourcesFile.php"); 	// файл, описыва
 $fileName = "$tileCacheDir/$mapSourcesFile/$z/$x/$y.$ext"; 	// 
 //echo "fileName=$fileName;<br>\n";
 //return;
-$img = null; $tries = 0;
+$tries = 0;
 if ($functionGetURL) { 	// если есть функция получения тайла
 //if (function_exists('GetURL')) { 	// если есть функция получения тайла 	// В loaderSched файлы источников загружаются по очереди, поэтому нельзя require_once
 	eval($functionGetURL); 	// создадим функцию GetURL
 	$file_info = finfo_open(FILEINFO_MIME_TYPE);
 	do {
+		if($_SESSION['noInternetTimeStart']) { 	// ранее было обнаружено отсутствие интернета
+			if((time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
+				//echo "связи нет, пропускаем ".(time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)." секунд <br>\n";
+				break; 	 // не будем спрашивать тайл, и поедем дальше
+			}
+		}
+		$img = null; 
 		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
 		//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 		if(is_array($uri))	list($uri,$opts) = $uri;
@@ -66,7 +73,11 @@ if ($functionGetURL) { 	// если есть функция получения �
 		//echo "url=$url;<br>\n";
 		$img = @file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
 		//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
-		if(!$http_response_header) break; 	// связи нет
+		if(!$http_response_header) { 	 //echo "связи нет<br>\n";
+			$_SESSION['noInternetTimeStart'] = time(); 	// 
+			$img = NULL;
+			break; 	 //  поедем дальше
+		}
 		$mime_type = finfo_buffer($file_info,$img);
 		//echo "mime_type=$mime_type<br>\n";		print_r($img);
 		if (substr($mime_type,0,5)=='image') {

@@ -26,6 +26,8 @@ $opts = array(
 $context = stream_context_create($opts); 	// 
 try {
 	$VNavToken = file_get_contents($VRequestUrl, FALSE, $context); 	// 
+	//echo "GetNavToken http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
+	//print_r($VNavToken);
 	if($VNavToken === FALSE) { 	// не хочет отдавать, что делать?
 		$VNavToken = '';
 	}
