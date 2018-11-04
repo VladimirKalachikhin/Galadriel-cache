@@ -5,7 +5,8 @@ $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
-'1556c7bd' 	// чистый голубой квадрат
+'1556c7bd', 	// чистый голубой квадрат
+'c7b10d34' 	// чистый голубой квадрат
 );
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
