@@ -28,7 +28,7 @@ do {
 		else $jobName = FALSE;	
 	}
 	if(! $jobName) break; 	// просмотрели все файлы, не нашли, с чем работать - выход
-	//echo "Берём файл $jobName\n";
+	echo "Берём файл $jobName\n";
 	//echo filesize("$jobsInWorkDir/$jobName") . " \n";
 	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
 	if(!$job) break; 	// файла не оказалось
@@ -40,7 +40,6 @@ do {
 	if($res == -1)  $xy = $s;	// сдвинуть не удалось - первая строка?
 	else while(($s=fgets($job)) !== FALSE) $xy = $s;
 	$pos = ftell($job);
-	//echo filesize($jobName) . "\n";
 	ftruncate($job,$pos-strlen($xy)) or exit("loader.php Unable truncated file $jobName"); 	// укоротим файл на строку
 	fclose($job); 	// освободим файл
 	$xy = str_getcsv($xy);
@@ -50,7 +49,7 @@ do {
 	echo "карта $map;\n Тайл x=".$xy[0].", y=".$xy[1].", z=$zoom\n";
 	//exit("res=$res pos=$pos s=$s $xy\n");
 	$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
-	echo "res=$res;\n";
+	//echo "res=$res;\n";
 } while($jobName);
 unlink("$jobsDir/$pID.lock");	// 
 

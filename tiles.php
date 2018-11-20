@@ -48,7 +48,9 @@ if ($functionGetURL AND ((!$tile) OR ((time()-filemtime($fileName)-$ttl) > 0))) 
 		// отдадим существующий
 		$jobName = "$r.$z"; 	// имя файла задания
 		file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
+		chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
 		file_put_contents("$jobsDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для планировщика
+		chmod("$jobsDir/$jobName",0777); 	// чтобы запуск от другого юзера
 		if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одного загрузчика
 			//error_log("Need scheduler!");
 			exec("$phpCLIexec loaderSched.php > /dev/null 2>&1 &"); 	// если запускать сам файл, ему нужны права
