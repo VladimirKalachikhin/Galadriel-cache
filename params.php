@@ -17,12 +17,11 @@ $noInternetTimeout = 20; 	// no try the source this time if no internet connecti
 $forceFresh = FALSE; 	// retrieve tile from source if it expired, or first return existing, and after get new (lazy download). On cli always TRUE.
 
 //$globalProxy = 'tcp://127.0.0.1:8123'; 	// Global Proxy. May be tor via Polipo, for example. If not defined - not used.
-
-$globalTrash = array( 	// crc32 of junk tiles
-'00000000',	// zero length file
-'0940c426' 	// empty png
+/*
+// crc32 of junk tiles '00000000' zero length file and '0940c426' empty png are not trash!
+$globalTrash = array(
 );
-
+*/
 // Tile loader
 // paths - required if lazy download use
 $jobsDir = 'loaderJobs'; 	// loader jobs directory, in filesystem. Check the user rights to this directory. Need to read/write for loaderSched.php
