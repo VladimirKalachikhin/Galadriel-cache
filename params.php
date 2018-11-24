@@ -28,7 +28,7 @@ $globalTrash = array( 	// crc32 of junk tiles
 $jobsDir = 'loaderJobs'; 	// loader jobs directory, in filesystem. Check the user rights to this directory. Need to read/write for loaderSched.php
 $jobsInWorkDir = "$jobsDir/inWork"; 	// current jobs directory.  Check the user rights to this directory. Need to read/write for loaderSched.php and loader.php
 // options
-$maxLoaderRuns = 12; 	// simultaneously working loader tasks
+$maxLoaderRuns = 12; 	// simultaneously working loader tasks. Set at least 2 to avoid blocking download by bad source.
 $loaderMaxZoom = 16; 	// loader download tiles to this zoom only, not to map or default $maxZoom
 //$phpCLIexec = '/usr/bin/php-cli'; 	// php-cli executed name on your OS
 $phpCLIexec = '/usr/bin/php'; 	// php-cli executed name on your OS

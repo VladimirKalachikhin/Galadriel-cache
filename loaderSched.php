@@ -7,6 +7,7 @@ chdir($path_parts['dirname']); // задаем директорию выполн
 
 require('fcommon.php');
 require('params.php'); 	// пути и параметры
+$bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
 
 //$loaderMaxZoom = 12; 	// скачивать до этого масштаба или максимального масштаба карты, если он меньше
 //print_r($path_parts);
@@ -24,6 +25,7 @@ do {
 	array_walk($jobs,function (&$name,$ind) {
 			global $loaderPIDs, $schedulerPIDs, $pID;
 			if(strpos($name,'~')!==FALSE) $name = NULL; 	// скрытые файлы
+			if(strpos($name,'.')===FALSE) $name = NULL; 	// служебные файлы - без расширения
 			if($name[0]=='.') $name = NULL; 	// скрытые файлы и каталоги
 			if(substr($name,-5)=='slock') { 	// выберем оттуда флаги запущенных планировщиков
 				$schPID = substr($name,0,strpos($name,'.')); 	// имена файлов-PID процессов-планировщиков
@@ -45,12 +47,14 @@ do {
 	$runsS = FALSE;
 	foreach($schedulerPIDs as $schedulerRunPID) {
 		if(file_exists( "/proc/$schedulerRunPID")) $runsS = $schedulerRunPID; 	// процесс с таким PID работает, и это не я
-		else unlink("$jobsDir/$schedulerRunPID.slock");
+		else unlink("$jobsDir/$schedulerRunPID.slock"); 	// файл-флаг остался от чего-то, но процесс с таким PID не работает - удалим
 	}
 	if($runsS) {
-		echo "Ещё один планировщик PID $runsS уже работает!\n";
-		break; 	// если уже есть работающий планировщик - прекратим
+		echo "Я - $pID, ещё один планировщик с PID $runsS уже работает!\n";
+		if($pID < $runsS) 		break; 	// если уже есть работающий планировщик, который был запущен позже - убъём себя.
 	}
+	// Всё, я работаю
+	@unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников - он мог сохраниться из-за краха
 	// Занесём себя в cron
 	if(! $inCron) { 	// стараемся, чтобы в cron была только одна запись о запуске нас. Хотя это не должно плохо кончаться
 		// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
@@ -143,12 +147,13 @@ do {
 	sleep(5);
 } while($jobs);
 
-echo "Планировщик завершился\n";
-unlink("$jobsDir/$pID.slock");	// 
 if(! $runsS) { 	// нет других запущенных экземпляров планировщика
 	// удалим себя из cron
 	exec("crontab -l | grep -v '$fullSelfName'  | crontab -");
+	@unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников
 }
+unlink("$jobsDir/$pID.slock");	// 
+echo "Планировщик $pID завершился\n";
 
 
 

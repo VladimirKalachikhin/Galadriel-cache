@@ -3,13 +3,14 @@ ob_start(); 	// попробуем перехватить любой вывод 
 /* Original source http://wiki.openstreetmap.org/wiki/ProxySimplePHP
 *	Modified to use directory structure matching the OSM urls and retries on a failure
 */
-$now = microtime();
+//$now = microtime(TRUE); $from=0;
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
 chdir($path_parts['dirname']); // задаем директорию выполнение скрипта
 require_once('fcommon.php');
 
 require('params.php'); 	// пути и параметры
-
+$bannedSources = array();
+$bannedSourcesFileName = "$jobsDir/bannedSources";
 if($argv) { 	// cli
 	$runCLI = TRUE;
 	$options = getopt("z:x:y:r::");
@@ -42,21 +43,23 @@ if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не про�
 //clearstatcache(); 	// вопросы к файловой системе кешируются глобально или локально?
 //$fileNamePresent = @is_file($fileName); 	// тайл есть?
 $tile = @file_get_contents($fileName); 	// попробуем взять тайл из кеша
+$from=1;
 if ($functionGetURL AND ((!$tile) OR ((time()-filemtime($fileName)-$ttl) > 0))) { 	// если есть функция получения тайла, и нет в кэше или файл протух
 	//error_log("No $r/$z/$x/$y tile exist?:".!$tile."; Expired to ".(time()-filemtime($fileName)-$ttl)."sec.");
 	if($tile AND !$forceFresh) 	{ 	// тайл есть, и не указано, что нужно обязательно свежий
-		// отдадим существующий
+		$from =2; 	// отдадим существующий
 		$jobName = "$r.$z"; 	// имя файла задания
 		file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
-		chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
+		@chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
 		file_put_contents("$jobsDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для планировщика
-		chmod("$jobsDir/$jobName",0777); 	// чтобы запуск от другого юзера
+		@chmod("$jobsDir/$jobName",0777); 	// чтобы запуск от другого юзера
 		if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одного загрузчика
 			//error_log("Need scheduler!");
 			exec("$phpCLIexec loaderSched.php > /dev/null 2>&1 &"); 	// если запускать сам файл, ему нужны права
 		}
 	}
 	else { 	// тайл надо получать
+		$from=3;
 		eval($functionGetURL); 	// создадим функцию GetURL
 		do {
 			if($_SESSION['noInternetTimeStart']) { 	// ранее было обнаружено отсутствие интернета
@@ -98,7 +101,19 @@ if ($functionGetURL AND ((!$tile) OR ((time()-filemtime($fileName)-$ttl) > 0))) 
 			if(!$http_response_header) { 	 //echo "связи нет<br>\n";
 				$_SESSION['noInternetTimeStart'] = time(); 	// 
 				$img = NULL;
-				if($runCLI) { 	// если спрашивали из загрузчика - будем вечно стоять в ожидании связи
+				if($runCLI) { 	// если спрашивали из загрузчика - будем  стоять в ожидании связи
+					$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
+					if(!$bannedSources) $bannedSources = array();
+					$bannedSources[$r] = TRUE; 	// отметим проблемы с источником
+					file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
+					//echo "Попытка № $tries - тайла не получено из-за отсутствия связи или умирания источника<br>\n";
+					/* если не ждать вечно - тайлы будут пропускаться загрузчиком, и об этом никто не узнает.
+					$tries++;
+					if ($tries > $maxTry) {	// Ждать больше нельзя
+						$img = null; 	// Тайла не получили
+						break; 	
+					}
+					*/
 					sleep($tryTimeout);
 					continue;
 				}
@@ -131,9 +146,14 @@ if ($functionGetURL AND ((!$tile) OR ((time()-filemtime($fileName)-$ttl) > 0))) 
 				$fp = fopen($fileName, "w");
 				fwrite($fp, $tile);
 				fclose($fp);
-				chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возаможность заменить тайл, когда он протухнет
+				@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возаможность заменить тайл, когда он протухнет
 				
 				//echo "Тайл получен с $tries попытки <br>\n";
+				$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName));
+				if($bannedSources) {
+					$bannedSources[$r] = FALSE; 	// снимем проблемы с источником, возможно, установленные кем-то другим
+					file_put_contents($bannedSourcesFileName, serialize($bannedSources));
+				}
 				break; 	// тайл получили
 			}
 			elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
@@ -149,6 +169,11 @@ if ($functionGetURL AND ((!$tile) OR ((time()-filemtime($fileName)-$ttl) > 0))) 
 			}
 			sleep($tryTimeout);
 		} while (TRUE); 	// Будем пробовать получить, пока не получим
+		if($bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
+			$bannedSources = unserialize(file_get_contents($bannedSourcesFileName));
+			$bannedSources[$r] = FALSE; 	// снимем проблемы с источником
+			file_put_contents($bannedSourcesFileName, serialize($bannedSources));
+		}
 	}
 } 
 //print_r($img);
@@ -175,6 +200,19 @@ echo $tile;
 $content_lenght = ob_get_length();
 header("Content-Length: $content_lenght");
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
-$now=microtime()-$now;
-//error_log("Tile $r/$z/$x/$y get for $now sec");
+/*
+$now=microtime(TRUE)-$now;
+switch($from) {
+case 1:
+	$from='from cache';
+	break;
+case 2:
+	$from='from cache with lazy download';
+	break;
+case 3:
+	$from='from source';
+	break;
+}
+error_log("Tile $r/$z/$x/$y get $from for $now sec");
+*/
 ?>
