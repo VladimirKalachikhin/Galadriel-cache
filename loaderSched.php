@@ -86,8 +86,10 @@ do {
 				continue;
 			}
 			echo "Поставим его на скачивание\n";
+			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			copy("$jobsDir/$job","$jobsInWorkDir/$job"); 	// поставим на скачивание
 			chmod("$jobsInWorkDir/$job",0777); 	// чтобы запуск от другого юзера
+			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 			$loaderPIDs[] = -1; 	// добавим заведомо несуществующий PID к списку запуценных загрузчиков, в знак того, что загрузчик надо запустить
 			continue;
 		}
@@ -112,8 +114,10 @@ do {
 				if($newZoom > $maxZoom) unlink("$nextJob");	// что-то не так с масштабами?
 				else {
 					echo "Поставим на скачивание масштаб $newZoom\n";
+					$umask = umask(0); 	// сменим на 0777 и запомним текущую
 					copy("$nextJob","$jobsInWorkDir/" . basename($nextJob)); 	// поставим на скачивание следующий уровень
 					chmod("$jobsInWorkDir/" . basename($nextJob),0777); 	// чтобы запуск от другого юзера
+					umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 					$loaderPIDs[] = -1; 	// добавим заведомо несуществующий PID к списку запуценных загрузчиков, в знак того, что загрузчик надо запустить
 				}
 			}
@@ -185,6 +189,7 @@ do {
 		$runNextJobName = "$jobsInWorkDir/" . $path_parts['filename'] . ".$zoom";
 		if(file_exists($runNextJobName)) 		rename($runNextJobName, $nextJobName); 	// заменим существующий файл задания ещё не выполненной его частью, удалив часть из выполняемых
 	}
+	$umask = umask(0); 	// сменим на 0777 и запомним текущую
 	$newJob = fopen($nextJobName,'a'); 	// создадим новый - откроем старый файл только для записи, чтобы никто больше не трогал
 	while(($xy=fgetcsv($oldJob)) !== FALSE) {
 		if((!is_numeric($xy[0])) OR (!is_numeric($xy[1]))) continue; 	// вдруг в файле фигня
@@ -197,6 +202,7 @@ do {
 	fclose($newJob);
 	chmod($nextJobName,0777); 	// чтобы запуск от другого юзера
 	fclose($oldJob);
+	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 	unlink($jobName);	// прибъём старое задание
 } while($zoom<$minZoom);
 return $nextJobName;

@@ -45,7 +45,7 @@ $trash = array(
 	'c9eb16f8',
 	'd87aee55' 	// запрет Navionics в Дании
 );
-$minZoom = 11;
+$minZoom = 10;
 $maxZoom = 19;
 
 $functionGetURL = <<<'EOFU'
