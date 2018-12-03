@@ -79,25 +79,34 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 			if(is_array($uri))	list($uri,$opts) = $uri;
 			if(!$uri) break; 	// по каким-то причинам (например, нет токена для Navionics) не удалось получить uri тайла
+
+			if(!$opts['http']) {
+				$opts['http']=array(
+					'method'=>"GET"
+				);
+			}
+
 			if(!$opts['ssl']) { 	// откажемся от проверок ssl сертификатов, потому что сертификатов у нас нет
 				$opts['ssl']=array(
 				"verify_peer"=>FALSE,
 				"verify_peer_name"=>FALSE
 	 		   );
 			}
+
 			if(!$opts['http']['proxy'] AND $globalProxy) { 	// глобальный прокси
-				$opts['http']=array(
-				'proxy'=>$globalProxy,
-				'request_fulluri'=>TRUE
-				);
+				//error_log("Set global proxy $globalProxy");
+				$opts['http']['proxy']=$globalProxy;
+				$opts['http']['request_fulluri']=TRUE;
 			}
 			if(!$opts['http']['timeout']) { 
 				if($runCLI) $opts['http']['timeout'] = (float)(5*$getTimeout);
 				else 	$opts['http']['timeout'] = (float)$getTimeout;	// таймаут ожидания получения тайла, сек
 			}
 			//echo "opts :<pre>"; print_r($opts); echo "</pre>";
+			//error_log("opts :" . print_r($opts,TRUE));
 			$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
-			$img = @file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
+			$img = file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
+			//error_log($uri);
 			//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
 			//print_r($img);
 			if(!$http_response_header) { 	 //echo "связи нет<br>\n";
