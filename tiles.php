@@ -108,6 +108,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			$img = file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
 			//error_log($uri);
 			//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
+			//error_log( print_r($http_response_header,TRUE));
 			//print_r($img);
 			// Обработка проблем ответа
 			if(!$http_response_header) { 	 //echo "связи нет<br>\n";
@@ -121,6 +122,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 					file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
 					@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
 					umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+					error_log("$r banned!");
 					//echo "Попытка № $tries - тайла не получено из-за отсутствия связи или умирания источника<br>\n";
 					/* если не ждать вечно - тайлы будут пропускаться загрузчиком, и об этом никто не узнает.
 					$tries++;
@@ -140,6 +142,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			// Обработка проблем полученного
 			$mime_type = finfo_buffer($file_info,$img);
 			//echo "mime_type=$mime_type<br>\n";		//print_r($img);
+			//error_log("mime_type=$mime_type");		//print_r($img);
 			if (substr($mime_type,0,5)=='image') {
 				if($globalTrash) { 	// имеется глобальный список ненужных тайлов
 					if($trash) $trash = array_merge($trash,$globalTrash);
@@ -178,8 +181,17 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 				}
 				break; 	// тайл получили
 			}
-			elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
+			//elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
+			else { 	// файла нет или не дадут. Но OpenTopo потом даёт
 				$img = null;
+				if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
+					//error_log( print_r($http_response_header,TRUE));
+					foreach($http_response_header as $header) {
+						if(strpos($header,'404') !== FALSE) { 	// файл не найден.
+							break 2; 	// прекратим спрашивать, если перенаправили на 404
+						}
+					}
+				}
 				//break;
 			}
 			// Тайла не получили, надо подождать
@@ -195,6 +207,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			$bannedSources = unserialize(file_get_contents($bannedSourcesFileName));
 			$bannedSources[$r] = FALSE; 	// снимем проблемы с источником
 			file_put_contents($bannedSourcesFileName, serialize($bannedSources));
+			error_log("$r unbanned!");
 		}
 	}
 } 
