@@ -109,6 +109,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			//error_log($uri);
 			//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
 			//print_r($img);
+			// Обработка проблем ответа
 			if(!$http_response_header) { 	 //echo "связи нет<br>\n";
 				$_SESSION['noInternetTimeStart'] = time(); 	// 
 				$img = NULL;
@@ -133,6 +134,10 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 				}
 				else break; 	 // если спрашивали из браузера - не будем спрашивать тайл, и поедем дальше
 			}
+			elseif(strpos($http_response_header[0,'404']) !== FALSE) { 	// файл не найден. Следует ли сохранять в кеше что-то типа .tne ?
+				break 	// не будем дальше ждать: если сервер внятно отвечает, стало быть, так оно и есть
+			}
+			// Обработка проблем полученного
 			$mime_type = finfo_buffer($file_info,$img);
 			//echo "mime_type=$mime_type<br>\n";		//print_r($img);
 			if (substr($mime_type,0,5)=='image') {

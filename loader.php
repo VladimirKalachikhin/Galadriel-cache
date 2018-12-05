@@ -35,7 +35,7 @@ do {
 	if(! $jobName) break; 	// просмотрели все файлы, не нашли, с чем работать - выход
 	echo "Берём файл $jobName\n";
 	//echo filesize("$jobsInWorkDir/$jobName") . " \n";
-	$job = @fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
+	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
 	if(!$job) break; 	// файла не оказалось
 	flock($job,LOCK_EX) or exit("loader.php Unable locking job file Error");
 	$strSize = strlen($s=fgets($job)); 	// размер первой строки в байтах
