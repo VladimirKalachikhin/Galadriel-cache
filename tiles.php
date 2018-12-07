@@ -2,6 +2,11 @@
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /* Original source http://wiki.openstreetmap.org/wiki/ProxySimplePHP
 *	Modified to use directory structure matching the OSM urls and retries on a failure
+Берёт тай из кеша и сразу отдаёт-показывает.
+Потом, если надо - скачивает
+Если получено 404 - сохраняет пустой тайл, в остальных случаях - переспрашивает.
+Если полученный тайл ещё не показывали (он новый) - показываем.
+В CLI тайл не показываем, только скачиваем.
 */
 //$now = microtime(TRUE);
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
@@ -37,20 +42,21 @@ require_once("$mapSourcesDir/$r.php"); 	// файл, описывающий ис
 $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 //echo "file=$fileName; <br>\n";
 //return;
-$tile = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
-if((!$runCLI) AND $tile) 	{ 	// тайл есть
-	showTile($tile,$ext); 	// сначала покажем
+$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
+if((!$runCLI) AND $img) 	{ 	// тайл есть
+	showTile($img,$ext); 	// сначала покажем
 	$tileShowed = TRUE;
 	$from = 1;
 }
 // потом получим
 if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не протухают
-if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR ((time()-filemtime($fileName)-$ttl) > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
-	//error_log("No $r/$z/$x/$y tile exist?:".!$tile."; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
+if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((time()-filemtime($fileName)-$ttl) > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
+	//error_log("No $r/$z/$x/$y tile exist?:".!$img."; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 	// тайл надо получать
-	$img = null; $tries = 1; 
+	$img = FALSE; $tries = 1; 
 	eval($functionGetURL); 	// создадим функцию GetURL
 	do {
+		// Проблема со связью
 		if($_SESSION['noInternetTimeStart']) { 	// ранее было обнаружено отсутствие интернета
 			if((time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
 				//echo "связи нет, ждём/пропускаем ".(time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)." секунд <br>\n";
@@ -61,7 +67,6 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 				else break; 	 // если спрашивали из браузера - не будем спрашивать тайл, и поедем дальше
 			}
 		}
-		$img = NULL;
 		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
 		//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 		if(is_array($uri))	list($uri,$opts) = $uri;
@@ -100,7 +105,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 		// Обработка проблем ответа
 		if(!$http_response_header) { 	 //echo "связи нет<br>\n";
 			$_SESSION['noInternetTimeStart'] = time(); 	// 
-			$img = NULL;
+			$img = FALSE; 	// картинки нет по непонятной прчине
 			if($runCLI) { 	// если спрашивали из загрузчика - будем  стоять в ожидании связи
 				$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
 				if(!$bannedSources) $bannedSources = array();
@@ -124,28 +129,43 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			else break; 	 // если спрашивали из браузера - не будем спрашивать тайл, и поедем дальше
 		}
 		elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден. Следует ли сохранять в кеше что-то типа .tne ?
-			break; 	// не будем дальше ждать: если сервер внятно отвечает, стало быть, так оно и есть
+			$img = NULL; 	// картинки нет, потому что её нет
 		}
 		// Обработка проблем полученного
-		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-		$mime_type = finfo_buffer($file_info,$img);
-		//echo "mime_type=$mime_type<br>\n";		//print_r($img);
-		//error_log("mime_type=$mime_type");		//print_r($img);
-		if (substr($mime_type,0,5)=='image') {
-			if($globalTrash) { 	// имеется глобальный список ненужных тайлов
-				if($trash) $trash = array_merge($trash,$globalTrash);
-				else $trash = $globalTrash;
-			}
-			if($trash) { 	// имеется список ненужных тайлов
-				$imgHash = hash('crc32b',$img);
-				//echo "imgHash=$imgHash;<br>\n";
-				if(in_array($imgHash,$trash)) { 	// принятый тайл - мусор
-					$img = null;
-					break;
+		if($img) {
+			$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+			$mime_type = finfo_buffer($file_info,$img);
+			//echo "mime_type=$mime_type<br>\n";		//print_r($img);
+			//error_log("mime_type=$mime_type");		//print_r($img);
+			if (substr($mime_type,0,5)=='image') {
+				if($globalTrash) { 	// имеется глобальный список ненужных тайлов
+					if($trash) $trash = array_merge($trash,$globalTrash);
+					else $trash = $globalTrash;
+				}
+				if($trash) { 	// имеется список ненужных тайлов
+					$imgHash = hash('crc32b',$img);
+					//echo "imgHash=$imgHash;<br>\n";
+					if(in_array($imgHash,$trash)) { 	// принятый тайл - мусор
+						$img = FALSE;
+						break;
+					}
 				}
 			}
-			// теперь тайл получен
-			$tile = $img; unset($img);
+			//elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
+			else { 	// файла нет или не дадут. Но OpenTopo потом даёт
+				$img = FALSE;
+				if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
+					//error_log( print_r($http_response_header,TRUE));
+					foreach($http_response_header as $header) {
+						if(strpos($header,'404') !== FALSE) { 	// файл не найден.
+							$img = NULL;
+							break; 	// прекратим спрашивать, если перенаправили на 404
+						}
+					}
+				}
+			}
+		}
+		if($img !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			//@mkdir(dirname($fileName), 0755, true);
 			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
@@ -153,7 +173,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			//echo "Кешируем $fileName<br>\n";
 			
 			$fp = fopen($fileName, "w");
-			fwrite($fp, $tile);
+			fwrite($fp, $img);
 			fclose($fp);
 			@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возаможность заменить тайл, когда он протухнет
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
@@ -161,30 +181,17 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$tile) OR (
 			//echo "Тайл получен с $tries попытки <br>\n";
 			break; 	// тайл получили
 		}
-		//elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
-		else { 	// файла нет или не дадут. Но OpenTopo потом даёт
-			$img = null;
-			if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
-				//error_log( print_r($http_response_header,TRUE));
-				foreach($http_response_header as $header) {
-					if(strpos($header,'404') !== FALSE) { 	// файл не найден.
-						break 2; 	// прекратим спрашивать, если перенаправили на 404
-					}
-				}
-			}
-			//break;
-		}
 		// Тайла не получили, надо подождать
 		//echo "Попытка № $tries - тайла не получено <br>\n";
 		$tries++;
 		if ($tries > $maxTry) {	// Ждать больше нельзя
-			$img = null; 	// Тайла не получили
+			$img = NULL; 	// Тайла не получили
 			break;
 		}
 		sleep($tryTimeout);
 	} while (TRUE); 	// Будем пробовать получить, пока не получим
 	// отдадим тайл
-	if((!$runCLI) AND (!$tileShowed)) showTile($tile,$ext); 	//покажем тайл, если ещё не показывали.
+	if((!$runCLI) AND (!$tileShowed)) showTile($img,$ext); 	//покажем тайл, если ещё не показывали.
 	
 	if($bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
 		$bannedSources = unserialize(file_get_contents($bannedSourcesFileName));
