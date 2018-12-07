@@ -42,7 +42,8 @@ http://192.168.10.10/tileproxy/tiles.php?z=16&x=37995&y=18581&r=navionics_sonarc
 */
 
 $DefURLBase='http://backend.navionics.io/tile/';
-$RequestHead='Referer: https://webapiv2.navionics.com/examples/4000_gNavionicsOverlayExample.html';
+//$RequestHead='Referer: https://webapiv2.navionics.com/examples/4000_gNavionicsOverlayExample.html\r\nUser-Agent:Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 2.0.50727)';';
+$RequestHead='Referer: http://webapp.navionics.com/';
 $tokenTimeOut = 12*60*60; // сек. - время, через которое токен считается протухшим, и надо запрашивать снова
 //******************************************************************************
 // LAYERS parameter: config_a_b_c
