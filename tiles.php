@@ -151,7 +151,10 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 				}
 			}
 		}
-		//elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
+		elseif (substr($mime_type,0,4)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
+			error_log($img);
+			$img = FALSE;
+		}
 		else { 	// файла нет или не дадут. Но OpenTopo потом даёт
 			$img = FALSE;
 			if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
