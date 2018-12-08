@@ -36,6 +36,7 @@ if(!$x) $x=0;
 if(!$y) $y=0;
 if(!$z) $z=0;
 if(!$r) $r = 'osmmapMapnik';
+if($runCLI) $maxTry = 2 * $maxTry;
 // определимся с источником карты
 require_once("$mapSourcesDir/$r.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 // возьмём тайл
@@ -56,7 +57,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 	$img = FALSE; $tries = 1; 
 	eval($functionGetURL); 	// создадим функцию GetURL
 	do {
-		// Проблема со связью
+		// Проблема со связью. В cli запуск загрузки для проблемного источника не допустит loader
 		if($_SESSION['noInternetTimeStart']) { 	// ранее было обнаружено отсутствие интернета
 			if((time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
 				//echo "связи нет, ждём/пропускаем ".(time()-$_SESSION['noInternetTimeStart']-$noInternetTimeout)." секунд <br>\n";
@@ -132,35 +133,33 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 			$img = NULL; 	// картинки нет, потому что её нет
 		}
 		// Обработка проблем полученного
-		if($img) {
-			$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-			$mime_type = finfo_buffer($file_info,$img);
-			//echo "mime_type=$mime_type<br>\n";		//print_r($img);
-			//error_log("mime_type=$mime_type");		//print_r($img);
-			if (substr($mime_type,0,5)=='image') {
-				if($globalTrash) { 	// имеется глобальный список ненужных тайлов
-					if($trash) $trash = array_merge($trash,$globalTrash);
-					else $trash = $globalTrash;
-				}
-				if($trash) { 	// имеется список ненужных тайлов
-					$imgHash = hash('crc32b',$img);
-					//echo "imgHash=$imgHash;<br>\n";
-					if(in_array($imgHash,$trash)) { 	// принятый тайл - мусор
-						$img = FALSE;
-						break;
-					}
+		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+		$mime_type = finfo_buffer($file_info,$img);
+		//echo "mime_type=$mime_type<br>\n";		//print_r($img);
+		//error_log("mime_type=$mime_type");		//print_r($img);
+		if (substr($mime_type,0,5)=='image') {
+			if($globalTrash) { 	// имеется глобальный список ненужных тайлов
+				if($trash) $trash = array_merge($trash,$globalTrash);
+				else $trash = $globalTrash;
+			}
+			if($trash) { 	// имеется список ненужных тайлов
+				$imgHash = hash('crc32b',$img);
+				//echo "imgHash=$imgHash;<br>\n";
+				if(in_array($imgHash,$trash)) { 	// принятый тайл - мусор
+					$img = FALSE;
+					break;
 				}
 			}
-			//elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
-			else { 	// файла нет или не дадут. Но OpenTopo потом даёт
-				$img = FALSE;
-				if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
-					//error_log( print_r($http_response_header,TRUE));
-					foreach($http_response_header as $header) {
-						if(strpos($header,'404') !== FALSE) { 	// файл не найден.
-							$img = NULL;
-							break; 	// прекратим спрашивать, если перенаправили на 404
-						}
+		}
+		//elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
+		else { 	// файла нет или не дадут. Но OpenTopo потом даёт
+			$img = FALSE;
+			if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
+				//error_log( print_r($http_response_header,TRUE));
+				foreach($http_response_header as $header) {
+					if(strpos($header,'404') !== FALSE) { 	// файл не найден.
+						$img = NULL;
+						break; 	// прекратим спрашивать, если перенаправили на 404
 					}
 				}
 			}
@@ -190,10 +189,11 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 		}
 		sleep($tryTimeout);
 	} while (TRUE); 	// Будем пробовать получить, пока не получим
+	
 	// отдадим тайл
 	if((!$runCLI) AND (!$tileShowed)) showTile($img,$ext); 	//покажем тайл, если ещё не показывали.
 	
-	if($bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
+	if(($img !== FALSE) AND $runCLI AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
 		$bannedSources = unserialize(file_get_contents($bannedSourcesFileName));
 		$bannedSources[$r] = FALSE; 	// снимем проблемы с источником
 		file_put_contents($bannedSourcesFileName, serialize($bannedSources));
