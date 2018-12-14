@@ -36,7 +36,7 @@ if(!$x) $x=0;
 if(!$y) $y=0;
 if(!$z) $z=0;
 if(!$r) $r = 'osmmapMapnik';
-if($runCLI) $maxTry = 2 * $maxTry;
+if($runCLI) $maxTry = 3 * $maxTry; 	// увеличим число попыток скачать файл, если запущены загрузчиком
 // определимся с источником карты
 require_once("$mapSourcesDir/$r.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 // возьмём тайл
@@ -170,10 +170,10 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 		if($img !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			//@mkdir(dirname($fileName), 0755, true);
+			
 			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
 			//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
-			//echo "Кешируем $fileName<br>\n";
-			
+			//echo "Кешируем $fileName<br>\n";		
 			$fp = fopen($fileName, "w");
 			fwrite($fp, $img);
 			fclose($fp);

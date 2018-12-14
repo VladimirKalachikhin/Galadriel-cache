@@ -12,7 +12,13 @@ function getURL($z,$x,$y) {
 Algorithm getted from https://github.com/osmandapp/Osmand/issues/5818 and other
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=eniroTopo
 */
-$url='https://map.eniro.com/geowebcache/service/tms1.0.0/map/';
+$server = array();
+$server[] = '';
+$server[] = '01';
+$server[] = '02';
+$server[] = '03';
+$server[] = '04';
+$url='https://map'.$server[array_rand($server)].'.eniro.com/geowebcache/service/tms1.0.0/map/';
 //$url='https://map.eniro.com/geowebcache/service/tms1.0.0/nautical/';
 $y = ((1 << $z) - 1 - $y);
 $url .= "$z/$x/$y".".png";

@@ -153,8 +153,8 @@ do {
 		@unlink("$jobsDir/$loaderRunPID.lock"); 	// процесса с таким PID нет, удалим файл с PID. Но и файла к этому моменту может уже не быть
 		if($runs<$maxLoaderRuns) {
 			echo "Запускаем загрузчик\n";
-			//exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
-			exec("$phpCLIexec loader.php > /dev/null &");
+			exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
+			//exec("$phpCLIexec loader.php > /dev/null &");
 			$runs++;
 		}
 		else break;
@@ -162,8 +162,8 @@ do {
 	if($runs) { 	// если уже запущено меньше разрешённого количества загрузчиков. Иначе - не было заданий
 		for($runs; $runs<$maxLoaderRuns; $runs++) { 	// запустим ещё
 			echo "Запускаем ещё загрузчик\n";
-			//exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
-			exec("$phpCLIexec loader.php > /dev/null &");
+			exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
+			//exec("$phpCLIexec loader.php > /dev/null &");
 		}
 	}
 	//echo "runs=$runs; nextJob=$nextJob;\n";

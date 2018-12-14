@@ -37,7 +37,7 @@ require_once("$mapSourcesDir/$mapSourcesFile.php"); 	// файл, описыва
 $fileName = "$tileCacheDir/$mapSourcesFile/$z/$x/$y.$ext"; 	// 
 //echo "fileName=$fileName;<br>\n";
 //return;
-$tries = 0;
+$tries = 0; $img = FALSE;
 if ($functionGetURL) { 	// если есть функция получения тайла
 //if (function_exists('GetURL')) { 	// если есть функция получения тайла 	// В loaderSched файлы источников загружаются по очереди, поэтому нельзя require_once
 	eval($functionGetURL); 	// создадим функцию GetURL
@@ -49,11 +49,16 @@ if ($functionGetURL) { 	// если есть функция получения �
 				break; 	 // не будем спрашивать тайл, и поедем дальше
 			}
 		}
-		$img = null; 
+		$img = FALSE; 
 		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
 		//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 		if(is_array($uri))	list($uri,$opts) = $uri;
 		if(!$uri) break; 	// по каким-то причинам (например, нет токена для Navionics) не удалось получить uri тайла
+		if(!$opts['http']) {
+			$opts['http']=array(
+				'method'=>"GET"
+			);
+		}
 		if(!$opts['ssl']) { 	// откажемся от проверок ssl сертификатов, потому что сертификатов у нас нет
 			$opts['ssl']=array(
 		    "verify_peer"=>FALSE,
@@ -61,23 +66,26 @@ if ($functionGetURL) { 	// если есть функция получения �
  		   );
 		}
 		if(!$opts['http']['proxy'] AND $globalProxy) { 	// глобальный прокси
-			$opts['http']=array(
-			'proxy'=>$globalProxy,
-			'request_fulluri'=>TRUE
-			);
+			$opts['http']['proxy']=$globalProxy;
+			$opts['http']['request_fulluri']=TRUE;
 		}
 		if(!$opts['http']['timeout']) { 
 			$opts['http']['timeout'] = $getTimeout;	// таймаут ожидания получения тайла, сек
 		}
 		$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 		//echo "url=$url;<br>\n";
-		$img = @file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
+		$img = file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
 		//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
+		// Обработка проблем ответа
 		if(!$http_response_header) { 	 //echo "связи нет<br>\n";
 			$_SESSION['noInternetTimeStart'] = time(); 	// 
-			$img = NULL;
+			$img = FALSE;
 			break; 	 //  поедем дальше
 		}
+		elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден. Следует ли сохранять в кеше что-то типа .tne ?
+			$img = NULL; 	// картинки нет, потому что её нет
+		}
+		// Обработка проблем полученного
 		$mime_type = finfo_buffer($file_info,$img);
 		//echo "mime_type=$mime_type<br>\n";		print_r($img);
 		if (substr($mime_type,0,5)=='image') {
@@ -89,10 +97,29 @@ if ($functionGetURL) { 	// если есть функция получения �
 				$imgHash = hash('crc32b',$img);
 				//echo "imgHash=$imgHash;<br>\n";
 				if(in_array($imgHash,$trash)) { 	// принятый тайл - мусор
-					$img = null;
+					$img = FALSE;
 					break;
 				}
 			}
+		}
+		elseif (substr($mime_type,0,4)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
+			error_log($img);
+			$img = FALSE;
+		}
+		else { 	// файла нет или не дадут. Но OpenTopo потом даёт
+			$img = FALSE;
+			if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
+				//error_log( print_r($http_response_header,TRUE));
+				foreach($http_response_header as $header) {
+					if(strpos($header,'404') !== FALSE) { 	// файл не найден.
+						$img = NULL;
+						break; 	// прекратим спрашивать, если перенаправили на 404
+					}
+				}
+			}
+		}
+		if($img !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404
+			
 			$umask = umask(0); 	// сменим и запомним
 			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё.
 			//echo "Кешируем $fileName<br>\n";
@@ -101,17 +128,14 @@ if ($functionGetURL) { 	// если есть функция получения �
 			fclose($fp);
 			chmod($fileName,0777); 	// чтобы запуск от другого юзера
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+			
 			break; 	// тайл получили
-		}
-		elseif (substr($mime_type,0,5)=='text') { 	// файла нет или не дадут
-			$img = null;
-			//break;
 		}
 		// Тайла не получили, надо подождать
 		//echo "Попытка № $tries - тайла не получено\n";
 		$tries++;
 		if ($tries > $maxTry) {	// Ждать больше нельзя
-			$img = null; 	// Тайла не получили
+			$img = FALSE; 	// Тайла не получили
 			break;
 		}
 		sleep($tryTimeout);
