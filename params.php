@@ -15,7 +15,7 @@ $tryTimeout = 3; 	// pause between try to download tile from source, sec
 $getTimeout = 10; 	// timeout tile source response, sec
 $noInternetTimeout = 20; 	// no try the source this time if no internet connection found, sec
 
-$globalProxy = 'tcp://127.0.0.1:8123'; 	// Global Proxy. May be tor via Polipo, for example. If not defined - not used.
+//$globalProxy = 'tcp://127.0.0.1:8123'; 	// Global Proxy. May be tor via Polipo, for example. If not defined - not used.
 /*
 // crc32 of junk tiles '00000000' zero length file and '0940c426' empty png are not trash!
 $globalTrash = array(
