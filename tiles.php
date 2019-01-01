@@ -168,6 +168,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 			}
 		}
 		if($img !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404
+			if(($img === NULL) AND $tileShowed) break; 	// свежего тайла нет, но есть старый - не будем перезаписывать
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			//@mkdir(dirname($fileName), 0755, true);
 			

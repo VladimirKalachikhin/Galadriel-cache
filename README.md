@@ -65,7 +65,7 @@ http {
 ```
 it's increase i-nodes to max.
 ```
-# une2fs -m 1 /dev/sdb1
+# tune2fs -m 1 /dev/sdb1
 ```
 it's reduce system area.
 /dev/sdb1 - your SD card
