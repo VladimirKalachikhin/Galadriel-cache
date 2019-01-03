@@ -46,15 +46,14 @@ $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 $img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
 if((!$runCLI) AND $img) 	{ 	// тайл есть
 	showTile($img,$ext); 	// сначала покажем
-	$tileShowed = TRUE;
-	$from = 1;
+	//$from = 1;
 }
 // потом получим
 if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не протухают
 if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((time()-filemtime($fileName)-$ttl) > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 	//error_log("No $r/$z/$x/$y tile exist?:".!$img."; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 	// тайл надо получать
-	$img = FALSE; $tries = 1; 
+	$newimg = FALSE; $tries = 1; 
 	eval($functionGetURL); 	// создадим функцию GetURL
 	do {
 		// Проблема со связью. В cli запуск загрузки для проблемного источника не допустит loader
@@ -98,15 +97,15 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 		//echo "opts :<pre>"; print_r($opts); echo "</pre>";
 		//error_log("opts :" . print_r($opts,TRUE));
 		$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
-		$img = file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
+		$newimg = file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
 		//error_log($uri);
 		//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
 		//error_log( print_r($http_response_header,TRUE));
-		//print_r($img);
+		//print_r($newimg);
 		// Обработка проблем ответа
 		if(!$http_response_header) { 	 //echo "связи нет<br>\n";
 			$_SESSION['noInternetTimeStart'] = time(); 	// 
-			$img = FALSE; 	// картинки нет по непонятной прчине
+			$newimg = FALSE; 	// картинки нет по непонятной прчине
 			if($runCLI) { 	// если спрашивали из загрузчика - будем  стоять в ожидании связи
 				$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
 				if(!$bannedSources) $bannedSources = array();
@@ -120,7 +119,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 				/* если не ждать вечно - тайлы будут пропускаться загрузчиком, и об этом никто не узнает.
 				$tries++;
 				if ($tries > $maxTry) {	// Ждать больше нельзя
-					$img = null; 	// Тайла не получили
+					$newimg = null; 	// Тайла не получили
 					break; 	
 				}
 				*/
@@ -130,45 +129,44 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 			else break; 	 // если спрашивали из браузера - не будем спрашивать тайл, и поедем дальше
 		}
 		elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден. Следует ли сохранять в кеше что-то типа .tne ?
-			$img = NULL; 	// картинки нет, потому что её нет
+			$newimg = NULL; 	// картинки нет, потому что её нет
 		}
 		// Обработка проблем полученного
 		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-		$mime_type = finfo_buffer($file_info,$img);
-		//echo "mime_type=$mime_type<br>\n";		//print_r($img);
-		//error_log("mime_type=$mime_type");		//print_r($img);
+		$mime_type = finfo_buffer($file_info,$newimg);
+		//error_log("mime_type=$mime_type");
 		if (substr($mime_type,0,5)=='image') {
 			if($globalTrash) { 	// имеется глобальный список ненужных тайлов
 				if($trash) $trash = array_merge($trash,$globalTrash);
 				else $trash = $globalTrash;
 			}
 			if($trash) { 	// имеется список ненужных тайлов
-				$imgHash = hash('crc32b',$img);
+				$imgHash = hash('crc32b',$newimg);
 				//echo "imgHash=$imgHash;<br>\n";
 				if(in_array($imgHash,$trash)) { 	// принятый тайл - мусор
-					$img = FALSE;
+					$newimg = FALSE;
 					break;
 				}
 			}
 		}
 		elseif (substr($mime_type,0,4)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
-			error_log($img);
-			$img = FALSE;
+			error_log($newimg);
+			$newimg = FALSE;
 		}
 		else { 	// файла нет или не дадут. Но OpenTopo потом даёт
-			$img = FALSE;
+			$newimg = FALSE;
 			if(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
 				//error_log( print_r($http_response_header,TRUE));
 				foreach($http_response_header as $header) {
 					if(strpos($header,'404') !== FALSE) { 	// файл не найден.
-						$img = NULL;
+						$newimg = NULL;
 						break; 	// прекратим спрашивать, если перенаправили на 404
 					}
 				}
 			}
 		}
-		if($img !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404
-			if(($img === NULL) AND $tileShowed) break; 	// свежего тайла нет, но есть старый - не будем перезаписывать
+		if($newimg !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404
+			if(($newimg === NULL) AND $img) break; 	// свежего тайла нет, но есть старый - не будем перезаписывать
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			//@mkdir(dirname($fileName), 0755, true);
 			
@@ -176,7 +174,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 			//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
 			//echo "Кешируем $fileName<br>\n";		
 			$fp = fopen($fileName, "w");
-			fwrite($fp, $img);
+			fwrite($fp, $newimg);
 			fclose($fp);
 			@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возаможность заменить тайл, когда он протухнет
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
@@ -188,16 +186,16 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 		//echo "Попытка № $tries - тайла не получено <br>\n";
 		$tries++;
 		if ($tries > $maxTry) {	// Ждать больше нельзя
-			$img = NULL; 	// Тайла не получили
+			$newimg = NULL; 	// Тайла не получили
 			break;
 		}
 		sleep($tryTimeout);
 	} while (TRUE); 	// Будем пробовать получить, пока не получим
 	
 	// отдадим тайл
-	if((!$runCLI) AND (!$tileShowed)) showTile($img,$ext); 	//покажем тайл, если ещё не показывали.
+	if((!$runCLI) AND (!$img)) showTile($newimg,$ext); 	//покажем тайл, если ещё не показывали.
 	
-	if(($img !== FALSE) AND $runCLI AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
+	if(($newimg !== FALSE) AND $runCLI AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
 		$bannedSources = unserialize(file_get_contents($bannedSourcesFileName));
 		$bannedSources[$r] = FALSE; 	// снимем проблемы с источником
 		file_put_contents($bannedSourcesFileName, serialize($bannedSources));
