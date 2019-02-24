@@ -97,7 +97,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 		//echo "opts :<pre>"; print_r($opts); echo "</pre>";
 		//error_log("opts :" . print_r($opts,TRUE));
 		$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
-		$newimg = file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
+		$newimg = @file_get_contents($uri, FALSE, $context); 	// бессмыслено проверять проблемы - с ними всё равно ничего нельзя сделать
 		//error_log($uri);
 		//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
 		//error_log( print_r($http_response_header,TRUE));
@@ -114,7 +114,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND ((!$img) OR ((
 				file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
 				@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
 				umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-				error_log("tiles: $r banned!");
+				error_log("tiles.php: $r banned at ".gmdate("D, d M Y H:i:s", time())."!");
 				//echo "Попытка № $tries - тайла не получено из-за отсутствия связи или умирания источника<br>\n";
 				/* если не ждать вечно - тайлы будут пропускаться загрузчиком, и об этом никто не узнает.
 				$tries++;

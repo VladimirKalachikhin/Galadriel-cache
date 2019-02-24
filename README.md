@@ -3,6 +3,8 @@ This is a simple raster map tiles cache/proxy to use on a weak computers such as
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) is a good choice too.<br>
 Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
 
+## v. 0.1
+
 ## Features:
 1. User-defined map sources
 2. nginx support
