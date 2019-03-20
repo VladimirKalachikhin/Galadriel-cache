@@ -2,7 +2,7 @@
 /* Функции, необходимые для работы с источниками карт Navionics
 На основе соответствующих функций из файлов GetUrlScript.txt источников карт Navionics SAS.Planet http://www.sasgis.org/
 
-GetNavToken() Запрашивает новый токен для карт
+GetNavToken() Запрашивает новый токен для карт 
 */
 
 function GetNavToken() {

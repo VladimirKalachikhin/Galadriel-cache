@@ -13,6 +13,9 @@ Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps d
 It's all. No versioning, no reprojection.
 
 ## Usage:
+_tiles.php_ - cache/proxy<br>
+_tilefromsource.php_ - proxy, mostly for a nginx 404 helper usage
+
 OruxMaps source definition:
 ```
 	<onlinemapsource uid="1055">

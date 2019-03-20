@@ -53,7 +53,7 @@ do {
 	$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
 	//echo "res=$res;\n";
 	$now=microtime(TRUE)-$now;
-	echo "карта $map;\n Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек.\n\n";
+	echo "Карта $map;\nПолучен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек.\n\n";
 } while($jobName);
 unlink("$jobsDir/$pID.lock");	// 
 echo "Загрузчик $pID завершился\n";
