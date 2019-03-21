@@ -146,10 +146,10 @@ then
 fi
 mount -rw -t ext4  /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 ```
-and place it in _Android/data/ccc71.at.free/scripts/_ home directory.<br>
+and place it in home directory by path _Android/data/ccc71.at.free/scripts/_ <br>
 Open **3C toolbox**<br>
-Go Tools - Script editor
-To mark _01_mountExtSDcard_ as runed in boot
+Go Tools - Script editor<br>
+Mark _01_mountExtSDcard_ as runed in boot
 
 
 ## Loader.
