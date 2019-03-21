@@ -75,6 +75,53 @@ it's increase i-nodes to max.
 it's reduce system area.
 /dev/sdb1 - your SD card
 
+## Direct usage
+If you server dead, but you have a rooted Android phone or tablet, you may:<br>
+1. remove SD card with cache from server
+2. insert SD card with cache to Android device
+on Android device with terminal:
+3. Open terminal. Try:
+# mount -o rw,remount /
+# mkdir /data/mySDcard  
+# chown 1000:1000 /data/mySDcard
+# chmod 774 /data/mySDcard
+# mount -o ro,remount /
+# mount -rw -t ext4  /dev/block/mmcblk1p1 /data/mySDcard
+This creates mount point and mounts your SD card there to, so you have all maps on your Android device.<br>
+There:<br>
+	/dev/block/mmcblk1p1 - partition wint cashe on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
+	/data/mySDcard - mount point
+
+To access map via OruxMaps:<br>
+Modify _oryxmaps/mapfiles/onlinemapsources.xml_ by add:
+```
+	<onlinemapsource uid="1052">
+		<name>Navionics layer from local dir (NAV)</name>
+		<url><![CDATA[file://data/mySDcard/tiles/navionics_layer/{$z}/{$x}/{$y}.png]]></url> 
+		<minzoom>12</minzoom>
+		<maxzoom>18</maxzoom>
+		<projection>MERCATORESFERICA</projection>
+		<cacheable>0</cacheable>
+		<downloadable>0</downloadable>
+	</onlinemapsource>
+	<onlinemapsource uid="1054">
+		<name>OpenTopoMap from local dir (TOPO)</name>
+		<url><![CDATA[file://data/mySDcard/tiles/OpenTopoMap/{$z}/{$x}/{$y}.png]]></url> 
+		<minzoom>5</minzoom>
+		<maxzoom>18</maxzoom>
+		<projection>MERCATORESFERICA</projection>
+		<cacheable>0</cacheable>
+		<downloadable>0</downloadable>
+	</onlinemapsource>
+```
+and other maps by same way.<br>
+There:<br>
+	/tiles/ - path to cache from SD card root.<br>
+
+Depending on how you obtain root, the command `mount` may be written as<br>
+`su --mount-master -c "busybox mount -rw -t ext4  /dev/block/mmcblk1p1 /data/mySDcard"`
+
+
 ## Loader.
 GaladrielCache includes dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in loaderjobs/ directory. Start loaderSched.php in cli.
 For example:
@@ -93,5 +140,6 @@ Will be downloaded navionics_layer map within the specified tiles from zoom 9 to
 
 Tile loader may use any number of threads to load, and use cron for robust download.<br>
 You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader.
-### clearCache
+
+## clearCache
 Use in cli _clearCache.php mapname_ to _mapname_ or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is may be a blanck tiles or .tne files from SAS.Planet
