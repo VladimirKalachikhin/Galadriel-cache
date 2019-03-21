@@ -80,7 +80,7 @@ it's reduce system area.
 /dev/sdb1 - your SD card
 
 
-## Direct usage of cache
+## Direct usage of cache:
 If you server dead, but you have a rooted Android phone or tablet, you may:<br>
 1. remove SD card with cache from server
 2. insert SD card with cache to Android device<br>
@@ -96,8 +96,8 @@ on Android device with terminal:
 ```
 This creates mount point and mounts your SD card there to, so you have all maps on your Android device.<br>
 There:<br>
-		/dev/block/mmcblk1p1 - partition wint cache on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
-		/data/mySDcard - mount point
+		_/dev/block/mmcblk1p1_ - partition wint cache on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
+		_/data/mySDcard_ - mount point
 
 To access map via OruxMaps:<br>
 Modify _oryxmaps/mapfiles/onlinemapsources.xml_ by add:
@@ -152,7 +152,7 @@ Go Tools - Script editor<br>
 Mark _01_mountExtSDcard_ as runed in boot
 
 
-## Loader.
+## Loader
 GaladrielCache includes dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in loaderjobs/ directory. Start loaderSched.php in cli.
 For example:
 
