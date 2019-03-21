@@ -52,7 +52,7 @@ Paths and other set and describe in _params.php_<br>
 Custom sources are in _mapsources/_<br>
 Help about map sources are in _mapsources/mapsources.txt_
 
-If you use nginx to serve cache, configure 404 helper to proxy:
+If you use nginx to serve cache, configure 404 helper to proxy:<br>
 nginx.conf:
 ```
 http {
@@ -60,7 +60,7 @@ http {
 		location /tileproxy {
 			default_type  application/octet-stream;
 			error_page  404  /tileproxy/tilefromsource.php?uri=$uri;
-        }
+		}
 	}
 }
 ```
@@ -81,12 +81,14 @@ If you server dead, but you have a rooted Android phone or tablet, you may:<br>
 2. insert SD card with cache to Android device
 on Android device with terminal:
 3. Open terminal. Try:
+```
 # mount -o rw,remount /
 # mkdir /data/mySDcard  
 # chown 1000:1000 /data/mySDcard
 # chmod 774 /data/mySDcard
 # mount -o ro,remount /
 # mount -rw -t ext4  /dev/block/mmcblk1p1 /data/mySDcard
+```
 This creates mount point and mounts your SD card there to, so you have all maps on your Android device.<br>
 There:<br>
 	/dev/block/mmcblk1p1 - partition wint cashe on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
