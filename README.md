@@ -83,7 +83,7 @@ it's reduce system area.
 ## Direct usage of cache
 If you server dead, but you have a rooted Android phone or tablet, you may:<br>
 1. remove SD card with cache from server
-2. insert SD card with cache to Android device
+2. insert SD card with cache to Android device<br>
 on Android device with terminal:
 3. Open terminal. Try:
 ```
