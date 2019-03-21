@@ -40,7 +40,11 @@ or, if you use nginx for serve files:
 		<downloadable>0</downloadable>
 	</onlinemapsource>
 ```
-where 192.168.1.1 - your server, /tileproxy/ - path to project, /tiles/ - path to file storage in the sense of a web server, and yasat.EPSG3395 - your custom map source name.
+Where:
+		192.168.1.1 - your server 
+		/tileproxy/tiles.php - cache/proxy 
+		/tiles/ - path to file storage in the sense of a web server
+		and yasat.EPSG3395 - your custom map source name.
 
 ATTENTION! You MUST configure your MAP VIEWER for the use specific projection! 
 (`<projection>MERCATORELIPSOIDAL</projection>` in the example above)<br> 
@@ -75,7 +79,8 @@ it's increase i-nodes to max.
 it's reduce system area.
 /dev/sdb1 - your SD card
 
-## Direct usage
+
+## Direct usage of cache
 If you server dead, but you have a rooted Android phone or tablet, you may:<br>
 1. remove SD card with cache from server
 2. insert SD card with cache to Android device
@@ -91,8 +96,8 @@ on Android device with terminal:
 ```
 This creates mount point and mounts your SD card there to, so you have all maps on your Android device.<br>
 There:<br>
-	/dev/block/mmcblk1p1 - partition wint cashe on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
-	/data/mySDcard - mount point
+		/dev/block/mmcblk1p1 - partition wint cashe on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
+		/data/mySDcard - mount point
 
 To access map via OruxMaps:<br>
 Modify _oryxmaps/mapfiles/onlinemapsources.xml_ by add:
@@ -118,10 +123,33 @@ Modify _oryxmaps/mapfiles/onlinemapsources.xml_ by add:
 ```
 and other maps by same way.<br>
 There:<br>
-	/tiles/ - path to cache from SD card root.<br>
+		/tiles/ - path to cache from SD card root.<br>
 
 Depending on how you obtain root, the command `mount` may be written as<br>
 `su --mount-master -c "busybox mount -rw -t ext4  /dev/block/mmcblk1p1 /data/mySDcard"`
+
+With **3C toolbox** you can automate the mounting when the device boots.<br>
+Create file:<br>
+01_mountExtSDcard
+```
+#!/system/bin/sh
+
+EXT_SD_DIRECTORY=/data/mySDcard;
+
+if [ ! -d $EXT_SD_DIRECTORY ];
+then
+	mount -o rw,remount /
+	mkdir $EXT_SD_DIRECTORY;
+	chown 1000:1000 $EXT_SD_DIRECTORY;
+	chmod 774 $EXT_SD_DIRECTORY;
+	mount -o ro,remount /
+fi
+mount -rw -t ext4  /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
+```
+and place it in _Android/data/ccc71.at.free/scripts/_ home directory.<br>
+Open **3C toolbox**<br>
+Go Tools - Script editor
+To mark _01_mountExtSDcard_ as runed in boot
 
 
 ## Loader.
