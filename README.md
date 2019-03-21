@@ -96,7 +96,7 @@ on Android device with terminal:
 ```
 This creates mount point and mounts your SD card there to, so you have all maps on your Android device.<br>
 There:<br>
-		/dev/block/mmcblk1p1 - partition wint cashe on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
+		/dev/block/mmcblk1p1 - partition wint cache on you SD card. To find it, try `ls /dev/block`. Last mmcblk - most probably your SD card.<br>
 		/data/mySDcard - mount point
 
 To access map via OruxMaps:<br>
