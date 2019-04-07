@@ -43,7 +43,8 @@ do {
 	echo "Берём файл $jobName\n";
 	//echo filesize("$jobsInWorkDir/$jobName") . " \n";
 	// Планировщик времени
-	$ave = (@min($timer)+((@max($timer)-@min($timer))/2))+$lag; 	// среднее плюс допустимое
+	if(count($jobNames)<count($timer)) empty($timer); 	// статистика какого-то завершившегося задания присутствует в $timer, и среднее будет неправильно 
+	$ave = ((@max($timer)+@min($timer))/2)+$lag; 	// среднее плюс допустимое
 	if($timer[$map]>$ave) continue; 	// пропустим эту карту, если на неё уже затрачено много времени
 	// Есть ли ещё файл?
 	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл

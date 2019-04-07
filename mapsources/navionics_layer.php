@@ -44,6 +44,9 @@ $trash = array(
 	'a01ccc39',
 	'417c93ed',
 	'c9eb16f8',
+	'8ce7f158',
+	'e64a995e',
+	'307c4966',
 	'd87aee55' 	// запрет Navionics в Дании
 );
 

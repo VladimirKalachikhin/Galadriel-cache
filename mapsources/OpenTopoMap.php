@@ -12,6 +12,7 @@ function getURL($z,$x,$y) {
 /* Алгоритм получения ссылки на тайл заимствован из SAS.Planet
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
+//error_log("OpenTopoMap $z,$x,$y");
 $server = array();
 $server[] = 'a';
 $server[] = 'b';
