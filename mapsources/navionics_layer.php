@@ -3,6 +3,7 @@
 $ttl = 86400*30*6; //cache timeout in seconds время, через которое тайл считается протухшим, 1/2 год
 //$ttl = 0; //cache timeout in seconds время, через которое тайл считается протухшим
 $ext = 'png'; 	// tile image type/extension
+$on403 = 'skip'; 	// что делать, если Forbidden: skip, wait - default
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, тайлы с дурацкими надписями	'0940c426' пустой тайл - не мусор! Иначе пустые файлы будут скачиваться снова и снова, а их много.
 
 $trash = array(
@@ -62,6 +63,9 @@ function getURL($zoom,$x,$y) {
 
 */
 
+global $tileCacheDir, $r, $on403; 	// from params.php, from tiles.php, from self
+$tokenFileName = "$tileCacheDir/$r/navtoken";
+
 $DefURLBase='http://backend.navionics.io/tile/';
 //$RequestHead='Referer: https://webapiv2.navionics.com/examples/4000_gNavionicsOverlayExample.html\r\nUser-Agent:Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 2.0.50727)';
 $RequestHead='Referer: http://webapp.navionics.com/';
@@ -83,15 +87,22 @@ $tokenTimeOut = 12*60*60; // сек. - время, через которое т�
 $cReqParams = 'LAYERS=config_1_10.00_0&TRANSPARENT=TRUE&UGC=FALSE';
 
 list($VNavToken,$VTimeStamp) = $_SESSION['NavionicsToken'];
+if(!$VNavToken) { 	// нет сессии - протухла или клиент cli, или клиент не умеет печеньки
+	list($VNavToken,$VTimeStamp) = unserialize(@file_get_contents($tokenFileName));
+}
 //echo "Before: VNavToken=$VNavToken;\nVTimeStamp=$VTimeStamp;<br>\n";
 //error_log( "Before: VNavToken=$VNavToken;\nVTimeStamp=$VTimeStamp;<br>\n");
 //echo "Должен протухнуть в " . time() . "-$tokenTimeOut<br>\n" ;
 if((time()-$tokenTimeOut) > $VTimeStamp) { 	//  токена нет ($VTimeStamp==0) или токен протух
 	$VNavToken = GetNavToken(); 	// ../fNavionics.php получим новый токен и время его получения
 	$_SESSION['NavionicsToken'] = $VNavToken; 	// сохраним токен
+	$umask = umask(0); 	// сменим на 0777 и запомним текущую
+	file_put_contents($tokenFileName, serialize($VNavToken)); 	// запишем файл с токеном
+	@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
+	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 	list($VNavToken,$VTimeStamp) = $VNavToken;
 }
-if(!$VNavToken) return ''; 	// обломаемся, если нет токена. Считаем, что процедура получения тайла понимает пустую строку вместо uri
+if(!$VNavToken) $on403='wait'; 	//  нет токена. Запрос тайла окончится 403, на что мы скажем wait
 $ResultURL = $DefURLBase . "$zoom/$x/$y" . "?$cReqParams" . "&navtoken=$VNavToken";
 //echo "ResultURL=$ResultURL; <br>\n";
 $opts = array(

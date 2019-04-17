@@ -12,6 +12,7 @@ $ContentType = 'image/jpeg'; 	// if content type differ then file extension
 $minZoom = 0; 	// map min zoom
 $maxZoom = 19; 	// map max zoom
 $EPSG=4326; 	// map projection, for map viewer (such as web client) or get tile algorithm. Not used for cache/proxy.
+$on403 = 'wait'; 	// Forbidden action: skip, wait. By default - wait, source will be banned on $noInternetTimeout (params.php) time. 'Skip' eq 'File not found'.
 $trash = array(); 	// array of crc32 of bad, junk or other unwanted tiles or other files. This tiles not be stored to cache.
 $functionGetURL = <<<'EOFU'
 EOFU; 	// string to wrap getURL() function. This is necessery to avoid function redefinitions error.

@@ -30,12 +30,20 @@ do {
 		$path_parts = pathinfo($jobName);
 		$zoom = $path_parts['extension']; 	//
 		$map = $path_parts['filename'];
-		if($bannedSources[$map]) { 	// проигнорируем задание для проблемного источника
-			echo "Бросаем файл $jobName - источник с проблемами\n\n";
-			continue;	
+		if($bannedSources[$map]) { 	// источник с проблемами
+			if((time()-$bannedSources[$map]-($noInternetTimeout*1))<0) {	// если многократный таймаут из конфига не истёк
+				unset($timer[$map]); 	// удалим из планировки загрузки
+				echo "Бросаем файл $jobName - источник с проблемами\n\n";
+				$jobName = FALSE; 	// других может и не быть
+				continue;	// проигнорируем задание для проблемного источника
+			}
+			else { 				// 	иначе - таки запустим скачивание
+				echo "Пытаемся $jobName - источник с проблемами\n";
+			}
 		}
 		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
-		if( is_file("$jobsInWorkDir/$jobName") AND (filesize("$jobsInWorkDir/$jobName") > 4) AND (filesize("$jobsInWorkDir/$jobName")<>4096)) break; 	// выбрали файл для обслуживания
+		//echo "jobName=$jobName; is_file($jobsInWorkDir/$jobName)=".is_file("$jobsInWorkDir/$jobName")." filesize($jobsInWorkDir/$jobName)=".filesize("$jobsInWorkDir/$jobName")." \n";
+		if( $jobName AND is_file("$jobsInWorkDir/$jobName") AND (filesize("$jobsInWorkDir/$jobName") > 4) AND (filesize("$jobsInWorkDir/$jobName")<>4096)) break; 	// выбрали файл для обслуживания
 		else $jobName = FALSE;	
 	}
 	if(! $jobName) break; 	// просмотрели все файлы, не нашли, с чем работать - выход
@@ -65,10 +73,19 @@ do {
 	$now = microtime(TRUE);
 	// Запустим скачивание
 	$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
-	//echo "res=$res;\n";
+	//echo "res=$res; \n";
+	if($res==0) { 	// загрузка тайла плохо кончилась
+		$umask = umask(0); 	// сменим на 0777 и запомним текущую
+		file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND); 	// вернём номер тайла в файл задания для загрузчика
+		@chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
+		umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+		$s = ", но тайл будет запрошен повторно";
+	}
 	$now=microtime(TRUE)-$now;
 	$timer[$map] += $now;
-	echo "Карта $map, на неё затрачено ".$timer[$map]."сек. при среднем допустимом $ave сек.\nПолучен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек.\n\n";
+	echo "Карта $map, на неё затрачено ".$timer[$map]."сек. при среднем допустимом $ave сек.\n";
+	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $s";
+	echo "	\n\n";
 } while($jobName);
 unlink("$jobsDir/$pID.lock");	// 
 echo "Загрузчик $pID завершился\n";

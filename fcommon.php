@@ -27,7 +27,6 @@ $lat_deg = $deg['lat'];
 return array('x'=>merc_x($lon_deg,$r_major),'y'=>merc_y($lat_deg,$r_major,$r_minor));
 }
 
-
 function merc_x($lon,$r_major=6378137.000) {
 /* Меркатор на эллипсоиде
 Долготу в линейную координату x
@@ -55,6 +54,7 @@ function merc_y($lat,$r_major=6378137.000,$r_minor=6356752.3142) {
     $y = - $r_major * log($ts);
     return $y;
 }
+
 function nextZoom($xy){
 /* Возвращает четыре номера тайлов следующего (большего) масштаба
 https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
@@ -66,5 +66,13 @@ $nextZoom[2] = array(2*$xy[0],2*$xy[1]+1);	// левый нижний тайл
 $nextZoom[3] = array(2*$xy[0]+1,2*$xy[1]+1);	// правый нижнй тайл
 return $nextZoom;
 } // end function nextZoom
+
+function quickFilePutContents($fileName,$content) {
+/**/
+$tmpFileName = tempnam('','');
+echo "$tmpFileName \n";
+file_put_contents($tmpFileName,$content);
+rename($tmpFileName,$fileName);
+}
 
 ?>
