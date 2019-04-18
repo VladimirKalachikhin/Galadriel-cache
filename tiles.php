@@ -69,13 +69,14 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	}
 	// Проблем связи и источника нет - будем получать тайл
 	$tries = 1; 
+	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 	eval($functionGetURL); 	// создадим функцию GetURL
 	do {
 		$newimg = FALSE; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
 		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
 		//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 		if(!$uri) { 	// по каким-то причинам нет uri тайла
-			$newimg = NULL; 	// очевидно, картинки картинки нет и не будет
+			$newimg = NULL; 	// очевидно, картинки нет и не будет
 			break;
 		}
 		// Параметры запроса
@@ -126,7 +127,6 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			break; 	 // бессмысленно ждать, уходим
 		}
 		elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
-			//error_log( print_r($http_response_header,TRUE));
 			foreach($http_response_header as $header) {
 				if((substr($header,0,4)=='HTTP') AND (strpos($header,'200') !== FALSE)) break; 	// файл получен, перейдём к обработке
 				elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'404') !== FALSE)) { 	// файл не найден.
@@ -147,7 +147,6 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			}
 		}
 		// Обработка проблем полученного
-		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 		$mime_type = finfo_buffer($file_info,$newimg);
 		//error_log("mime_type=$mime_type");
 		if (substr($mime_type,0,5)=='image') {
@@ -157,8 +156,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			}
 			if($trash) { 	// имеется список ненужных тайлов
 				$imgHash = hash('crc32b',$newimg);
-				//echo "imgHash=$imgHash;<br>\n";
-				if(in_array($imgHash,$trash)) { 	// принятый тайл - мусор
+				if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
 					$newimg = NULL; 	// тайл принят нормально, но он мусор
 					break;
 				}
@@ -174,7 +172,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 		//echo "Попытка № $tries - тайла не получено <br>\n";
 		$tries++;
 		if ($tries > $maxTry) {	// Ждать больше нельзя
-			$newimg = NULL; 	// Тайла не получили - считаем, что тайла нет, сохраним пустой
+			//$newimg = NULL; 	// Тайла не получили - считаем, что тайла нет, сохраним пустой
 			//doBann($r); 	// забаним источник
 			break;
 		}
@@ -186,6 +184,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	// сохраним тайл
 	if($newimg !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла
 		if($newimg OR ($img===FALSE)) { 	// есть свежий тайл или нет старого
+			
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			//@mkdir(dirname($fileName), 0755, true);
 			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
@@ -195,7 +194,9 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			fclose($fp);
 			@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возаможность заменить тайл, когда он протухнет
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-			//error_log("Saved ".strlen($newimg)." bytes");		
+			
+			error_log("Saved ".strlen($newimg)." bytes");	
+			if(!$newimg)	error_log(print_r($http_response_header,TRUE));
 		}		
 	}
 	if(($newimg !== FALSE) AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
@@ -248,52 +249,4 @@ if($runCLI) {
 }
 return;
 
-function showTile($tile,$ext) {
-global $runCLI;
-
-if($runCLI) return; 	// не будем отдавать картинку в cli
-if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
-	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-	$mime_type = finfo_buffer($file_info,$tile);
-	$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
-	header("Expired: " . $exp_gmt);
-	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
-	//header("Last-Modified: " . $mod_gmt);
-	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
-	if($mime_type) header ("Content-Type: $mime_type");
-	else header ("Content-Type: image/$ext");
-}
-else {
-	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
-	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
-	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
-}
-ob_clean(); 	// очистим, если что попало в буфер, но заголовки выше должны отправиться
-echo $tile;
-$content_lenght = ob_get_length();
-header("Content-Length: $content_lenght");
-ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
-ob_start(); 	// попробуем перехватить любой вывод скрипта
-}
-
-function doBann($r) {
-/* Банит источник */
-global $bannedSources, $runCLI, $bannedSourcesFileName, $tries, $http_response_header, $_SESSION;
-//error_log("newimg=$newimg;");
-//error_log(print_r($http_response_header,TRUE));
-
-$curr_time = time();
-$bannedSources[$r] = $curr_time; 	// отметим проблемы с источником
-if($runCLI) { 	// если спрашивали из загрузчика
-	$umask = umask(0); 	// сменим на 0777 и запомним текущую
-	file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
-	//quickFilePutContents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
-	@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
-	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-}
-else { 	// спрашивают из браузера
-	$_SESSION['bannedSources'] = $bannedSources; 	// 
-}
-error_log("tiles.php: Попытка № $tries: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)."!");
-} // end function doBann
 ?>

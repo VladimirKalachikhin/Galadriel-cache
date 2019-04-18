@@ -57,7 +57,7 @@ foreach($zooms as $zoom) {
 		foreach($files as $file) {
 			$crc32 = hash_file('crc32b',$file);
 			//echo "$crc32\n";
-			if(in_array($crc32,$trash)) {
+			if(in_array($crc32,$trash,TRUE)) {
 				echo "deleting $file\n";
 				unlink($file);
 			}

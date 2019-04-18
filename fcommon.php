@@ -75,4 +75,54 @@ file_put_contents($tmpFileName,$content);
 rename($tmpFileName,$fileName);
 }
 
+function showTile($tile,$ext) {
+global $runCLI;
+
+if($runCLI) return; 	// не будем отдавать картинку в cli
+if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
+	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+	$mime_type = finfo_buffer($file_info,$tile);
+	$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
+	header("Expired: " . $exp_gmt);
+	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
+	//header("Last-Modified: " . $mod_gmt);
+	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
+	if($mime_type) header ("Content-Type: $mime_type");
+	else header ("Content-Type: image/$ext");
+}
+else {
+	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
+	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+}
+ob_clean(); 	// очистим, если что попало в буфер, но заголовки выше должны отправиться
+echo $tile;
+$content_lenght = ob_get_length();
+header("Content-Length: $content_lenght");
+ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
+ob_start(); 	// попробуем перехватить любой вывод скрипта
+}
+
+function doBann($r) {
+/* Банит источник */
+global $bannedSources, $runCLI, $bannedSourcesFileName, $tries, $http_response_header, $_SESSION;
+//error_log("newimg=$newimg;");
+//error_log(print_r($http_response_header,TRUE));
+
+$curr_time = time();
+$bannedSources[$r] = $curr_time; 	// отметим проблемы с источником
+if($runCLI) { 	// если спрашивали из загрузчика
+	$umask = umask(0); 	// сменим на 0777 и запомним текущую
+	file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
+	//quickFilePutContents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
+	@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
+	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+}
+else { 	// спрашивают из браузера
+	$_SESSION['bannedSources'] = $bannedSources; 	// 
+}
+error_log("tiles.php: Попытка № $tries: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)."!");
+} // end function doBann
+
+
 ?>
