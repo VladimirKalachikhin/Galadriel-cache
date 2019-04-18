@@ -128,17 +128,17 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 		elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
 			//error_log( print_r($http_response_header,TRUE));
 			foreach($http_response_header as $header) {
-				if(strpos($header,'200') !== FALSE) break; 	// файл получен, перейдём к обработке
-				elseif(strpos($header,'404') !== FALSE) { 	// файл не найден.
+				if((substr($header,0,4)=='HTTP') AND (strpos($header,'200') !== FALSE)) break; 	// файл получен, перейдём к обработке
+				elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'404') !== FALSE)) { 	// файл не найден.
 					$newimg = NULL;
 					break 2; 	// бессмысленно ждать, уходим
 				}
-				elseif(strpos($header,'403') !== FALSE) { 	// Forbidden.
+				elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'403') !== FALSE)) { 	// Forbidden.
 					if($on403=='skip') $newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
 					else 	doBann($r); 	// забаним источник 
 					break 2; 	 // бессмысленно ждать, уходим
 				}
-				elseif(strpos($header,'503') !== FALSE) { 	// Service Unavailable
+				elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'503') !== FALSE)) { 	// Service Unavailable
 					if ($tries > $maxTry-1) { 	// ждём
 						doBann($r); 	// напоследок забаним источник
 						break 2; 	 	// уходим
@@ -190,12 +190,12 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			//@mkdir(dirname($fileName), 0755, true);
 			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
 			//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
-			//error_log("Saved ".strlen($newimg)." bytes");		
 			$fp = fopen($fileName, "w");
 			fwrite($fp, $newimg);
 			fclose($fp);
 			@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возаможность заменить тайл, когда он протухнет
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+			//error_log("Saved ".strlen($newimg)." bytes");		
 		}		
 	}
 	if(($newimg !== FALSE) AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
@@ -279,7 +279,7 @@ ob_start(); 	// попробуем перехватить любой вывод 
 function doBann($r) {
 /* Банит источник */
 global $bannedSources, $runCLI, $bannedSourcesFileName, $tries, $http_response_header, $_SESSION;
-error_log("newimg=$newimg;");
+//error_log("newimg=$newimg;");
 //error_log(print_r($http_response_header,TRUE));
 
 $curr_time = time();
