@@ -40,6 +40,7 @@ do {
 			}
 			else { 				// 	иначе - таки запустим скачивание
 				echo "Пытаемся $jobName - источник с проблемами\n";
+				break;
 			}
 		}
 		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
