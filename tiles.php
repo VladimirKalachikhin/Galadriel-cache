@@ -56,7 +56,7 @@ if((!$runCLI) AND ($img!==FALSE)) 	{ 	// тайл есть, возможно, п
 // потом получим
 if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не протухают
 $newimg = FALSE; 	// 
-if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE) OR ((time()-filemtime($fileName)-$ttl) > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
+if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE) OR ((time()-@filemtime($fileName)-$ttl) > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 	//error_log("No $r/$z/$x/$y tile exist?:".!$img."; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 	// тайл надо получать
 	// определимся с наличием проблем связи и источника карты
@@ -196,7 +196,6 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 			
 			error_log("Saved ".strlen($newimg)." bytes");	
-			if(!$newimg)	error_log(print_r($http_response_header,TRUE));
 		}		
 	}
 	if(($newimg !== FALSE) AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет

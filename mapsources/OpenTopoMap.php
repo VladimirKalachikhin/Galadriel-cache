@@ -5,9 +5,11 @@ $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 17;
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, тайлы с дурацкими надписями. '1556c7bd' чистый голубой квадрат 'c7b10d34' чистый голубой квадрат - не мусор! Иначе такие тайлы будут скачиваться снова и снова, а их много.
+/*
 $trash = array(
 '00000000' 	// zero length file
 );
+*/
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
 /* Алгоритм получения ссылки на тайл заимствован из SAS.Planet
@@ -39,7 +41,9 @@ $url .= "/".$z."/".$x."/".$y.".png";
 $opts = array(
 	'http'=>array(
 		'method'=>"GET",
-		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n"
+		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
+		'proxy'=>'tcp://127.0.0.1:8123',
+		'request_fulluri'=>TRUE
 	)
 );
 //print_r($opts);

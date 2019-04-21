@@ -24,6 +24,7 @@ do {
 	// проблемные источники
 	$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName));
 	//echo ":<pre> bannedSources "; print_r($bannedSources); echo "</pre>\n";
+	//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
 	// Выбор файла задания
 	foreach($jobNames as $jobName) { 	// возьмём первый файл, которым можно заниматься
 		//echo "jobsInWorkDir=$jobsInWorkDir; jobName=$jobName;\n";
@@ -53,7 +54,10 @@ do {
 	// Планировщик времени
 	if(count($jobNames)<count($timer)) $timer=array(); 	// статистика какого-то завершившегося задания присутствует в $timer, и среднее будет неправильно 
 	$ave = ((@max($timer)+@min($timer))/2)+$lag; 	// среднее плюс допустимое
-	if($timer[$map]>$ave) continue; 	// пропустим эту карту, если на неё уже затрачено много времени
+	if($timer[$map]>$ave) { 	// пропустим эту карту, если на неё уже затрачено много времени
+		echo "бросаем - на него затрачено много времени\n\n";
+		continue;
+	}
 	// Есть ли ещё файл?
 	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
 	if(!$job) break; 	// файла не оказалось
@@ -75,10 +79,7 @@ do {
 	$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
 	//echo "res=$res; \n";
 	if($res==0) { 	// загрузка тайла плохо кончилась
-		$umask = umask(0); 	// сменим на 0777 и запомним текущую
 		file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND); 	// вернём номер тайла в файл задания для загрузчика
-		@chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
-		umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 		$s = ", но тайл будет запрошен повторно";
 	}
 	$now=microtime(TRUE)-$now;
