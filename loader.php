@@ -77,11 +77,13 @@ do {
 	//exit("res=$res pos=$pos s=$s $xy\n");
 	$now = microtime(TRUE);
 	// Запустим скачивание
-	$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
-	//echo "res=$res; \n";
-	if($res==0) { 	// загрузка тайла плохо кончилась
-		file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND); 	// вернём номер тайла в файл задания для загрузчика
-		$s = ", но тайл будет запрошен повторно";
+	if($xy[0] AND $xy[1]) {
+		$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
+		//echo "res=$res; \n";
+		if($res==0) { 	// загрузка тайла плохо кончилась
+			file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND); 	// вернём номер тайла в файл задания для загрузчика
+			$s = ", но тайл будет запрошен повторно";
+		}
 	}
 	$now=microtime(TRUE)-$now;
 	$timer[$map] += $now;
