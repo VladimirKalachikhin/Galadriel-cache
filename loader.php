@@ -33,7 +33,7 @@ do {
 		$map = $path_parts['filename'];
 		if($bannedSources[$map]) { 	// источник с проблемами
 			if((time()-$bannedSources[$map]-($noInternetTimeout*1))<0) {	// если многократный таймаут из конфига не истёк
-				unset($timer[$map]); 	// удалим из планировки загрузки
+				unset($timer[$jobName]); 	// удалим из планировки загрузки
 				echo "Бросаем файл $jobName - источник с проблемами\n\n";
 				$jobName = FALSE; 	// других может и не быть
 				continue;	// проигнорируем задание для проблемного источника
@@ -55,8 +55,9 @@ do {
 	// Планировщик времени
 	if(count($jobNames)<count($timer)) $timer=array(); 	// статистика какого-то завершившегося задания присутствует в $timer, и среднее будет неправильно 
 	$ave = ((@max($timer)+@min($timer))/2)+$lag; 	// среднее плюс допустимое
-	if($timer[$map]>$ave) { 	// пропустим эту карту, если на неё уже затрачено много времени
+	if($timer[$jobName]>$ave) { 	// пропустим эту карту, если на неё уже затрачено много времени
 		echo "бросаем - на него затрачено много времени\n\n";
+		//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
 		continue;
 	}
 	// Есть ли ещё файл?
@@ -86,8 +87,8 @@ do {
 		}
 	}
 	$now=microtime(TRUE)-$now;
-	$timer[$map] += $now;
-	echo "Карта $map, на неё затрачено ".$timer[$map]."сек. при среднем допустимом $ave сек.\n";
+	$timer[$jobName] += $now;
+	echo "Карта $map, на неё затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
 	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $s";
 	echo "	\n\n";
 } while($jobName);
