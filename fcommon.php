@@ -83,31 +83,36 @@ if($tile) { 	// тайла могло не быть в кеше, и его не 
 	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 	$mime_type = finfo_buffer($file_info,$tile);
 	$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
-	header("Expired: " . $exp_gmt);
+	header("Expired: " . $exp_gmt . "\r\n");
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
 	//header("Last-Modified: " . $mod_gmt);
-	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
-	if($mime_type) header ("Content-Type: $mime_type");
-	else header ("Content-Type: image/$ext");
+	header("Cache-Control: public, max-age=3600\r\n"); 	// Тайл будет стопудово кешироваться браузером 1 час
+	if($mime_type) header ("Content-Type: $mime_type\r\n");
+	else header ("Content-Type: image/$ext\r\n");
 }
 else {
-	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
-	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
-	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+	header("Cache-Control: no-cache, must-revalidate\r\n"); // HTTP/1.1
+	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n"); // Дата в прошлом
+	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found\r\n");
 }
+header("Connection: close\r\n"); 	// Tell the client to close connection
 ob_clean(); 	// очистим, если что попало в буфер, но заголовки выше должны отправиться
-echo $tile;
-$content_lenght = ob_get_length();
-header("Content-Length: $content_lenght");
+echo $tile; 	// теперь в output buffer только тайл
+$content_lenght = ob_get_length(); 	// возьмём его размер
+header("Content-Length: $content_lenght"); 	// завершающий header
+ignore_user_abort(true); 	// чтобы выполнение не прекратилось после разрыва соединения
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
-ob_start(); 	// попробуем перехватить любой вывод скрипта
+@ob_flush();
+flush(); 		// Force php-output-cache to flush to browser.
+//ob_start(); 	// попробуем перехватить любой вывод скрипта
 }
 
 function doBann($r) {
 /* Банит источник */
-global $bannedSources, $runCLI, $bannedSourcesFileName, $tries, $http_response_header, $_SESSION;
+global $bannedSources, $runCLI, $bannedSourcesFileName, $tries, $http_response_header;
 //error_log("newimg=$newimg;");
 //error_log(print_r($http_response_header,TRUE));
+//error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
 
 $curr_time = time();
 $bannedSources[$r] = $curr_time; 	// отметим проблемы с источником
@@ -121,7 +126,8 @@ if($runCLI) { 	// если спрашивали из загрузчика
 else { 	// спрашивают из браузера
 	$_SESSION['bannedSources'] = $bannedSources; 	// 
 }
-error_log("tiles.php: Попытка № $tries: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)."!");
+//error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
+error_log("fcommon.php doBann: Trying # $tries: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)."!");
 } // end function doBann
 
 

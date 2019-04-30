@@ -73,6 +73,7 @@ do {
 	else while(($s=fgets($job)) !== FALSE) $xy = $s;
 	$pos = ftell($job);
 	ftruncate($job,$pos-strlen($xy)) or exit("loader.php Unable truncated file $jobName"); 	// укоротим файл на строку
+	flock($job, LOCK_UN); 	//снимем блокировку
 	fclose($job); 	// освободим файл
 	$xy = str_getcsv($xy);
 	//exit("res=$res pos=$pos s=$s $xy\n");
@@ -82,7 +83,13 @@ do {
 		$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
 		//echo "res=$res; \n";
 		if($res==0) { 	// загрузка тайла плохо кончилась
-			file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND); 	// вернём номер тайла в файл задания для загрузчика
+			//file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND | LOCK_EX); 	// вернём номер тайла в файл задания для загрузчика
+			$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
+			flock($job,LOCK_EX) or exit("loader.php 2 Unable locking job file Error");
+			fseek($job,0,SEEK_END); 	// сдвинем указатель в конец
+			fwrite($job, $xy[0].",".$xy[1]."\n");
+			fflush($job);
+			flock($job, LOCK_UN); 	//снимем блокировку		
 			$s = ", но тайл будет запрошен повторно";
 		}
 	}

@@ -1,7 +1,6 @@
-<?php session_start(); 	// используется для хранения токена NAVIONICS
+<?php session_start(); 	// 
 ob_start(); 	// попробуем перехватить любой вывод скрипта
-/* Original source http://wiki.openstreetmap.org/wiki/ProxySimplePHP
-*	Modified to use directory structure matching the OSM urls and retries on a failure
+/* By the http://wiki.openstreetmap.org/wiki/ProxySimplePHP
 Берёт тай из кеша и сразу отдаёт-показывает.
 Потом, если надо - скачивает
 Если получено 404 - сохраняет пустой тайл, в остальных случаях - переспрашивает.
@@ -48,22 +47,24 @@ $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 //echo "file=$fileName; <br>\n";
 //return;
 $img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
-//error_log("Получено ".strlen($img)." bytes из кэша");		
+//error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
 if((!$runCLI) AND ($img!==FALSE)) 	{ 	// тайл есть, возможно, пустой, спросили из браузера
 	showTile($img,$ext); 	// сначала покажем
+	//error_log("showTile $r/$z/$x/$y.$ext from cache");		
 	//$from = 1;
 }
 // потом получим
 if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не протухают
 $newimg = FALSE; 	// 
 if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE) OR ((time()-@filemtime($fileName)-$ttl) > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
-	//error_log("No $r/$z/$x/$y tile exist?:".!$img."; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
+	//error_log("No $r/$z/$x/$y tile exist?; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 	// тайл надо получать
 	// определимся с наличием проблем связи и источника карты
 	if($runCLI)	$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
 	else 		$bannedSources = $_SESSION['bannedSources'];
+	//error_log("tiles.php: bannedSources ".print_r($bannedSources,TRUE));
 	if((time()-$bannedSources[$r]-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
-		if(!$runCLI) showTile(NULL,NULL); 	// покажем 404 
+		if((!$runCLI) AND ($img===FALSE)) showTile(NULL,NULL); 	// покажем 404, если уже не показывали из кеша 
 		//error_log("Source are banned!\n");
 		goto END;
 	}
@@ -181,6 +182,22 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	
 	// покажем тайл
 	if((!$runCLI) AND ($img===FALSE)) showTile($newimg,$ext); 	//покажем тайл, если ещё не показывали. Если $newimg===FALSE, будет показано 404
+
+	// Обслужим источник
+	if(($newimg !== FALSE) AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
+		$bannedSources[$r] = FALSE; 	// снимем проблемы с источником
+		if($runCLI)	{ 	// считаем файл проблем
+			$umask = umask(0); 	// сменим на 0777 и запомним текущую
+			file_put_contents($bannedSourcesFileName, serialize($bannedSources));
+			//quickFilePutContents($bannedSourcesFileName, serialize($bannedSources));
+			@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
+			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+		}
+		else 		$_SESSION['bannedSources'] = $bannedSources;
+		error_log("tiles.php: Trying # $tries: $r unbanned!");
+	}
+	session_write_close(); 	// побыстрей закроем сессию, чтобы остальные могли воспользоваться файлом сессии
+
 	// сохраним тайл
 	if($newimg !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла
 		if($newimg OR ($img===FALSE)) { 	// есть свежий тайл или нет старого
@@ -197,18 +214,6 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			
 			error_log("Saved ".strlen($newimg)." bytes");	
 		}		
-	}
-	if(($newimg !== FALSE) AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
-		$bannedSources[$r] = FALSE; 	// снимем проблемы с источником
-		if($runCLI)	{ 	// считаем файл проблем
-			$umask = umask(0); 	// сменим на 0777 и запомним текущую
-			file_put_contents($bannedSourcesFileName, serialize($bannedSources));
-			//quickFilePutContents($bannedSourcesFileName, serialize($bannedSources));
-			@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
-			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-		}
-		else 		$_SESSION['bannedSources'] = $bannedSources;
-		error_log("tiles.php: Попытка № $tries: $r unbanned!");
 	}
 	
 	// Опережающее скачивание при показе - должно помочь с крупными масштабами
@@ -246,6 +251,7 @@ if($runCLI) {
 	if(($img===FALSE) AND ($newimg === FALSE)) fwrite(STDOUT, '0'); 	// тайла не было и он не был получен
 	else fwrite(STDOUT, '1');
 }
+ob_clean(); 	// очистим, если что попало в буфер
 return;
 
 ?>
