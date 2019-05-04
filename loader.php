@@ -75,7 +75,7 @@ do {
 	ftruncate($job,$pos-strlen($xy)) or exit("loader.php Unable truncated file $jobName"); 	// укоротим файл на строку
 	flock($job, LOCK_UN); 	//снимем блокировку
 	fclose($job); 	// освободим файл
-	$xy = str_getcsv($xy);
+	$xy = str_getcsv(trim($xy));
 	//exit("res=$res pos=$pos s=$s $xy\n");
 	$now = microtime(TRUE);
 	// Запустим скачивание
