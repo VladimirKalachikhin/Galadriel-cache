@@ -104,7 +104,7 @@ ignore_user_abort(true); 	// чтобы выполнение не прекрат
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
 @ob_flush();
 flush(); 		// Force php-output-cache to flush to browser.
-//ob_start(); 	// попробуем перехватить любой вывод скрипта
+ob_start(); 	// попробуем перехватить любой вывод скрипта
 }
 
 function doBann($r) {

@@ -1,4 +1,6 @@
-<?php session_start(); 	// 
+<?php
+session_cache_limiter('private_no_expire:'); 	// задаёт кеширование отдаваемого, несмотря на сессию
+session_start(); 	// 
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /* By the http://wiki.openstreetmap.org/wiki/ProxySimplePHP
 Берёт тай из кеша и сразу отдаёт-показывает.
