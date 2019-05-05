@@ -1,0 +1,30 @@
+In mapsources/ directory are stored files fully describing map and map source, include uri, projection and get tile algorithm.
+
+The filename are map name and .php ext.
+Map name are directory name in $tileCacheDir.
+The map describe file include() to main programm, so check the php syntax!
+None of the parameters in map describe file are required. If necessary, default parameters will be used.
+
+Map describe file may content:
+$ttl = 86400*30*12*3; // cache timeout in seconds.  86400 sec = 1 day. After this, tile trying to reload from source. If 0 - never trying to reload.
+$ext = 'png'; 	// tile image type/extension
+$ContentType = 'image/jpeg'; 	// if content type differ then file extension
+$minZoom = 0; 	// map min zoom
+$maxZoom = 19; 	// map max zoom
+$EPSG=4326; 	// map projection, for map viewer (such as web client) or get tile algorithm. Not used for cache/proxy.
+$on403 = 'wait'; 	// Forbidden action: skip, wait. By default - wait, source will be banned on $noInternetTimeout (params.php) time. 'Skip' eq 'File not found'.
+$trash = array(); 	// array of crc32 of bad, junk or other unwanted tiles or other files. This tiles not be stored to cache.
+$functionGetURL = <<<'EOFU'
+EOFU; 	// string to wrap getURL() function. This is necessery to avoid function redefinitions error.
+
+Main part - get the tile function:
+function getURL($z,$x,$y) {}
+$z - zoom
+$x - x number of tile
+$y - y number of tile
+Must return string of uri for get tile, or array of two items: string uri and array stream_context parameters.
+About stream_context parameters see http://php.net/manual/en/context.php
+
+For this function use utilites from fcommon.php
+
+
