@@ -37,17 +37,17 @@ else {	// http
 	$z = intval($_REQUEST['z']);
 	$r = strip_tags($_REQUEST['r']);
 }
-if(!$x) $x=0;
-if(!$y) $y=0;
-if(!$z) $z=0;
-if(!$r) $r = 'osmmapMapnik';
+if(!$x OR !$y OR !$z OR !$r) {
+	if(!$runCLI) showTile(NULL); 	// покажем 404
+	error_log("Incorrect tile info: $r/$z/$x/$y");		
+	goto END;
+}
 if($runCLI) $maxTry = 3 * $maxTry; 	// увеличим число попыток скачать файл, если запущены загрузчиком
 // определимся с источником карты
 require_once("$mapSourcesDir/$r.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 // возьмём тайл
 $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 //echo "file=$fileName; <br>\n";
-//return;
 $img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
 //error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
 if((!$runCLI) AND ($img!==FALSE)) 	{ 	// тайл есть, возможно, пустой, спросили из браузера
@@ -55,6 +55,7 @@ if((!$runCLI) AND ($img!==FALSE)) 	{ 	// тайл есть, возможно, п
 	//error_log("showTile $r/$z/$x/$y.$ext from cache");		
 	//$from = 1;
 }
+//return;
 // потом получим
 if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не протухают
 $newimg = FALSE; 	// 
@@ -66,7 +67,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	else 		$bannedSources = $_SESSION['bannedSources'];
 	//error_log("tiles.php: bannedSources ".print_r($bannedSources,TRUE));
 	if((time()-$bannedSources[$r]-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
-		if((!$runCLI) AND ($img===FALSE)) showTile(NULL,NULL); 	// покажем 404, если уже не показывали из кеша 
+		if((!$runCLI) AND ($img===FALSE)) showTile(NULL); 	// покажем 404, если уже не показывали из кеша 
 		//error_log("Source are banned!\n");
 		goto END;
 	}
@@ -191,7 +192,6 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 		if($runCLI)	{ 	// считаем файл проблем
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			file_put_contents($bannedSourcesFileName, serialize($bannedSources));
-			//quickFilePutContents($bannedSourcesFileName, serialize($bannedSources));
 			@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 		}
@@ -211,7 +211,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			$fp = fopen($fileName, "w");
 			fwrite($fp, $newimg);
 			fclose($fp);
-			@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возаможность заменить тайл, когда он протухнет
+			@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 			
 			error_log("Saved ".strlen($newimg)." bytes");	
@@ -254,6 +254,4 @@ if($runCLI) {
 	else fwrite(STDOUT, '1');
 }
 ob_clean(); 	// очистим, если что попало в буфер
-return;
-
 ?>

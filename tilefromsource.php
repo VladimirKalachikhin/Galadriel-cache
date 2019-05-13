@@ -184,33 +184,4 @@ if(($z>13) AND ($z<$loaderMaxZoom) AND $newimg) { 	// поставим зада�
 	}
 }
 
-
-
-
-
-
-
-
-
-if($img) {
-	if (@is_file($fileName)) {
-		$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
-		$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT";
-		header("Expired: " . $exp_gmt);
-		header("Last-Modified: " . $mod_gmt);
-	}
-	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
-	if($mime_type) header ("Content-Type: $mime_type");
-	else header ("Content-Type: image/$ext");
-}
-else {
-	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
-	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
-	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
-}
-ob_clean(); 	// очистим, если что попало в буфер, но заголовки выше должны отправиться
-echo $img;
-$content_lenght = ob_get_length();
-header("Content-Length: $content_lenght");
-ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
 ?>

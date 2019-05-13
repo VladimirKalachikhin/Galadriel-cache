@@ -75,10 +75,19 @@ file_put_contents($tmpFileName,$content);
 rename($tmpFileName,$fileName);
 }
 
-function showTile($tile,$ext) {
+function showTile($tile,$ext='') {
+/*
+Отдаёт тайл. Считается, что только эта функция что-то показывает клиенту
+https://gist.github.com/bubba-h57/32593b2b970366d24be7
+*/
 global $runCLI;
 
 if($runCLI) return; 	// не будем отдавать картинку в cli
+
+set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
+ignore_user_abort(true); 	// чтобы выполнение не прекратилось после разрыва соединения
+ob_end_clean(); 			// очистим, если что попало в буфер
+ob_start();
 if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
 	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 	$mime_type = finfo_buffer($file_info,$tile);
@@ -86,21 +95,20 @@ if($tile) { 	// тайла могло не быть в кеше, и его не 
 	header("Expired: " . $exp_gmt . "\r\n");
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
 	//header("Last-Modified: " . $mod_gmt);
-	header("Cache-Control: public, max-age=3600\r\n"); 	// Тайл будет стопудово кешироваться браузером 1 час
-	if($mime_type) header ("Content-Type: $mime_type\r\n");
-	else header ("Content-Type: image/$ext\r\n");
+	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
+	if($mime_type) header ("Content-Type: $mime_type");
+	else header ("Content-Type: image/$ext");
 }
 else {
-	header("Cache-Control: no-cache, must-revalidate\r\n"); // HTTP/1.1
-	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n"); // Дата в прошлом
-	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found\r\n");
+	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
+	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 }
-header("Connection: close\r\n"); 	// Tell the client to close connection
-ob_clean(); 	// очистим, если что попало в буфер, но заголовки выше должны отправиться
+header("Connection: close"); 	// Tell the client to close connection
+header("Content-Encoding: none");
 echo $tile; 	// теперь в output buffer только тайл
 $content_lenght = ob_get_length(); 	// возьмём его размер
 header("Content-Length: $content_lenght"); 	// завершающий header
-ignore_user_abort(true); 	// чтобы выполнение не прекратилось после разрыва соединения
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
 @ob_flush();
 flush(); 		// Force php-output-cache to flush to browser.
