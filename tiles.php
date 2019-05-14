@@ -162,6 +162,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 				$imgHash = hash('crc32b',$newimg);
 				if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
 					$newimg = NULL; 	// тайл принят нормально, но он мусор
+					//error_log("Tile $r/$z/$x/$y.$ext is trash");		
 					break;
 				}
 			}
@@ -202,7 +203,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 
 	// сохраним тайл
 	if($newimg !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла
-		if($newimg OR ($img===FALSE)) { 	// есть свежий тайл или нет старого
+		if(strlen($newimg) OR ($img===FALSE)) { 	// есть свежий тайл или нет старого
 			
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			//@mkdir(dirname($fileName), 0755, true);
