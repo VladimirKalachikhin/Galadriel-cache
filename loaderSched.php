@@ -212,12 +212,17 @@ do {
 	}
 	$umask = umask(0); 	// сменим на 0777 и запомним текущую
 	$newJob = fopen($nextJobName,'a'); 	// создадим новый - откроем старый файл только для записи, чтобы никто больше не трогал
-	while(($xy=fgetcsv($oldJob)) !== FALSE) {
+	while(($xy=fgets($oldJob)) !== FALSE) {
+		if(trim($xy[0])=='#') {
+			fwrite($newJob,"$xy") or exit("loaderSched.php createNextZoomLevel() write 0 error\n"); 	// запишем файл / допишем в существующий
+			continue;
+		}
+		$xy = str_getcsv(trim($xy));
 		if((!is_numeric($xy[0])) OR (!is_numeric($xy[1]))) continue; 	// вдруг в файле фигня
 		$xyS = nextZoom($xy);
 		//print_r($xyS);
 		foreach($xyS as $xy) {
-			fwrite($newJob,$xy[0].','.$xy[1]."\n") or exit("loaderSched.php createNextZoomLevel() write error\n"); 	// запишем файл / допишем в существующий
+			fwrite($newJob,$xy[0].','.$xy[1]."\n") or exit("loaderSched.php createNextZoomLevel() write 1 error\n"); 	// запишем файл / допишем в существующий
 		}
 	}
 	fclose($newJob);

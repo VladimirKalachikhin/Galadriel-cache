@@ -251,8 +251,8 @@ error_log("Tile $r/$z/$x/$y get $from for $now sec\n");
 */
 END:
 if($runCLI) {
-	if(($img===FALSE) AND ($newimg === FALSE)) fwrite(STDOUT, '0'); 	// тайла не было и он не был получен
-	else fwrite(STDOUT, '1');
+	if(($img===FALSE) AND ($newimg === FALSE)) fwrite(STDOUT, '1'); 	// тайла не было и он не был получен
+	else fwrite(STDOUT, '0');
 }
 ob_clean(); 	// очистим, если что попало в буфер
 ?>

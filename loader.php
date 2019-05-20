@@ -5,7 +5,18 @@
 Планировщик стремится уделить каждой карте одинаковое время с точностью до $lag
 В результате карты из тормозных источников будут скачиваться медленней менее чем вдвое, 
 зато из быстрых - быстрее в десятки раз.
+
+Непосредственно для скачивания будет запущена системная команда $execString
+В первой строке файла задания, может быть своя $execString. 
+Эта строка должна начнаться с #
+Специальная $execString может быть использована для копирования части кеша:
+# cp -Hpu --parents $tileCacheDir/$r/$z/$x/$y.png /home/stager/tileCacheCopy/
+ - в этом случае создадутся отсутствующие каталоги, и весь исходный путь будет добавлен к целевому
+# mkdir -p /home/stager/tileCacheCopy/$r/$z/$x/ && cp -Hpu $tileCacheDir/$r/$z/$x/$y.png /home/stager/tileCacheCopy/$r/$z/$x/
+ - в этом случае сперва создадутся каталоги, потом произойдёт копирование
+Могут быть использованы переменные из params.php
 */
+
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // определяем каталог скрипта
 chdir($path_parts['dirname']); // сменим каталог выполнение скрипта
 
@@ -18,6 +29,8 @@ $lag = 300; 	// сек, на которое может отличатся вре
 file_put_contents("$jobsDir/$pID.lock", "$pID"); 	// положим флаг, что запустились
 echo "Стартовал загрузчик $pID\n";
 do {
+	$execString = '$phpCLIexec tiles.php -z$z -x$x -y$y -r$r'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
+	
 	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
 	shuffle($jobNames); 	// перемешаем массив, чтобы по возможности разные задания брались в обработку
 	//echo ":<pre> jobNames "; print_r($jobNames); echo "</pre>";
@@ -64,25 +77,62 @@ do {
 	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
 	if(!$job) break; 	// файла не оказалось
 	flock($job,LOCK_EX) or exit("loader.php Unable locking job file Error");
-	$strSize = strlen($s=fgets($job)); 	// размер первой строки в байтах
-	if(!$strSize) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
+	$s=trim(fgets($job));
+	if($s===FALSE) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
+	if($s[0]=='#') { 	// там есть указание, что запускать
+		$execString = trim(substr($s,1));
+		if(!$execString) {
+			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// грохнем файл задания, с которым непонятно что делать
+			flock($job, LOCK_UN); 	//снимем блокировку
+			fclose($job); 	// освободим файл
+			continue;
+		}
+		$s=fgets($job);
+		if($s===FALSE) { 	// но упс - файл кончился
+			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// 
+			flock($job, LOCK_UN); 	//снимем блокировку
+			fclose($job); 	// освободим файл
+			continue;
+		}
+		$s=trim($s);
+	}
+	$strSize = strlen($s); 	// размер первой строки в байтах
+	//echo "s=$s; strSize=$strSize;\n";
+	if(!$strSize) {
+		do { 	// берём следующу непустую содержательную строку
+			$s=fgets($job);
+			//echo "s=$s;\n";
+		} while(($s!==FALSE) AND (trim($s)==''));
+		if($s===FALSE) { 	// но упс - файл кончился
+			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// 
+			flock($job, LOCK_UN); 	//снимем блокировку
+			fclose($job); 	// освободим файл
+			continue;
+		}
+	}
+	$strSize = strlen($s); 	// размер первой строки в байтах
 	// Возьмём последний тайл
-	$res = fseek($job,-2*$strSize,SEEK_END); 	// сдвинем указатель на 2 строки к началу
-	//echo ftell($job) . "\n";
-	if($res == -1)  $xy = $s;	// сдвинуть не удалось - первая строка?
+	$seek = fseek($job,-2*$strSize,SEEK_END); 	// сдвинем указатель на 2 строки к началу
+	if($seek == -1)  $xy = $s;	// сдвинуть не удалось - первая строка?
 	else while(($s=fgets($job)) !== FALSE) $xy = $s;
+	//echo "s=$s; strSize=$strSize; xy=$xy;\n";
 	$pos = ftell($job);
 	ftruncate($job,$pos-strlen($xy)) or exit("loader.php Unable truncated file $jobName"); 	// укоротим файл на строку
 	flock($job, LOCK_UN); 	//снимем блокировку
 	fclose($job); 	// освободим файл
 	$xy = str_getcsv(trim($xy));
-	//exit("res=$res pos=$pos s=$s $xy\n");
+	//echo "xy :<pre> "; print_r($xy); echo "</pre>\n";
 	$now = microtime(TRUE);
 	// Запустим скачивание
-	if($xy[0] AND $xy[1]) {
-		$res = exec("$phpCLIexec tiles.php -z".$zoom." -x".$xy[0]." -y".$xy[1]." -r".$map); 	// загрузим тайл синхронно
+	$str = "";
+	if(is_numeric($xy[0]) AND is_numeric($xy[1])) {
+		$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
+		//echo '$execString1="'.$execString.'";'."\n";
+		eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
+		//echo "$execString1\n"; 	//
+		$res = exec($execStringParsed); 	// загрузим тайл синхронно
 		//echo "res=$res; \n";
-		if($res==0) { 	// загрузка тайла плохо кончилась
+		if($res==1) { 	// загрузка тайла плохо кончилась
 			//file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND | LOCK_EX); 	// вернём номер тайла в файл задания для загрузчика
 			$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
 			flock($job,LOCK_EX) or exit("loader.php 2 Unable locking job file Error");
@@ -90,15 +140,19 @@ do {
 			fwrite($job, $xy[0].",".$xy[1]."\n");
 			fflush($job);
 			flock($job, LOCK_UN); 	//снимем блокировку		
-			$s = ", но тайл будет запрошен повторно";
+			fclose($job); 	// освободим файл
+			$str = ", но тайл будет запрошен повторно";
 		}
 	}
 	$now=microtime(TRUE)-$now;
 	$timer[$jobName] += $now;
 	echo "Карта $map, на неё затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
-	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $s";
+	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
 	echo "	\n\n";
+	//exit;
 } while($jobName);
+@flock($job, LOCK_UN); 	// на всякий случай - снимем блокировку		
+@fclose($job); 	// освободим файл
 unlink("$jobsDir/$pID.lock");	// 
 echo "Загрузчик $pID завершился\n";
 

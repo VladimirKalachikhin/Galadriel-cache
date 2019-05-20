@@ -171,5 +171,25 @@ Will be downloaded navionics_layer map within the specified tiles from zoom 9 to
 Tile loader may use any number of threads to load, and use cron for robust download.<br>
 You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader.
 
+### Use Loader to copy part of cache
+Add to first line of csv job file some copy command. In this case Loader start this command instead loading tile.<br>
+This first line must be started from #. For example:
+
+navionics_layer.9
+```
+# mkdir -p /mnt/mySDcard/RegionTileCache/$r/$z/$x/ && cp -Hpu $tileCacheDir/$r/$z/$x/$y.png /mnt/mySDcard/RegionTileCache/$r/$z/$x/
+295,145
+296,145
+296,144
+295,144
+295,143
+296,143
+```
+
+This will copy the specified tiles of navionics_layer map up to max zoom to destination.<br>
+
+You can use variables from _params.php_, but not from _mapsources/_. Avoid to create job files have custom command and without for one map. <br>
+Job files, created by [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master), saved in _loaderjobs/oldjobs_
+
 ## clearCache
 Use in cli _clearCache.php mapname_ to _mapname_ or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is may be a blanck tiles or .tne files from SAS.Planet

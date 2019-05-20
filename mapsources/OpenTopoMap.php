@@ -34,7 +34,8 @@ $userAgents[] = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101
 $userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0';
 $userAgent = $userAgents[array_rand($userAgents)];
 
-$RequestHead='Referer: http://openstreet.com';
+//$RequestHead='Referer: http://openstreet.com';
+$RequestHead='';
 
 $url = 'https://'.$server[array_rand($server)] . '.tile.opentopomap.org';
 $url .= "/".$z."/".$x."/".$y.".png";
