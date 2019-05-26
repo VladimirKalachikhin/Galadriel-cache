@@ -42,7 +42,7 @@ $opts = array(
 	'http'=>array(
 		'method'=>"GET",
 		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
-		'proxy'=>'tcp://127.0.0.1:8123',
+		//'proxy'=>'tcp://127.0.0.1:8123',
 		'request_fulluri'=>TRUE
 	)
 );
