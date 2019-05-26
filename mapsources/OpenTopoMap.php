@@ -16,10 +16,9 @@ function getURL($z,$x,$y) {
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
 //error_log("OpenTopoMap $z,$x,$y");
-$server = array();
-$server[] = 'a';
-$server[] = 'b';
-$server[] = 'c';
+$server = array('a','b','c');
+$getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	// set it if you hawe Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
+$tilesPerNode = 10;
 
 $userAgents = array();
 $userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
@@ -43,11 +42,20 @@ $opts = array(
 	'http'=>array(
 		'method'=>"GET",
 		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
-		//'proxy'=>'tcp://127.0.0.1:8123',
+		'proxy'=>'tcp://127.0.0.1:8123',
 		'request_fulluri'=>TRUE
 	)
 );
 //print_r($opts);
+if($getTorNewNode AND $opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
+	//error_log("Are session support present? _SESSION['tilesPerNode']=".$_SESSION['tilesPerNode']);
+	if ((!$_SESSION['tilesPerNode']) OR ($_SESSION['tilesPerNode'] > $tilesPerNode)) { 	// если сессии нет совсем или уже пора
+		error_log("getting new Tor exit node");
+		exec($getTorNewNode);	// сменим выходную ноду Tor
+		$_SESSION['tilesPerNode'] = 1;
+	}
+	else $_SESSION['tilesPerNode']++;
+}
 return array($url,$opts);
 }
 EOFU;
