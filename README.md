@@ -70,13 +70,10 @@ http {
 ```
 ## Prepare SD card to cache:
 ```
-# mkfs.ext4 -i 4096 /dev/sdb1
+# mkfs.ext4 -O ^64bit,^metadata_csum -b 4096 -i 4096 /dev/sdb1
 ```
-it's increase i-nodes to max.
-```
-# tune2fs -m 1 /dev/sdb1
-```
-it's reduce system area.
+-b 4096 -i 4096 set block to 4096 bytes and increase i-nodes to max.<br>
+ -O ^64bit,^metadata_csum needs for compability with old Android devices<br>
 /dev/sdb1 - your SD card
 
 
