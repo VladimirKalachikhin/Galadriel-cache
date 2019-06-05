@@ -105,7 +105,6 @@ else {
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 }
 header("Connection: close"); 	// Tell the client to close connection
-header("Content-Encoding: none");
 echo $tile; 	// теперь в output buffer только тайл
 $content_lenght = ob_get_length(); 	// возьмём его размер
 header("Content-Length: $content_lenght"); 	// завершающий header
