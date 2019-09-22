@@ -61,7 +61,7 @@ do {
 	if(! $inCron) { 	// стараемся, чтобы в cron была только одна запись о запуске нас. Хотя это не должно плохо кончаться
 		// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
 		exec("crontab -l | grep -v '$fullSelfName'  | crontab -");
-		exec('(crontab -l ; echo "* * * * * '.$fullSelfName.'") | crontab -'); 	// каждую минуту
+		exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.$fullSelfName.'") | crontab -'); 	// каждую минуту
 		$inCron = TRUE;
 	}
 	// Проверим наличие, установим и снимем задания
