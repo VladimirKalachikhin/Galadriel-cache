@@ -32,6 +32,7 @@ if($argv) { 	// cli
 	$forceFresh = TRUE; 	// retrieve tile from source if it expired
 }
 else {	// http
+	$runCLI = FALSE;
 	$x = intval($_REQUEST['x']);
 	$y = intval($_REQUEST['y']);
 	$z = intval($_REQUEST['z']);
