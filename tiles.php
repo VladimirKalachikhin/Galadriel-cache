@@ -207,16 +207,17 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 		if(strlen($newimg) OR ($img===FALSE)) { 	// есть свежий тайл или нет старого
 			
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
-			//@mkdir(dirname($fileName), 0755, true);
-			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
+			//mkdir(dirname($fileName), 0755, true);
+			mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
 			//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
-			$fp = fopen($fileName, "w");
-			fwrite($fp, $newimg);
-			fclose($fp);
-			@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
+			if( $fp = fopen($fileName, "w")) {
+				fwrite($fp, $newimg);
+				fclose($fp);
+				@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
+				
+				error_log("Saved ".strlen($newimg)." bytes");	
+			}
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-			
-			error_log("Saved ".strlen($newimg)." bytes");	
 		}		
 	}
 	
