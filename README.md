@@ -76,9 +76,9 @@ http {
  `-O 64bit, metadata_csum` needs for compability with old Android devices.  
 `/dev/sdb1` - your SD card
 
-## Access to cache
-### Direct usage of cache:
+## Direct access to cache
 If you server dead, but you have a rooted Android phone or tablet, you may:
+### Mount SD card
 1. remove SD card with cache from server
 2. insert SD card with cache to Android device
 on Android device with terminal:
@@ -99,7 +99,7 @@ There:
 Depending on how you obtain root, the command `mount` may be written as  
 `su --mount-master -c "busybox mount -rw -t ext4  /dev/block/mmcblk1p1 /data/mySDcard"`
 
-### To access map via OruxMaps:  
+### Configure OruxMaps:  
 Modify _oryxmaps/mapfiles/onlinemapsources.xml_ by add:
 ```
 	<onlinemapsource uid="1052">
@@ -122,11 +122,11 @@ Modify _oryxmaps/mapfiles/onlinemapsources.xml_ by add:
 	</onlinemapsource>
 ```
 and other maps by same way.  
-There:  
-`/tiles/` - path to cache from SD card root. 
+There `/tiles/` - path to cache from SD card root. 
+
 ### Automated mounting in Android with 3C toolbox
 With **3C toolbox** you can automate the mounting when the device boots.  
-* Create file:
+1. Create file:  
 _01_mountExtSDcard_
 ```
 #!/system/bin/sh
@@ -143,10 +143,10 @@ then
 fi
 mount -rw -t ext4  /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 ```
-* Place it in home directory by path `Android/data/ccc71.at.free/scripts/`  
-* Open **3C toolbox**  
-* Go Tools - Script editor  
-* Mark _01_mountExtSDcard_ as runed in boot
+2. Place it in home directory by path `Android/data/ccc71.at.free/scripts/`  
+3. Open **3C toolbox**  
+4. Go Tools - Script editor  
+5. Mark _01_mountExtSDcard_ as runed in boot
 
 ## Loader
 GaladrielCache includes dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Start _loaderSched.php_ in cli.
