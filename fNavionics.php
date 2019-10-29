@@ -4,6 +4,8 @@
 
 GetNavToken() Запрашивает новый токен для карт 
 */
+//$token = GetNavToken();
+//echo "Navtoken:<pre>"; print_r($token); echo "</pre>";
 
 function GetNavToken() {
 /* Запрашивает новый токен для карт 
@@ -16,7 +18,8 @@ global $globalProxy;
 $VTimeStamp = time();    
 //$VRequestUrl = 'https://backend.navionics.io/tile/get_key/Navionics_internalpurpose_00001/webapiv2.navionics.com?_=' . $VTimeStamp;
 //$VRequestHeader = "Origin: https://webapiv2.navionics.com\r\n" . 'Referer: https://webapiv2.navionics.com/examples/4000_gNavionicsOverlayExample.html';
-$VRequestUrl = 'http://backend.navionics.io/tile/get_key/Navionics_internalpurpose_00001/webapp.navionics.com?_=' . $VTimeStamp;
+//$VRequestUrl = 'http://backend.navionics.io/tile/get_key/Navionics_internalpurpose_00001/webapp.navionics.com?_=' . $VTimeStamp;
+$VRequestUrl = 'http://backend.navionics.com/tile/get_key/Navionics_internalpurpose_00001/webapp.navionics.com?_=' . $VTimeStamp;
 $VRequestHeader = "Origin: http://webapp.navionics.com/\r\n" . 'Referer: http://webapp.navionics.com/';
 
 $opts = array(
