@@ -45,7 +45,8 @@ if(!$x OR !$y OR !$z OR !$r) {
 }
 if($runCLI) $maxTry = 3 * $maxTry; 	// увеличим число попыток скачать файл, если запущены загрузчиком
 // определимся с источником карты
-require_once("$mapSourcesDir/$r.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+$sourceName = explode('/',$r)[0]; 	// $r может быть с путём до конкретного кеша
+require_once("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 // возьмём тайл
 $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 //echo "file=$fileName; <br>\n";
@@ -67,7 +68,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	if($runCLI)	$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
 	else 		$bannedSources = $_SESSION['bannedSources'];
 	//error_log("tiles.php: bannedSources ".print_r($bannedSources,TRUE));
-	if((time()-$bannedSources[$r]-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
+	if((time()-$bannedSources[$sourceName]-$noInternetTimeout)<0) {	// если таймаут из конфига не истёк
 		if((!$runCLI) AND ($img===FALSE)) showTile(NULL); 	// покажем 404, если уже не показывали из кеша 
 		//error_log("Source are banned!\n");
 		goto END;
@@ -119,12 +120,12 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 		//print_r($newimg);
 		// Обработка проблем ответа
 		if((!$http_response_header)) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n";
-			doBann($r); 	// забаним источник
+			doBann($sourceName); 	// забаним источник
 			break; 	 // бессмысленно ждать, уходим
 		}
 		elseif(strpos($http_response_header[0],'403') !== FALSE) { 	// Forbidden
 			if($on403=='skip') $newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
-			else 	doBann($r); 	// забаним источник 
+			else 	doBann($sourceName); 	// забаним источник 
 			break; 	 // бессмысленно ждать, уходим
 		}
 		elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден.
@@ -140,12 +141,12 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 				}
 				elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'403') !== FALSE)) { 	// Forbidden.
 					if($on403=='skip') $newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
-					else 	doBann($r); 	// забаним источник 
+					else 	doBann($sourceName); 	// забаним источник 
 					break 2; 	 // бессмысленно ждать, уходим
 				}
 				elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'503') !== FALSE)) { 	// Service Unavailable
 					if ($tries > $maxTry-1) { 	// ждём
-						doBann($r); 	// напоследок забаним источник
+						doBann($sourceName); 	// напоследок забаним источник
 						break 2; 	 	// уходим
 					}
 				}
@@ -179,7 +180,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 		$tries++;
 		if ($tries > $maxTry) {	// Ждать больше нельзя
 			//$newimg = NULL; 	// Тайла не получили - считаем, что тайла нет, сохраним пустой
-			//doBann($r); 	// забаним источник
+			//doBann($sourceName); 	// забаним источник
 			break;
 		}
 		sleep($tryTimeout);
@@ -189,8 +190,8 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	if((!$runCLI) AND ($img===FALSE)) showTile($newimg,$ext); 	//покажем тайл, если ещё не показывали. Если $newimg===FALSE, будет показано 404
 
 	// Обслужим источник
-	if(($newimg !== FALSE) AND $bannedSources[$r]) { 	// снимем проблемы с источником, получили мы тайл или нет
-		$bannedSources[$r] = FALSE; 	// снимем проблемы с источником
+	if(($newimg !== FALSE) AND $bannedSources[$sourceName]) { 	// снимем проблемы с источником, получили мы тайл или нет
+		$bannedSources[$sourceName] = FALSE; 	// снимем проблемы с источником
 		if($runCLI)	{ 	// считаем файл проблем
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			file_put_contents($bannedSourcesFileName, serialize($bannedSources));
@@ -198,7 +199,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 		}
 		else 		$_SESSION['bannedSources'] = $bannedSources;
-		error_log("tiles.php: Trying # $tries: $r unbanned!");
+		error_log("tiles.php: Trying # $tries: $sourceName unbanned!");
 	}
 	session_write_close(); 	// побыстрей закроем сессию, чтобы остальные могли воспользоваться файлом сессии
 
@@ -223,7 +224,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	
 	// Опережающее скачивание при показе - должно помочь с крупными масштабами
 	if((!$runCLI) AND ($z>13) AND ($z<$loaderMaxZoom) AND $newimg) { 	// поставим задание на получение всех нижележащих тайлов, если этот тайл удачно скачался
-		$jobName = "$r.".($z+1); 	// имя файла задания
+		$jobName = "$sourceName.".($z+1); 	// имя файла задания
 		$umask = umask(0); 	// сменим на 0777 и запомним текущую
 		file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
 		@chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
