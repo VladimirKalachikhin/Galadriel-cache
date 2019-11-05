@@ -112,7 +112,7 @@ do {
 		clearstatcache(TRUE,"$jobsInWorkDir/$job");
 		$fs = filesize("$jobsInWorkDir/$job"); 	// выполняющееся скачивание
 		//echo "Размер $jobsInWorkDir/$job - $fs байт.\n";
-		if($fs<4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
+		if($fs<=4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
 			echo "Задание $job завершилось\n";
 			//error_log("Планировщик: Задание $job завершилось");
 			unlink("$jobsInWorkDir/$job");	// 
