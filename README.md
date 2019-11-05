@@ -149,7 +149,7 @@ mount -rw -t ext4  /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 5. Mark _01_mountExtSDcard_ as runed in boot
 
 ## Loader
-GaladrielCache includes dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderJobs/` directory. Start _loaderSched.php_ in cli.
+GaladrielCache includes dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Start _loaderSched.php_ in cli.
 For example:  
 _navionics_layer.9_
 ```
