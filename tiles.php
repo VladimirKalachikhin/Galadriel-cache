@@ -45,12 +45,18 @@ if(!$x OR !$y OR !$z OR !$r) {
 }
 if($runCLI) $maxTry = 3 * $maxTry; 	// увеличим число попыток скачать файл, если запущены загрузчиком
 // определимся с источником карты
-$sourceName = explode('/',$r)[0]; 	// $r может быть с путём до конкретного кеша
+$sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
+$sourceName = $sourcePath[0];
+unset($sourcePath[0]);
+$sourcePath = implode('/',$sourcePath); 	// склеим путь обратно, если его не было - будет пустая строка
 require_once("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 // возьмём тайл
 $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 //echo "file=$fileName; <br>\n";
 $img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
+$imgFileTime = time()-@filemtime($fileName)-$ttl; 	// оставшееся тайлу время
+if(($imgFileTime > 0) AND $freshOnly) $img=FALSE; 	// тайл протух, но указано протухшие тайлы не показывать
+//$img=FALSE;
 //error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
 if((!$runCLI) AND ($img!==FALSE)) 	{ 	// тайл есть, возможно, пустой, спросили из браузера
 	showTile($img,$ext); 	// сначала покажем
@@ -61,7 +67,7 @@ if((!$runCLI) AND ($img!==FALSE)) 	{ 	// тайл есть, возможно, п
 // потом получим
 if( ! $ttl) $ttl = time(); 	// ttl == 0 - тайлы никогда не протухают
 $newimg = FALSE; 	// 
-if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE) OR ((time()-@filemtime($fileName)-$ttl) > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
+if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE) OR ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 	//error_log("No $r/$z/$x/$y tile exist?; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 	// тайл надо получать
 	// определимся с наличием проблем связи и источника карты
@@ -79,7 +85,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 	eval($functionGetURL); 	// создадим функцию GetURL
 	do {
 		$newimg = FALSE; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
-		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
+		$uri = getURL($z,$x,$y,$sourcePath); 	// получим url и массив с контекстом: заголовками, etc.
 		//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 		if(!$uri) { 	// по каким-то причинам нет uri тайла
 			$newimg = NULL; 	// очевидно, картинки нет и не будет
@@ -219,6 +225,7 @@ if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE
 				error_log("Saved ".strlen($newimg)." bytes");	
 			}
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+			
 		}		
 	}
 	
