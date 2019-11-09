@@ -7,6 +7,7 @@ None of the parameters in map describe file are required. If necessary, default 
 
 Map describe file may content:
 $ttl = 86400*30*12*3; // cache timeout in seconds.  86400 sec = 1 day. After this, tile trying to reload from source. If 0 - never trying to reload.
+$freshOnly = FALSE; 	// Normally, outdated tiles first showing, then - downloaded. If TRUE - first loaded.
 $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/jpeg'; 	// if content type differ then file extension
 $minZoom = 0; 	// map min zoom
@@ -18,13 +19,18 @@ $functionGetURL = <<<'EOFU'
 EOFU; 	// string to wrap getURL() function. This is necessery to avoid function redefinitions error.
 
 Main part - get the tile function:
-function getURL($z,$x,$y) {}
+function getURL($z,$x,$y,$layer) {}
 $z - zoom
 $x - x number of tile
 $y - y number of tile
+$layer - section of path, such as http://base.url/$layer/$z/$y/$x.png for example.
 Must return string of uri for get tile, or array of two items: string uri and array stream_context parameters.
 About stream_context parameters see http://php.net/manual/en/context.php
 
 For this function use utilites from fcommon.php
 
+You can influence to GaladrielMap by
+$data = array();
+$data['javascriptOpen']; 	// the javascript string, eval'ed before create map
+$data['javascriptClose']; 	// the javascript string, eval'ed after close map
 
