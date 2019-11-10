@@ -17,6 +17,7 @@ $data = array(
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y,$layer) {
+if(!$layer) $layer="/wind_stream/0h";
 $url = "https://weather.openportguide.de/tiles/actual/$layer";
 $url .= "/".$z."/".$x."/".$y.".png";
 return $url;
@@ -28,7 +29,7 @@ let title, mapTXT, forecastTXT, windTXT, pressureTXT, temperatureTXT, precipitat
 if(window.navigator.language.indexOf('ru')==-1) { 	// клиент нерусский
 	title = 'Weather';
 	mapTXT = 'Layer';
-	forecastTXT = 'Fore cast, hours';
+	forecastTXT = 'Fore<wbr>cast, hours';
 	windTXT = 'Wind, m/sec';
 	pressureTXT = 'Pressure, hPa'; 
 	temperatureTXT = 'Temperature, °C';
@@ -39,7 +40,7 @@ if(window.navigator.language.indexOf('ru')==-1) { 	// клиент нерусс�
 else {
 	title = 'Погода';
 	mapTXT = 'Карта';
-	forecastTXT = 'Прог ноз, час.';
+	forecastTXT = 'Прог<wbr>ноз, час.';
 	windTXT = 'Ветер,м/сек';
 	pressureTXT = 'Давление,гПа'; 
 	temperatureTXT = 'Температура,°C';
@@ -55,9 +56,10 @@ if(typeof weatherTab == 'undefined') {
 		title: title,              // an optional pane header
 		tab: '<img src="img/logo_tk_weatherservice.png" alt="Weather forecast" width="70%">',  // content can be passed as HTML string,
 		pane: `
+			<div style="height:100%;">
 			by <a href="http://weather.openportguide.de/index.php/en/" target="_blank">Thomas Krüger Weather Service</a><br>
-			<form id="weatherLayers">
-				<table  style="font-size:120%;margin:0 1rem 0 0;float:right;">
+			<form id="weatherLayers" style="position:relative; z-index:10; width:95%;">
+				<table  style="font-size:120%;float:right;word-break: break-all;width:70%;">
 					<caption><h3>${mapTXT}</h3></caption>
 					<tr style="height:3rem;"><td style="text-align:right;">${windTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="wind_stream" checked ></td></tr>
 					<tr style="height:3rem;"><td style="text-align:right;">${pressureTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="surface_pressure"></td></tr>
@@ -65,7 +67,7 @@ if(typeof weatherTab == 'undefined') {
 					<tr style="height:3rem;"><td style="text-align:right;">${precipitationTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="precipitation"></td></tr>
 					<tr style="height:3rem;"><td style="text-align:right;">${waveTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="significant_wave_height"></td></tr>
 				</table>
-				<table style="font-size:120%;margin:0 0 1rem 0;">
+				<table style="font-size:120%;width:25%;">
 					<caption><h3>${forecastTXT}</h3></caption>
 					<tr style="height:3rem;"><td>O</td><td><input type="radio" name="weatherForecast" value="0h" checked onClick="
 																									additionalTileCachePath = [];
@@ -133,7 +135,7 @@ if(typeof weatherTab == 'undefined') {
 																									"></td></tr>
 				</table>	
 			</form>
-			<div style="text-align: right; position: absolute; bottom: 0; right: 0;">
+			<div style="text-align: right; position: absolute; bottom: 0; right: 0; z-index:1;">
 			<span style="background:rgb(160, 0, 200)">0-2 </span><br>
 			<span style="background:rgb(130, 0, 220)">2-3 </span><br>
 			<span style="background:rgb(30, 60, 255)">3-5 </span><br>
@@ -149,6 +151,7 @@ if(typeof weatherTab == 'undefined') {
 			<span style="background:rgb(240, 0, 130)">35&gt; </span><br>
 			${windLegendTXT}
 			</div>
+			<div>
 		`,        // DOM elements can be passed, too
 	};
 	sidebar.addPanel(panelContent);
