@@ -3,7 +3,7 @@ This is a simple raster map tiles cache/proxy to use on a weak computers such as
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) is a good choice too.  
 Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
 
-## v. 1.2
+## v. 1.3
 
 ## Features:
 1. User-defined map sources
@@ -143,7 +143,9 @@ then
 fi
 mount -rw -t ext4  /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 ```
-2. Place it in home directory by path `Android/data/ccc71.at.free/scripts/`  
+2. Place it in home directory by path  
+`Android/data/ccc71.at.free/scripts/` or  
+`Android/data/ccc71.at/scripts/`  
 3. Open **3C toolbox**  
 4. Go Tools - Script editor  
 5. Mark _01_mountExtSDcard_ as runed in boot
@@ -186,3 +188,6 @@ Job files, created by [GaladrielMap](https://github.com/VladimirKalachikhin/Gala
 
 ## clearCache
 Use in cli _clearCache.php mapname_ to *mapname* or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is may be a blanck tiles or .tne files from SAS.Planet
+
+## Support
+You can get support for GaladrielMap and GaladrielCahe for a beer via PayPal at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)
