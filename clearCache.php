@@ -2,21 +2,31 @@
 /* Для указанной карты, или для всех, если не указана
 при наличии списка мусорных файлов ($trash)
 каждый файл проверяется по этому списку и удаляется, если есть в.
+Кроме того, если указан аргумент fresh - удаляются и протухшие тайлы
 */
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
 chdir($path_parts['dirname']); // задаем директорию выполнение скрипта
 
 require('params.php'); 	// пути и параметры
 
+$fresh = FALSE;
 if($argv) { 	// cli
-	$mapName = @$argv[1]; 	// второй элемент - первый аргумент
+	if(@$argv[1] == 'fresh') {
+		$mapName = '';
+		$fresh = TRUE;
+	}
+	else {
+		$mapName = @$argv[1]; 	// второй элемент - первый аргумент
+		if(@$argv[2] == 'fresh') $fresh = TRUE;
+	}
 }
 else {	// http
 	$mapName = $_REQUEST['r'];
+	$fresh = $_REQUEST['fresh'];
 }
-//echo "mapName=$mapName;\n";
+//echo "mapName=$mapName; fresh=$fresh;\n";
 if($mapName) {
-	clearMap($mapName);
+	clearMap($mapName,$fresh);
 	return;
 }
 // Получаем список имён карт
@@ -27,10 +37,10 @@ array_walk($mapsInfo,function (&$name,$ind) {
 //echo ":<pre>"; print_r($mapsInfo); echo "</pre>";
 foreach($mapsInfo as $mapName) {
 	echo "Processing $mapName<br>\n";
-	clearMap($mapName);
+	clearMap($mapName,$fresh);
 }
 
-function clearMap($mapName) {
+function clearMap($mapName,$fresh=FALSE) {
 /* Для указанной карты при наличии списка мусорных файлов ($trash)
 каждый файл проверяется по этому списку и удаляется, если есть в.
 */
@@ -41,29 +51,35 @@ if($globalTrash) { 	// имеется глобальный список нену
 	else $trash = $globalTrash;
 }
 //echo "trash:<pre>"; print_r($trash); echo "</pre>\n";
-if(! @$trash) return "No trash list found";
-//echo "$tileCacheDir/$mapName/*\n";
-$zooms = preg_grep('~.[0-9]$~',glob("$tileCacheDir/$mapName/*",GLOB_ONLYDIR));
-if($zooms === FALSE) exit("No access to map cache dir\n");
-//echo "zooms:<pre>"; print_r($zooms); echo "</pre>\n";
-foreach($zooms as $zoom) {
-	$Xs = preg_grep('~.[0-9]$~',glob("$zoom/*",GLOB_ONLYDIR));
-	if($Xs === FALSE) exit("No access to zoom level $zoom dir\n");
-	//echo "Xs:<pre>"; print_r($Xs); echo "</pre>\n";
-	foreach($Xs as $X) {
-		$files = glob("$X/*"); 	// будем рассматривать любые файлы, не только тайлы
-		if($files === FALSE) exit("No access to X level $X dir\n");
-		//echo "files:<pre>"; print_r($files); echo "</pre>\n";
-		foreach($files as $file) {
+//echo "$tileCacheDir/$mapName\n";
+clearMapLayer("$tileCacheDir/$mapName",$trash,$fresh,$ttl); 	// рекурсивно обойдём дерево, потому что кеш может быть версионным
+} // end function clearMap
+
+function clearMapLayer($indir,$trash=array(),$fresh=FALSE,$ttl=0,$ext='png') {
+/*
+//$zooms = preg_grep('~.[0-9]$~',glob("$indir/*",GLOB_ONLYDIR)); 	// клёво же!
+*/
+//echo "Iteration: fresh=$fresh; ttl=$ttl; $indir\n";
+$files = glob("$indir/*");
+//echo "dirs:<pre>"; print_r($files); echo "</pre>\n";
+foreach($files as $file) {
+	if(is_dir($file))	clearMapLayer($file,$trash,$fresh,$ttl);
+	else {
+		//echo $file.' '.preg_match('~/*[0-9]\.'.$ext.'$~',$file)."\n";
+		if($fresh AND $ttl AND (preg_match('~/*[0-9]\.'.$ext.'$~',$file)==1) AND ((time()-@filemtime($file)-$ttl)>0)) { 	// если это тайл и он протух и сказано освежить
+			echo "deleting stinking tile $file\n";
+			unlink($file);
+		}
+		elseif($trash){
 			$crc32 = hash_file('crc32b',$file);
 			//echo "$crc32\n";
 			if(in_array($crc32,$trash,TRUE)) {
-				echo "deleting $file\n";
+				echo "deleting trash tile $file\n";
 				unlink($file);
 			}
 		}
 	}
 }
-} // end function clearMap
+} // end function clearMapLayer
 ?>
 

@@ -1,5 +1,5 @@
 <?php session_start();
-ob_start(); 	// попробуем перехватить любой вывод скрипта
+//ob_start(); 	// попробуем перехватить любой вывод скрипта
 /* 
 	Get tile from souce
 
@@ -19,6 +19,7 @@ $uri = $_REQUEST['uri']; 	// запрос, переданный от nginx. Сч
 //echo "Исходный uri=$uri; <br>\n";
 // Разберём этот uri
 $path_parts = pathinfo($uri); // 
+//echo "path_parts<pre>"; print_r($path_parts); echo "</pre><br>\n";
 if(!$path_parts['extension']) {$img = null; goto END;} 	// что-то не то с путями, но обломаться не должно, поэтому покажем пусто
 $y = $path_parts['filename'];
 $pos = strrpos($path_parts['dirname'],'/');
@@ -27,15 +28,29 @@ $path_parts['dirname'] = substr($path_parts['dirname'],0,$pos); 	// отреже
 $pos = strrpos($path_parts['dirname'],'/');
 $z = substr($path_parts['dirname'],$pos+1); 	// строка после слеша - z
 $path_parts['dirname'] = substr($path_parts['dirname'],0,$pos); 	// отрежем z
-$pos = strrpos($path_parts['dirname'],'/');
-$mapSourcesFile = substr($path_parts['dirname'],$pos+1); 	// строка после слеша - наименование карты
+//echo $path_parts['dirname']."<br>\n";
+$pos = strrpos($tileCacheDir,'/');
+$tileCacheLastDir = substr($tileCacheDir,$pos+1);
+$pos = strrpos($path_parts['dirname'],$tileCacheLastDir)+strlen($tileCacheLastDir);
+$mapSourcesFile = substr($path_parts['dirname'],$pos+1); 	// строка после слеша - наименование карты + путь к варианту, если есть
 $path_parts['dirname'] = substr($path_parts['dirname'],0,$pos); 	// отрежем наименование карты
-//echo "mapSourcesFile=$mapSourcesFile; z=$z; x=$x; y=$y; <br>\n";
+//echo $path_parts['dirname']."<br>\n";
+$pos = strpos($mapSourcesFile,'/');
+if($pos === FALSE) {
+	$mapAddPath = '';
+	$mapSourcesFile = $mapSourcesFile;
+}
+else {
+	$mapAddPath = substr($mapSourcesFile,$pos);
+	$mapSourcesFile = substr($mapSourcesFile,0,$pos);
+}
+//echo "mapSourcesFile=$mapSourcesFile; mapAddPath=$mapAddPath; z=$z; x=$x; y=$y; <br>\n";
 //echo "path_parts['dirname']=".$path_parts['dirname']."<br>mapSourcesDir=$mapSourcesDir;<br>tileCacheDir=$tileCacheDir;<br>\n";
 // определимся с источником карты
 require_once("$mapSourcesDir/$mapSourcesFile.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда. Может случиться, что с именем что-то не так - подавим ошибку
-$fileName = "$tileCacheDir/$mapSourcesFile/$z/$x/$y.$ext"; 	// 
-$newimg = FALSE; 	// 
+$fileName = "$tileCacheDir/$mapSourcesFile$mapAddPath/$z/$x/$y.$ext"; 	// 
+//echo "fileName=$fileName; <br>\n";
+$newimg = NULL; 	// 
 if ($functionGetURL) { 	// если есть функция получения тайла
 //if (function_exists('GetURL')) { 	// если есть функция получения тайла 	// В loaderSched файлы источников загружаются по очереди, поэтому нельзя require_once
 	// определимся с наличием проблем связи и источника карты
@@ -49,7 +64,7 @@ if ($functionGetURL) { 	// если есть функция получения �
 	$file_info = finfo_open(FILEINFO_MIME_TYPE);
 	do {
 		$newimg = FALSE; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
-		$uri = getURL($z,$x,$y); 	// получим url и массив с контекстом: заголовками, etc.
+		$uri = getURL($z,$x,$y,$mapAddPath); 	// получим url и массив с контекстом: заголовками, etc.
 		if(!$uri) { 	// по каким-то причинам нет uri тайла
 			$newimg = NULL; 	// очевидно, картинки нет и не будет
 			break;
@@ -79,6 +94,7 @@ if ($functionGetURL) { 	// если есть функция получения �
 
 		// Запрос - собственно, получаем файл
 		$newimg = @file_get_contents($uri, FALSE, $context); 	// 
+		//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
 
 		// Обработка проблем ответа
 		if((!$http_response_header)) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n";
@@ -149,6 +165,7 @@ END:
 // покажем тайл
 showTile($newimg,$ext); 	//покажем тайл. Если $newimg===FALSE, будет показано 404
 // сохраним тайл
+
 if($newimg !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла
 		
 	$umask = umask(0); 	// сменим на 0777 и запомним текущую

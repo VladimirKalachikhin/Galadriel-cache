@@ -1,7 +1,7 @@
 # GaladrielCache
 This is a simple raster map tiles cache/proxy to use on a weak computers such as RaspberryPi or NAS. Author use it in the wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.  
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) is a good choice too.  
-Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps directly on your smartphone in the event of a disaster.
+Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps without server - directly on your smartphone in the event of a disaster.
 
 ## v. 1.3
 
@@ -28,7 +28,7 @@ OruxMaps source definition:
 		<downloadable>0</downloadable>
 	</onlinemapsource>
 ```
-or, if you use nginx for serve files:
+or, if you use nginx for direct serve files:
 ```
 	<onlinemapsource uid="1055">
 		<name>Yandex Sat via my proxy (SAT)</name>
@@ -44,11 +44,11 @@ Where:
 `192.168.1.1` - your server 
 `/tileproxy/tiles.php` - cache/proxy 
 `/tiles/` - path to file storage in the sense of a web server
-and `yasat.EPSG3395` - your custom map source name.
+and `yasat.EPSG3395` - your custom map source name. 
 
 ATTENTION! You MUST configure your MAP VIEWER for the use specific projection!  
 (`<projection>MERCATORELIPSOIDAL</projection>` in the example above)  
-GaladrielCache knows nothing about projections, it's store tiles only.
+The GaladrielCache knows nothing about projections, it's store tiles only.
 
 ## Install&configure:
 You must have a web server with php support. Just copy.  
@@ -75,6 +75,17 @@ http {
 `-b 4096 -i 4096` set block to 4096 bytes and increase i-nodes to max.  
  `-O 64bit, metadata_csum` needs for compability with old Android devices.  
 `/dev/sdb1` - your SD card
+
+## nginx
+If you use nginx to direct access to tiles, you must configure a 404 helper (with php helper, of course) to a proxying.  
+In _nginx.conf_:
+```
+location /tileproxy/tiles {
+	default_type  application/octet-stream;
+	error_page 404 /tileproxy/tilefromsource.php?uri=$uri;
+        }
+```
+But, on this case, you will not be able to update tiles when they have expired. So you must run [clearCache](#clearcache) with "fresh" parameter periodically via cron to remove expired tiles. This is important if you are using the Weather source.
 
 ## Direct access to cache
 If you server dead, but you have a rooted Android phone or tablet, you may:
@@ -187,7 +198,8 @@ You can use variables from _params.php_, but not from _mapsources/*_. Avoid to c
 Job files, created by [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master), saved in `loaderjobs/oldjobs`
 
 ## clearCache
-Use in cli _clearCache.php mapname_ to *mapname* or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is may be a blanck tiles or .tne files from SAS.Planet
+Use in cli _clearCache.php mapname_ to *mapname* or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is may be a blanck tiles or .tne files from SAS.Planet  
+Use in cli _clearCache.php mapname fresh_ to *mapname* or _clearCache.php fresh_ to all maps to remove from cache expired tiles.
 
 ## Support
 You can get support for GaladrielMap and GaladrielCahe for a beer via PayPal at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)

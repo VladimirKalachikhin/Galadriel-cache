@@ -16,8 +16,7 @@ $data = array(
 );
 
 $functionGetURL = <<<'EOFU'
-function getURL($z,$x,$y,$layer) {
-if(!$layer) $layer="/wind_stream/0h";
+function getURL($z,$x,$y,$layer="/wind_stream/0h") {
 $url = "https://weather.openportguide.de/tiles/actual/$layer";
 $url .= "/".$z."/".$x."/".$y.".png";
 return $url;
@@ -59,7 +58,7 @@ if(typeof weatherTab == 'undefined') {
 			<div style="height:100%;">
 			by <a href="http://weather.openportguide.de/index.php/en/" target="_blank">Thomas Krüger Weather Service</a><br>
 			<form id="weatherLayers" style="position:relative; z-index:10; width:95%;">
-				<table  style="font-size:120%;float:right;word-break: break-all;width:70%;">
+				<table  style="font-size:120%;float:right;word-break: break-all;width:75%;">
 					<caption><h3>${mapTXT}</h3></caption>
 					<tr style="height:3rem;"><td style="text-align:right;">${windTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="wind_stream" checked ></td></tr>
 					<tr style="height:3rem;"><td style="text-align:right;">${pressureTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="surface_pressure"></td></tr>
@@ -67,7 +66,7 @@ if(typeof weatherTab == 'undefined') {
 					<tr style="height:3rem;"><td style="text-align:right;">${precipitationTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="precipitation"></td></tr>
 					<tr style="height:3rem;"><td style="text-align:right;">${waveTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="significant_wave_height"></td></tr>
 				</table>
-				<table style="font-size:120%;width:25%;">
+				<table style="font-size:120%;width:20%;">
 					<caption><h3>${forecastTXT}</h3></caption>
 					<tr style="height:3rem;"><td>O</td><td><input type="radio" name="weatherForecast" value="0h" checked onClick="
 																									additionalTileCachePath = [];
