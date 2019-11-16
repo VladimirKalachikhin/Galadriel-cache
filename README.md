@@ -52,22 +52,10 @@ The GaladrielCache knows nothing about projections, it's store tiles only.
 
 ## Install&configure:
 You must have a web server with php support. Just copy.  
-Paths and other set and describe in _params.php_
+Paths and other settings are describe in _params.php_
 Custom sources are in _mapsources/*_
 Help about map sources are in _mapsources/mapsources.txt_
 
-If you use nginx to serve cache, configure 404 helper to proxy:  
-_nginx.conf_:
-```
-http {
-	server {
-		location /tileproxy {
-			default_type  application/octet-stream;
-			error_page  404  /tileproxy/tilefromsource.php?uri=$uri;
-		}
-	}
-}
-```
 ## Prepare SD card to cache:
 ```
 # mkfs.ext4 -O 64bit, metadata_csum -b 4096 -i 4096 /dev/sdb1
@@ -83,7 +71,7 @@ In _nginx.conf_:
 location /tileproxy/tiles {
 	default_type  application/octet-stream;
 	error_page 404 /tileproxy/tilefromsource.php?uri=$uri;
-        }
+}
 ```
 But, on this case, you will not be able to update tiles when they have expired. So you must run [clearCache](#clearcache) with "fresh" parameter periodically via cron to remove expired tiles. This is important if you are using the Weather source.
 
