@@ -58,10 +58,10 @@ Help about map sources are in _mapsources/mapsources.txt_
 
 ## Prepare SD card to cache:
 ```
-# mkfs.ext4 -O 64bit, metadata_csum -b 4096 -i 4096 /dev/sdb1
+# mkfs.ext4 -O 64bit,metadata_csum -b 4096 -i 4096 /dev/sdb1
 ```
 `-b 4096 -i 4096` set block to 4096 bytes and increase i-nodes to max.  
- `-O 64bit, metadata_csum` needs for compability with old Android devices.  
+ `-O 64bit,metadata_csum` needs for compability with old Android devices.  
 `/dev/sdb1` - your SD card
 
 ## nginx
