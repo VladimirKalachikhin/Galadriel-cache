@@ -43,7 +43,6 @@ $trash = array(
 );
 $minZoom = 15;
 $maxZoom = 19;
-require_once('fNavionics.php'); 	// дополнительные функции, необходимые для получения тайла
 $functionGetURL = <<<'EOFU'
 require_once('fNavionics.php'); 	// дополнительные функции, необходимые для получения тайла
 
