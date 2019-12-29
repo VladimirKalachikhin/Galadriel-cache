@@ -1,6 +1,5 @@
 <?php
 $ttl = 86400*365; // 1 year cache timeout in seconds время, через которое тайл считается протухшим
-// $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
@@ -24,7 +23,11 @@ $userAgent = $userAgents[array_rand($userAgents)];
 
 $RequestHead='Referer: http://google.com';
 
-$url = 'http://mt'.$server[array_rand($server)].'.google.com/vt/lyrs=s,m&hl=iw';
+//$headersLang = 'iw'; // hebrew
+$headersLang = 'ru'; // russian
+//$headersLang = 'en'; // english
+//$headersLang = ''; // local
+$url = 'http://mt'.$server[array_rand($server)].".google.com/vt/lyrs=s,m&hl=$headersLang";
 $url .= "&x=$x&y=$y&z=$z";
 
 $opts = array(
