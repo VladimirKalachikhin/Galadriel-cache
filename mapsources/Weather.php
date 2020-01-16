@@ -1,6 +1,6 @@
 <?php
 //$ttl = 86400; // 1 day cache timeout in seconds время, через которое тайл считается протухшим
-$ttl = 60; // 1 day cache timeout in seconds время, через которое тайл считается протухшим
+$ttl = 60*60*6; // 1 day cache timeout in seconds время, через которое тайл считается протухшим
 // $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 1;
@@ -108,7 +108,7 @@ if(typeof weatherTab == 'undefined') {
 																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
 																									displayMap('Weather');
 																									"></td></tr>
-					<tr style="height:3rem;"><td>48</td><td><input type="radio" name="weatherForecast" value="48h" onClick="alert('
+					<tr style="height:3rem;"><td>48</td><td><input type="radio" name="weatherForecast" value="48h" onClick="
 																									additionalTileCachePath = [];
 																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
 																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
