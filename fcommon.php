@@ -84,10 +84,12 @@ global $runCLI;
 
 if($runCLI) return; 	// не будем отдавать картинку в cli
 
-set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
+//apache_setenv('no-gzip', '1'); 	// отключить сжатие вывода
+//set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
 ignore_user_abort(true); 	// чтобы выполнение не прекратилось после разрыва соединения
 ob_end_clean(); 			// очистим, если что попало в буфер
 ob_start();
+header("Connection: close"); 	// Tell the client to close connection
 if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
 	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 	$mime_type = finfo_buffer($file_info,$tile);
@@ -104,7 +106,6 @@ else {
 	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 }
-header("Connection: close"); 	// Tell the client to close connection
 echo $tile; 	// теперь в output buffer только тайл
 $content_lenght = ob_get_length(); 	// возьмём его размер
 header("Content-Length: $content_lenght"); 	// завершающий header

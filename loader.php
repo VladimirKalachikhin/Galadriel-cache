@@ -78,6 +78,7 @@ do {
 	if(!$job) break; 	// файла не оказалось
 	flock($job,LOCK_EX) or exit("loader.php Unable locking job file Error");
 	$s=trim(fgets($job));
+	//echo "s=$s;\n";
 	if($s===FALSE) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
 	if($s[0]=='#') { 	// там есть указание, что запускать
 		$execString = trim(substr($s,1));
@@ -92,7 +93,7 @@ do {
 			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// 
 			flock($job, LOCK_UN); 	//снимем блокировку
 			fclose($job); 	// освободим файл
-			continue;
+			break;
 		}
 		$s=trim($s);
 	}
@@ -107,7 +108,7 @@ do {
 			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// 
 			flock($job, LOCK_UN); 	//снимем блокировку
 			fclose($job); 	// освободим файл
-			continue;
+			break;
 		}
 	}
 	$strSize = strlen($s); 	// размер первой строки в байтах

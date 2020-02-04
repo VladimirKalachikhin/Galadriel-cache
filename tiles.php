@@ -3,7 +3,7 @@ session_cache_limiter('private_no_expire:'); 	// задаёт кеширован
 session_start(); 	// 
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /* By the http://wiki.openstreetmap.org/wiki/ProxySimplePHP
-Берёт тай из кеша и сразу отдаёт-показывает.
+Берёт тайл из кеша и сразу отдаёт-показывает.
 Потом, если надо - скачивает
 Если получено 404 - сохраняет пустой тайл, в остальных случаях - переспрашивает.
 Ксли принятый файл - в списке мусорных,сохраняем пустой
@@ -54,19 +54,18 @@ require_once("$mapSourcesDir/$sourceName.php"); 	// файл, описывающ
 $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 //echo "file=$fileName; <br>\n";
 $img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
-$imgFileTime = time()-@filemtime($fileName)-$ttl; 	// оставшееся тайлу время
-if(($imgFileTime > 0) AND $freshOnly) $img=FALSE; 	// тайл протух, но указано протухшие тайлы не показывать
+$imgFileTime = time()-@filemtime($fileName)-$ttl; 	// прожитое тайлом время сверх положенного
+if($ttl AND ($imgFileTime > 0) AND $freshOnly) $img=FALSE; 	// тайл протух, но указано протухшие тайлы не показывать
 //$img=FALSE;
 //error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
 if((!$runCLI) AND ($img!==FALSE)) 	{ 	// тайл есть, возможно, пустой, спросили из браузера
 	showTile($img,$ext); 	// сначала покажем
-	error_log("showTile $r/$z/$x/$y.$ext from cache");		
+	//error_log("showTile $r/$z/$x/$y.$ext from cache");		
 	//$from = 1;
 }
-//return;
 // потом получим
 $newimg = NULL; 	// 
-if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE) OR ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
+if ((($z <= $maxZoom) AND $z >= $minZoom) AND $functionGetURL AND (($img===FALSE) OR ($ttl AND ($imgFileTime > 0)))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 	//error_log("No $r/$z/$x/$y tile exist?; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 	// тайл надо получать
 	// определимся с наличием проблем связи и источника карты

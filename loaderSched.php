@@ -1,13 +1,14 @@
 #!/usr/bin/php
 <?php
 /* Планировщик заданий на загрузку тайлов. Видимо, запускается в одном экземпляре
+Файлы заданий и файлы заданий в работе убиваются здесь, загрузчик файлы заданий не убивает
 */
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
 chdir($path_parts['dirname']); // задаем директорию выполнение скрипта
 
 require('fcommon.php');
 require('params.php'); 	// пути и параметры
-//$bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
+$bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
 //@unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников - он мог сохраниться из-за краха
 
 //$loaderMaxZoom = 12; 	// скачивать до этого масштаба или максимального масштаба карты, если он меньше
@@ -42,6 +43,7 @@ do {
 	$jobs=array_unique($jobs);
 	sort($jobs,SORT_NATURAL | SORT_FLAG_CASE); 	// 
 	if(!$jobs[0]) unset($jobs[0]); 	// 
+	//echo "Очередь заданий перед началом обработки:"; print_r($jobs); echo "\n";
 	//echo "Вероятно, есть загрузчики: "; print_r($loaderPIDs); echo "\n";
 	//echo "Вероятно, есть планировщики: ";print_r($schedulerPIDs); echo "\n";
 	//exit;
@@ -86,7 +88,7 @@ do {
 		if($Zoom > $loaderMaxZoom) {
 			echo "Это задание имеет масштаб больше разрешённого, убъём задание\n";
 			//error_log("Планировщик: Это задание имеет масштаб больше разрешённого, убъём задание");
-			unlink("$jobsDir/$job");	// всё скачали, убъём задание
+			unlink("$jobsDir/$job");	// убъём задание
 			unset($jobs[$i]);
 			continue;
 		}
@@ -176,7 +178,15 @@ do {
 if(! $runsS) { 	// нет других запущенных экземпляров планировщика
 	// удалим себя из cron
 	exec("crontab -l | grep -v '$fullSelfName'  | crontab -");
-	//@unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников
+	// удалим файл с информацией о проблемах источников
+	@unlink($bannedSourcesFileName);	
+	// удалим файлы выполняющихся заданий: раз мы здесь, задания на выполнение иссякли, и ничего больше скачивать не нужно
+	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
+	foreach($jobNames as $jobName) { 	// 
+		//echo "Delete needless executing job file $jobsInWorkDir/$jobName\n";
+		echo "Удаляем ненужный выполняющийся файл задания $jobsInWorkDir/$jobName\n";
+		unlink("$jobsInWorkDir/$jobName");	
+	}
 }
 unlink("$jobsDir/$pID.slock");	// 
 echo "Планировщик $pID завершился\n";
