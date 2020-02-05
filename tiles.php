@@ -21,7 +21,7 @@ require_once('fcommon.php');
 require('params.php'); 	// пути и параметры
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 
-if($argv) { 	// cli
+if(@$argv) { 	// cli
 	$runCLI = TRUE;
 	$options = getopt("z:x:y:r::");
 	//print_r($options);
