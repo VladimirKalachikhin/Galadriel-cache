@@ -164,6 +164,7 @@ $data['javascriptOpen'] = $javascript;
 // При закрытии
 $javascript = <<<'EOJC'
 sidebar.removePanel('weatherTab');
+additionalTileCachePath = [];
 EOJC;
 $data['javascriptClose'] = $javascript;
 ?>
