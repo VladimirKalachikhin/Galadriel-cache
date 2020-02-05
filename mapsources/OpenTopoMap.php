@@ -1,6 +1,7 @@
 <?php
 $ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 //$ttl = 0; 	// тайлы не протухают никогда
+$ttl = 2; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 18;
@@ -60,7 +61,7 @@ $opts = array(
 	)
 );
 //print_r($opts);
-if($getTorNewNode AND $opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
+if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
 	//error_log("Are session support present? _SESSION['tilesPerNode']=".$_SESSION['tilesPerNode']);
 	if ((!$_SESSION['tilesPerNode']) OR ($_SESSION['tilesPerNode'] > $tilesPerNode)) { 	// если сессии нет совсем или уже пора
 		error_log("getting new Tor exit node");
