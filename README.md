@@ -8,6 +8,7 @@ Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps w
 ## Features:
 1. User-defined map sources
 2. Dumb tile loader
+3. Fast with [Leaflet](https://leafletjs.com/)
 
 It's all. No versioning, no reprojection.
 

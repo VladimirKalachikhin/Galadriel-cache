@@ -1,6 +1,6 @@
 <?php
 $ttl = 86400*365; // 1 year cache timeout in seconds время, через которое тайл считается протухшим
-$ext = 'png'; 	// tile image type/extension
+$ext = 'jpeg'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
 /* функция получения тайла позаимствована из OruxMaps */
