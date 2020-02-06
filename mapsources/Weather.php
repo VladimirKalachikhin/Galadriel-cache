@@ -16,7 +16,8 @@ $data = array(
 );
 
 $functionGetURL = <<<'EOFU'
-function getURL($z,$x,$y,$layer="/wind_stream/0h") {
+function getURL($z,$x,$y,$getURLparms=array()) {
+if(!($layer=@$getURLparms['mapAddPath'])) $layer="wind_stream/0h";
 $url = "https://weather.openportguide.de/tiles/actual/$layer";
 $url .= "/".$z."/".$x."/".$y.".png";
 return $url;

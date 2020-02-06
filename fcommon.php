@@ -85,16 +85,17 @@ global $runCLI;
 if($runCLI) return; 	// не будем отдавать картинку в cli
 
 //apache_setenv('no-gzip', '1'); 	// отключить сжатие вывода
-//set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
+set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
 ignore_user_abort(true); 	// чтобы выполнение не прекратилось после разрыва соединения
 ob_end_clean(); 			// очистим, если что попало в буфер
 ob_start();
 header("Connection: close"); 	// Tell the client to close connection
+header("Content-Encoding: none");
 if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
 	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 	$mime_type = finfo_buffer($file_info,$tile);
 	$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
-	header("Expired: " . $exp_gmt . "\r\n");
+	header("Expired: " . $exp_gmt);
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
 	//header("Last-Modified: " . $mod_gmt);
 	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
@@ -114,29 +115,6 @@ ob_end_flush(); 	// отправляем тело - собственно кар�
 flush(); 		// Force php-output-cache to flush to browser.
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 }
-
-function doBann($r) {
-/* Банит источник */
-global $bannedSources, $runCLI, $bannedSourcesFileName, $tries, $http_response_header;
-//error_log("newimg=$newimg;");
-//error_log(print_r($http_response_header,TRUE));
-//error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
-
-$curr_time = time();
-$bannedSources[$r] = $curr_time; 	// отметим проблемы с источником
-if($runCLI) { 	// если спрашивали из загрузчика
-	$umask = umask(0); 	// сменим на 0777 и запомним текущую
-	file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
-	//quickFilePutContents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
-	@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
-	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-}
-else { 	// спрашивают из браузера
-	$_SESSION['bannedSources'] = $bannedSources; 	// 
-}
-//error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
-error_log("fcommon.php doBann: Trying # $tries: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)."!");
-} // end function doBann
 
 
 ?>

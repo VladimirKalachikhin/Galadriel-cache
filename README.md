@@ -3,20 +3,19 @@ This is a simple raster map tiles cache/proxy to use on a weak computers such as
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) is a good choice too.  
 Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps without server - directly on your smartphone in the event of a disaster.
 
-## v. 1.3
+## v. 2.0
 
 ## Features:
 1. User-defined map sources
-2. nginx support
-3. Dumb tile loader
+2. Dumb tile loader
+3. Fast with [Leaflet](https://leafletjs.com/)
 
 It's all. No versioning, no reprojection.
 
 ## Usage:
 _tiles.php_ - cache/proxy  
-_tilefromsource.php_ - proxy, mostly for a nginx 404 helper usage
-
-OruxMaps source definition:
+### OruxMaps configuration
+To use GaladrielCache with OruxMaps, add map definitions to OruxMaps `onlinemapsources.xml`, for example - Yandex Sat map:
 ```
 	<onlinemapsource uid="1055">
 		<name>Yandex Sat via my proxy (SAT)</name>
@@ -28,33 +27,25 @@ OruxMaps source definition:
 		<downloadable>0</downloadable>
 	</onlinemapsource>
 ```
-or, if you use nginx for direct serve files:
-```
-	<onlinemapsource uid="1055">
-		<name>Yandex Sat via my proxy (SAT)</name>
-		<url><![CDATA[http://192.168.1.1/tiles/yasat.EPSG3395/{$z}/{$x}/{$y}.png]]></url>
-		<minzoom>5</minzoom>
-		<maxzoom>19</maxzoom>
-		<projection>MERCATORELIPSOIDAL</projection>
-		<cacheable>1</cacheable>
-		<downloadable>0</downloadable>
-	</onlinemapsource>
-```
 Where:
 `192.168.1.1` - your server 
 `/tileproxy/tiles.php` - cache/proxy 
 `/tiles/` - path to file storage in the sense of a web server
-and `yasat.EPSG3395` - your custom map source name. 
+and `yasat.EPSG3395` - your custom map source name.   
+Try it to other maps.
 
 ATTENTION! You MUST configure your MAP VIEWER for the use specific projection!  
 (`<projection>MERCATORELIPSOIDAL</projection>` in the example above)  
 The GaladrielCache knows nothing about projections, it's store tiles only.
 
+### GaladrielMap configuration
+To use GaladrielMap with GaladrielCache - set `$tileCachePath` in GaladrielMap's `params.php` file. 
+
 ## Install&configure:
 You must have a web server with php support. Just copy.  
-Paths and other settings are describe in _params.php_
-Custom sources are in _mapsources/*_
-Help about map sources are in _mapsources/mapsources.txt_
+Paths and other settings are describe in `params.php`
+Custom sources are in `mapsources/*`
+Help about map sources are in `mapsources/mapsources.txt`
 
 ## Prepare SD card to cache:
 ```
@@ -63,17 +54,6 @@ Help about map sources are in _mapsources/mapsources.txt_
 `-b 4096 -i 4096` set block to 4096 bytes and increase i-nodes to max.  
  `-O 64bit,metadata_csum` needs for compability with old Android devices.  
 `/dev/sdb1` - your SD card
-
-## nginx
-If you use nginx to direct access to tiles, you must configure a 404 helper (with php helper, of course) to a proxying.  
-In _nginx.conf_:
-```
-location /tileproxy/tiles {
-	default_type  application/octet-stream;
-	error_page 404 /tileproxy/tilefromsource.php?uri=$uri;
-}
-```
-But, on this case, you will not be able to update tiles when they have expired. So you must run [clearCache](#clearcache) with "fresh" parameter periodically via cron to remove expired tiles. This is important if you are using the Weather source.
 
 ## Direct access to cache
 If you server dead, but you have a rooted Android phone or tablet, you may:

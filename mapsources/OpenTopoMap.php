@@ -60,7 +60,7 @@ $opts = array(
 	)
 );
 //print_r($opts);
-if($getTorNewNode AND $opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
+if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
 	//error_log("Are session support present? _SESSION['tilesPerNode']=".$_SESSION['tilesPerNode']);
 	if ((!$_SESSION['tilesPerNode']) OR ($_SESSION['tilesPerNode'] > $tilesPerNode)) { 	// если сессии нет совсем или уже пора
 		error_log("getting new Tor exit node");

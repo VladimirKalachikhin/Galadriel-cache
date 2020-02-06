@@ -15,6 +15,8 @@
 # mkdir -p /home/stager/tileCacheCopy/$r/$z/$x/ && cp -Hpu $tileCacheDir/$r/$z/$x/$y.png /home/stager/tileCacheCopy/$r/$z/$x/
  - в этом случае сперва создадутся каталоги, потом произойдёт копирование
 Могут быть использованы переменные из params.php
+ВНИМАНИЕ! Загрузчик может загружать только карты с одним вариантом, типа map/z/y/x !!!
+Версионные карты (типа Weather) не могут быть загружены загрузчиком !!!!
 */
 
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // определяем каталог скрипта
@@ -29,7 +31,7 @@ $lag = 300; 	// сек, на которое может отличатся вре
 file_put_contents("$jobsDir/$pID.lock", "$pID"); 	// положим флаг, что запустились
 echo "Стартовал загрузчик $pID\n";
 do {
-	$execString = '$phpCLIexec tiles.php -z$z -x$x -y$y -r$r'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
+	$execString = '$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$r'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
 	
 	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
 	shuffle($jobNames); 	// перемешаем массив, чтобы по возможности разные задания брались в обработку
@@ -127,11 +129,35 @@ do {
 	// Запустим скачивание
 	$str = "";
 	if(is_numeric($xy[0]) AND is_numeric($xy[1])) {
+		require("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+		// возьмём тайл
+		$path_parts = pathinfo($xy[1]); // 
+		if(!$path_parts['extension']) {
+			if($ext) $xy[1] = $xy[1].".$ext"; 	// в конфиге источника указано расширение
+			else $xy[1] = $xy[1].".png";
+		}
+		$fileName = "$tileCacheDir/$map/$zoom/".$xy[0]."/".$xy[1]; 	// из кэша, однако наличие версионности игнорируется
+		//echo "file=$fileName; <br>\n";
 		$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
-		//echo '$execString1="'.$execString.'";'."\n";
-		eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
-		//echo "$execString1\n"; 	//
-		$res = exec($execStringParsed); 	// загрузим тайл синхронно
+		$res = FALSE;
+		$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
+		if($img!==FALSE) { 	// тайл есть
+			$imgFileTime = time()-filemtime($fileName)-$ttl; 	// прожитое тайлом время сверх положенного
+			//error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
+			if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
+				// тайл надо получать
+				//echo '$execString1="'.$execString.'";'."\n";
+				eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
+				//echo "$execString1\n"; 	//
+				$res = exec($execStringParsed); 	// загрузим тайл синхронно
+			} 
+		}
+		else { 	// тайла нет, тайл надо получать
+			//echo '$execString1="'.$execString.'";'."\n";
+			eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
+			//echo "$execString1\n"; 	//
+			$res = exec($execStringParsed); 	// загрузим тайл синхронно
+		}
 		//echo "res=$res; \n";
 		if($res==1) { 	// загрузка тайла плохо кончилась
 			//file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND | LOCK_EX); 	// вернём номер тайла в файл задания для загрузчика

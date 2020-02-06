@@ -3,6 +3,7 @@
 */
 $ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 // $ttl = 0; 	// тайлы не протухают никогда
+$ttl = 2; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 18;
