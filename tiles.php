@@ -8,7 +8,6 @@ ob_start(); 	// попробуем перехватить любой вывод 
 //$now = microtime(TRUE);
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
 chdir($path_parts['dirname']); // задаем директорию выполнение скрипта
-require_once('fcommon.php');
 
 require('params.php'); 	// пути и параметры
 
@@ -19,11 +18,12 @@ $r = filter_var($_REQUEST['r'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли
 
-if(!$x OR !$y OR !$z OR !$r) {
+if((!$x) OR (!$y) OR (!$z) OR (!$r)) {
 	showTile(NULL); 	// покажем 404
 	error_log("Incorrect tile info: $r/$z/$x/$y");		
 	goto END;
 }
+
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
 $sourceName = $sourcePath[0];
@@ -60,4 +60,47 @@ else { 	// тайла нет, тайл надо получать
 }
 END:
 ob_clean(); 	// очистим, если что попало в буфер
+return;
+
+function showTile($tile,$ext='') {
+/*
+Отдаёт тайл. Считается, что только эта функция что-то показывает клиенту
+https://gist.github.com/bubba-h57/32593b2b970366d24be7
+*/
+global $runCLI;
+
+if($runCLI) return; 	// не будем отдавать картинку в cli
+
+//apache_setenv('no-gzip', '1'); 	// отключить сжатие вывода
+set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
+ignore_user_abort(true); 	// чтобы выполнение не прекратилось после разрыва соединения
+ob_end_clean(); 			// очистим, если что попало в буфер
+ob_start();
+header("Connection: close"); 	// Tell the client to close connection
+header("Content-Encoding: none");
+if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
+	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+	$mime_type = finfo_buffer($file_info,$tile);
+	$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
+	header("Expired: " . $exp_gmt);
+	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
+	//header("Last-Modified: " . $mod_gmt);
+	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
+	if($mime_type) header ("Content-Type: $mime_type");
+	else header ("Content-Type: image/$ext");
+}
+else {
+	header("X-Debug: Not found if no tile"); // HTTP/1.1
+	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
+	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
+	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+}
+echo $tile; 	// теперь в output buffer только тайл
+$content_lenght = ob_get_length(); 	// возьмём его размер
+header("Content-Length: $content_lenght"); 	// завершающий header
+ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
+@ob_flush();
+flush(); 		// Force php-output-cache to flush to browser.
+ob_start(); 	// попробуем перехватить любой вывод скрипта
+}
 ?>

@@ -22,7 +22,7 @@ if(@$argv) { 	// cli
 else {
 	$uri = filter_var($_REQUEST['uri'],FILTER_SANITIZE_URL); 	// запрос, переданный от nginx. Считаем, что это запрос тайла
 }
-//echo "Исходный uri=$uri; <br>\n";
+echo "Исходный uri=$uri; <br>\n";
 if($uri) $img=getTile($uri); 	// fcache.php собственно, получение
 session_write_close();
 if($runCLI) {
