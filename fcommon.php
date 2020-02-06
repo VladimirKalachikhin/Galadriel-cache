@@ -116,25 +116,5 @@ flush(); 		// Force php-output-cache to flush to browser.
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 }
 
-function doBann($r) {
-/* Банит источник */
-global $bannedSources, $bannedSourcesFileName;
-//error_log("newimg=$newimg;");
-//error_log(print_r($http_response_header,TRUE));
-//error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
-
-$curr_time = time();
-$bannedSources[$r] = $curr_time; 	// отметим проблемы с источником
-//echo "bannedSources:<pre>"; print_r($bannedSources); echo "</pre>";
-//echo serialize($bannedSources)."<br>\n";
-$umask = umask(0); 	// сменим на 0777 и запомним текущую
-file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
-//quickFilePutContents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
-@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
-umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-//error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
-error_log("fcommon.php doBann: Trying # $tries: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)."!");
-} // end function doBann
-
 
 ?>

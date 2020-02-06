@@ -2,10 +2,11 @@
 //$ttl = 86400*30*12*2; //cache timeout in seconds время, через которое тайл считается протухшим, 2 год
 $ttl = 86400*30*6; //cache timeout in seconds время, через которое тайл считается протухшим, 1/2 год
 //$ttl = 0; //cache timeout in seconds время, через которое тайл считается протухшим
+$minZoom = 10;
+$maxZoom = 19;
 $ext = 'png'; 	// tile image type/extension
 $on403 = 'skip'; 	// что делать, если Forbidden: skip, wait - default
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, тайлы с дурацкими надписями	'0940c426' пустой тайл - не мусор! Иначе пустые файлы будут скачиваться снова и снова, а их много.
-
 $trash = array(
 	'b2451042', 	// пустой серый тайл с логотипом
 	'97aa1cbf', 	// кривая надпись про недоступность
@@ -62,19 +63,22 @@ $trash = array(
 	'd87aee55' 	// запрет Navionics в Дании
 );
 
-$minZoom = 10;
-$maxZoom = 19;
+// поскольку этот файл require там, где это всё есть:
+$getURLparms['on403'] = $on403;
+$getURLparms['tileCacheDir'] = $tileCacheDir;
+$getURLparms['mapSourcesName'] = $mapSourcesName;
 
 $functionGetURL = <<<'EOFU'
 require_once('fNavionics.php'); 	// дополнительные функции, необходимые для получения тайла
 
-function getURL($zoom,$x,$y) {
+function getURL($zoom,$x,$y,$getURLparms) {
 /* Алгоритм получения ссылки на тайл заимствован из SAS.Planet
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=navionics_layer
 
 */
-
-global $tileCacheDir, $r, $on403; 	// from params.php, from tiles.php, from self
+$tileCacheDir=$getURLparms['tileCacheDir'];
+$r=$getURLparms['mapSourcesName'];
+$on403=$getURLparms['on403']; 	// 
 $tokenFileName = "$tileCacheDir/$r/navtoken";
 
 //$DefURLBase='http://backend.navionics.io/tile/';

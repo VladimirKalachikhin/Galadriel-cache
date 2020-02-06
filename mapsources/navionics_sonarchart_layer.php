@@ -2,6 +2,8 @@
 //$ttl = 86400*30*12*2; //cache timeout in seconds время, через которое тайл считается протухшим, 2 год
 $ttl = 86400*30*6; //cache timeout in seconds время, через которое тайл считается протухшим, 1/2 год
 //$ttl = 0; //cache timeout in seconds время, через которое тайл считается протухшим
+$minZoom = 15;
+$maxZoom = 19;
 $ext = 'png'; 	// tile image type/extension
 $on403 = 'skip'; 	// что делать, если Forbidden: skip, wait - default
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, тайлы с дурацкими надписями 	'0940c426' пустой тайл - не мусор!
@@ -41,8 +43,12 @@ $trash = array(
 	'99b57ebb',
 	'd87aee55' 	// запрет Navionics в Дании
 );
-$minZoom = 15;
-$maxZoom = 19;
+
+// поскольку этот файл require там, где это всё есть:
+$getURLparms['on403'] = $on403;
+$getURLparms['tileCacheDir'] = $tileCacheDir;
+$getURLparms['mapSourcesName'] = $mapSourcesName;
+
 $functionGetURL = <<<'EOFU'
 require_once('fNavionics.php'); 	// дополнительные функции, необходимые для получения тайла
 
@@ -52,7 +58,9 @@ http://192.168.10.10/tileproxy/tiles.php?z=16&x=37995&y=18581&r=navionics_sonarc
 
 */
 
-global $tileCacheDir, $r, $on403; 	// from params.php, from tiles.php, from self
+$tileCacheDir=$getURLparms['tileCacheDir'];
+$r=$getURLparms['mapSourcesName'];
+$on403=$getURLparms['on403']; 	// 
 $tokenFileName = "$tileCacheDir/$r/navtoken";
 
 $DefURLBase='http://backend.navionics.com/tile/';
