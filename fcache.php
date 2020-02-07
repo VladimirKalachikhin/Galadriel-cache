@@ -4,7 +4,7 @@
 getTile($path) - получить файл из источника и положить в кеш
 doBann($r,$bannedSourcesFileName) - забанить источник
 */
-function getTile($path,$getURLparms=array()) {
+function getTile($path,$params=array(),$getURLparams=array()) {
 /* 
 	Get tile from souce
 
@@ -16,11 +16,15 @@ Use: $ php tilefromsource.php '/tiles/OpenTopoMap/11/1185/578.png'
 Если получено 404 - сохраняет пустой тайл, в остальных случаях - переспрашивает.
 Если принятый файл - в списке мусорных,сохраняем пустой
 
-$getURLparms - массив с параметрами для передаяи функции getURL(), определённой в файлк источника
+$params - массив с параметрами вообще. В основном - для переопределения переменных из params.php
+После загрузки params.php из $params создаются переменные, переписывающие переменные из params.php
+
+$getURLparams - массив с параметрами для передаяи функции getURL(), определённой в файлк источника
 вообще говоря - произвольный, но будем считать, что туда могут передаваться стандартные переменные 
 со своим именем в качестве ключа
 */
 require('params.php'); 	// пути и параметры
+if($params) extract($params,EXTR_OVERWRITE);
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
 $selfPath = $path_parts['dirname'];
@@ -60,7 +64,7 @@ require_once("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описыва
 if($ext) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.$ext"; 	// в конфиге источника указано расширение
 elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.".$path_parts['extension'];
 else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
-$getURLparms['mapAddPath'] = $mapAddPath;
+$getURLparams['mapAddPath'] = $mapAddPath;
 //echo "fileName=$fileName; <br>\n";
 $newimg = FALSE; 	// 
 if (!$functionGetURL) goto END;; 	// нет функции для получения тайла	
@@ -75,7 +79,7 @@ $tries = 1;
 $file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 do {
 	$newimg = NULL; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
-	$uri = getURL($z,$x,$y,$getURLparms); 	// получим url и массив с контекстом: заголовками, etc.
+	$uri = getURL($z,$x,$y,$getURLparams); 	// получим url и массив с контекстом: заголовками, etc.
 	//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
 	if(!$uri) goto END;; 	// по каким-то причинам нет uri тайла, очевидно, картинки нет и не будет
 	// Параметры запроса

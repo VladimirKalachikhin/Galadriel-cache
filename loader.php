@@ -24,6 +24,7 @@ chdir($path_parts['dirname']); // сменим каталог выполнени
 
 require('params.php'); 	// пути и параметры
 $bannedSourcesFileName = "$jobsDir/bannedSources";
+$maxTry = 5 * $maxTry; 	// увеличим количество попыток получить файл
 
 $pID = getmypid(); 	// process ID
 $timer = array(); 	// массив для подсчёта затраченного времени
@@ -31,7 +32,7 @@ $lag = 300; 	// сек, на которое может отличатся вре
 file_put_contents("$jobsDir/$pID.lock", "$pID"); 	// положим флаг, что запустились
 echo "Стартовал загрузчик $pID\n";
 do {
-	$execString = '$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$r'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
+	$execString = '$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$r --maxTry$maxTry'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
 	
 	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
 	shuffle($jobNames); 	// перемешаем массив, чтобы по возможности разные задания брались в обработку
