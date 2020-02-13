@@ -49,11 +49,11 @@ if($img!==FALSE) { 	// тайл есть
 	if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 		//error_log("No $r/$z/$x/$y tile exist?; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 		// тайл надо получать
-		exec("php tilefromsource.php $fileName > /dev/null 2>&1 &"); 	// exec не будет ждать завершения
+		exec("$phpCLIexec tilefromsource.php $fileName > /dev/null 2>&1 &"); 	// exec не будет ждать завершения
 	} 
 }
 else { 	// тайла нет, тайл надо получать
-	exec("php tilefromsource.php $fileName"); 	// exec будет ждать завершения
+	exec("$phpCLIexec tilefromsource.php $fileName"); 	// exec будет ждать завершения
 	// покажем тайл
 	$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша
 	showTile($img,$ext); 	//покажем тайл
