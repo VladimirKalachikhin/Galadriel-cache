@@ -111,7 +111,7 @@ do {
 	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
 
 	// Обработка проблем ответа
-	if((!$http_response_header)) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n";
+	if((!@$http_response_header)) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
 		doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник
 		goto END;; 	 // бессмысленно ждать, уходим совсем
 	}

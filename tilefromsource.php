@@ -30,7 +30,7 @@ else {
 if($uri) $img=getTile($uri,$params); 	// fcache.php собственно, получение
 
 session_write_close();
-if($runCLI) {
+if(@$argv) {
 	if($img===FALSE) fwrite(STDOUT, '1'); 	// тайла не было и он не был получен
 	else fwrite(STDOUT, '0');
 }
