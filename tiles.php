@@ -49,7 +49,18 @@ if($img!==FALSE) { 	// тайл есть
 	if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 		//error_log("No $r/$z/$x/$y tile exist?; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
 		// тайл надо получать
-		exec("$phpCLIexec tilefromsource.php $fileName > /dev/null 2>&1 &"); 	// exec не будет ждать завершения
+		//exec("$phpCLIexec tilefromsource.php $fileName > /dev/null 2>&1 &"); 	// exec не будет ждать завершения
+		// вместо получения - положим в очередь, кто-нибудь когда-нибудь получит
+		$jobName = "$sourceName.$z"; 	// имя файла задания
+		$umask = umask(0); 	// сменим на 0777 и запомним текущую
+		file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
+		chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
+		umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+		//error_log("Create working job: $jobsInWorkDir/$jobName;");
+		if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одного планировщика
+			//error_log("Need scheduler for zoom $z");
+			exec("$phpCLIexec loaderSched.php > /dev/null 2>&1 &"); 	// если запускать сам файл, ему нужны права
+		}
 	} 
 }
 else { 	// тайла нет, тайл надо получать
