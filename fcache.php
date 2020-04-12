@@ -214,7 +214,7 @@ return($newimg);
 } // end function getTile
 
 function createJob($mapSourcesName,$x,$y,$z) {
-/**/
+/* */
 global $jobsInWorkDir, $phpCLIexec, $aheadLoadStartZoom, $loaderMaxZoom; 	// переменные из конфига
 if((($z+1) > $loaderMaxZoom) OR ($z < $aheadLoadStartZoom)) return;
 $jobName = "$mapSourcesName.$z"; 	// имя файла задания

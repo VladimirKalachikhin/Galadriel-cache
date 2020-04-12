@@ -44,7 +44,6 @@ if($img!==FALSE) { 	// тайл есть
 	if($ttl AND ($imgFileTime > 0) AND $freshOnly) $img=FALSE; 	// тайл протух, но указано протухшие тайлы не показывать
 	//error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
 	showTile($img,$ext); 	// тайл есть, возможно, пустой - сначала покажем
-	//error_log("showTile $r/$z/$x/$y.$ext from cache");		
 	// потом, если надо, получим
 	if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 		//error_log("No $r/$z/$x/$y tile exist?; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
