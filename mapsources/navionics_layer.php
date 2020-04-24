@@ -64,9 +64,9 @@ $trash = array(
 );
 
 // поскольку этот файл require там, где это всё есть:
-$getURLparms['on403'] = $on403;
-$getURLparms['tileCacheDir'] = $tileCacheDir;
-$getURLparms['mapSourcesName'] = $mapSourcesName;
+$getURLparams['on403'] = $on403;
+$getURLparams['tileCacheDir'] = $tileCacheDir;
+$getURLparams['mapSourcesName'] = $mapSourcesName;
 
 $functionGetURL = <<<'EOFU'
 require_once('fNavionics.php'); 	// дополнительные функции, необходимые для получения тайла
