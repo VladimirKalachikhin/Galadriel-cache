@@ -66,7 +66,6 @@ elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapA
 else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
 $getURLparams['mapAddPath'] = $mapAddPath;
 //echo "fileName=$fileName; <br>\n";
-$newimg = FALSE; 	// 
 if (!$functionGetURL) goto END;; 	// нет функции для получения тайла	
 // есть функция получения тайла
 // определимся с наличием проблем связи и источника карты
@@ -78,7 +77,7 @@ eval($functionGetURL); 	// создадим функцию GetURL
 $tries = 1;
 $file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 do {
-	$newimg = NULL; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
+	$newimg = FALSE; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
 	//echo "Параметры:<pre>"; print_r($getURLparams); echo "</pre>";
 	$uri = getURL($z,$x,$y,$getURLparams); 	// получим url и массив с контекстом: заголовками, etc.
 	//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
@@ -114,20 +113,23 @@ do {
 	// Обработка проблем ответа
 	if((!@$http_response_header)) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
 		doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник
-		goto END;; 	 // бессмысленно ждать, уходим совсем
+		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
 	elseif(strpos($http_response_header[0],'403') !== FALSE) { 	// Forbidden
 		if($on403=='skip') {
 			error_log('Save enpty tile by 403 Forbidden responce and on403==skip parameter');
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
 		}
-		else 	doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник 
-		error_log('Save enpty tile by 403 Forbidden responce');
+		else {	
+			doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник 
+			$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
+			error_log('403 Forbidden responce');
+		}
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
 	elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден.
+		$newimg = NULL; 	// картинки нет, потому что её нет, сохраняем пустой тайл.
 		error_log('Save enpty tile by 404 Not Found');
-		$newimg = NULL; 	// картинки нет, потому что её нет
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
 	elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
@@ -143,14 +145,18 @@ do {
 					error_log('Save enpty tile by 403 Forbidden responce and on403==skip parameter');
 					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
 				}
-				else 	doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник 
-				error_log('Save enpty tile by 403 Forbidden responce');
+				else {
+					doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник 
+					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
+					error_log('403 Forbidden responce');
+				}
 				break 2; 	 // бессмысленно ждать, прекращаем получение тайла
 			}
 			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'503') !== FALSE)) { 	// Service Unavailable
 				if ($tries > $maxTry-1) { 	// ждём
 					doBann($mapSourcesName,$bannedSourcesFileName); 	// напоследок забаним источник
-					goto END;; 	 // бессмысленно ждать, уходим совсем
+					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
+					goto END; 	 // бессмысленно ждать, уходим совсем
 				}
 			}
 		}
