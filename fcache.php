@@ -224,16 +224,16 @@ if(($newimg !== FALSE) AND $bannedSources[$mapSourcesName]) { 	// снимем �
 
 // Опережающее скачивание при показе - должно помочь с крупными масштабами
 if($newimg) { 	// поставим задание на получение всех нижележащих тайлов, если этот тайл удачно скачался
-	createJob($mapSourcesName,$x,$y,$z);
+	createJob($mapSourcesName,$x,$y,$z,$jobsDir,$jobsInWorkDir, $phpCLIexec, $aheadLoadStartZoom, $loaderMaxZoom); 	// переменные из конфига
 }
 
 END:
 return($newimg);
 } // end function getTile
 
-function createJob($mapSourcesName,$x,$y,$z) {
+function createJob($mapSourcesName,$x,$y,$z,$jobsDir,$jobsInWorkDir,$phpCLIexec,$aheadLoadStartZoom,$loaderMaxZoom) {
 /* */
-global $jobsInWorkDir, $phpCLIexec, $aheadLoadStartZoom, $loaderMaxZoom; 	// переменные из конфига
+//echo "mapSourcesName=$mapSourcesName; z=$z; jobsDir=$jobsDir; jobsInWorkDir=$jobsInWorkDir, phpCLIexec=$phpCLIexec, aheadLoadStartZoom=$aheadLoadStartZoom, loaderMaxZoom=$loaderMaxZoom\n";
 if((($z+1) > $loaderMaxZoom) OR ($z < $aheadLoadStartZoom)) return;
 $jobName = "$mapSourcesName.$z"; 	// имя файла задания
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
