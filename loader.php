@@ -19,7 +19,7 @@
 Версионные карты (типа Weather) не могут быть загружены загрузчиком !!!!
 */
 
-$path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // определяем каталог скрипта
+$path_parts = pathinfo(__FILE__); // определяем каталог скрипта
 chdir($path_parts['dirname']); // сменим каталог выполнение скрипта
 
 require('params.php'); 	// пути и параметры
@@ -34,9 +34,9 @@ echo "Стартовал загрузчик $pID\n";
 do {
 	$execString = '$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$r --maxTry$maxTry'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
 	
+	clearstatcache(TRUE);
 	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
 	shuffle($jobNames); 	// перемешаем массив, чтобы по возможности разные задания брались в обработку
-	//echo ":<pre> jobNames "; print_r($jobNames); echo "</pre>";
 	// проблемные источники
 	$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName));
 	//echo ":<pre> bannedSources "; print_r($bannedSources); echo "</pre>\n";
@@ -85,6 +85,7 @@ do {
 	if($s===FALSE) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
 	if($s[0]=='#') { 	// там есть указание, что запускать
 		$execString = trim(substr($s,1));
+		//echo "execString=$execString;";
 		if(!$execString) {
 			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// грохнем файл задания, с которым непонятно что делать
 			flock($job, LOCK_UN); 	//снимем блокировку

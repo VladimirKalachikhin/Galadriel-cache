@@ -6,7 +6,7 @@ ob_start(); 	// попробуем перехватить любой вывод 
 Если полученный тайл ещё не показывали (он новый) - показываем.
 */
 //$now = microtime(TRUE);
-$path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
+$path_parts = pathinfo(__FILE__); // определяем каталог скрипта
 chdir($path_parts['dirname']); // задаем директорию выполнение скрипта
 
 require('params.php'); 	// пути и параметры

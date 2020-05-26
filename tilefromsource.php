@@ -3,7 +3,7 @@
 session_start(); 	// оно не нужно, но в источниках может использоваться, например, в navionics
 require_once('fcache.php'); // getTile($uri)
 
-$path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
+$path_parts = pathinfo(__FILE__); // определяем каталог скрипта
 $selfPath = $path_parts['dirname'];
 chdir($selfPath); // задаем директорию выполнение скрипта
 

@@ -3,6 +3,7 @@
 
 getTile($path) - получить файл из источника и положить в кеш
 doBann($r,$bannedSourcesFileName) - забанить источник
+createJob($mapSourcesName,$x,$y,$z,$jobsDir,$jobsInWorkDir,$phpCLIexec,$aheadLoadStartZoom,$loaderMaxZoom)
 */
 function getTile($path,$params=array(),$getURLparams=array()) {
 /* 
