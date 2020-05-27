@@ -105,11 +105,18 @@ do {
 			echo "Поставим его на скачивание\n";
 			//error_log("Планировщик: Поставим его на скачивание");
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
-			copy("$jobsDir/$job","$jobsInWorkDir/$job"); 	// поставим на скачивание
+			$res = copy("$jobsDir/$job","$jobsInWorkDir/$job"); 	// поставим на скачивание
 			chmod("$jobsInWorkDir/$job",0777); 	// чтобы запуск от другого юзера
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-			$loaderPIDs[] = -1; 	// добавим заведомо несуществующий PID к списку запуценных загрузчиков, в знак того, что загрузчик надо запустить
-			continue;
+			if($res) {
+				$loaderPIDs[] = -1; 	// добавим заведомо несуществующий PID к списку запуценных загрузчиков, в знак того, что загрузчик надо запустить
+				continue;
+			}
+			else {
+				echo "ERROR: Поставить задание на скачивание не удалось.\nКаталог $jobsInWorkDir/$job отсутствует? На него нет прав?\n";
+				//error_log("LoaderShed: ERROR run job file.\nIs $jobsInWorkDir/$job exists?\n");
+				break;
+			}
 		}
 		clearstatcache(TRUE,"$jobsInWorkDir/$job");
 		$fs = filesize("$jobsInWorkDir/$job"); 	// выполняющееся скачивание
