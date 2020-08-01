@@ -67,12 +67,12 @@ elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapA
 else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
 $getURLparams['mapAddPath'] = $mapAddPath;
 //echo "fileName=$fileName; <br>\n";
-if (!$functionGetURL) goto END;; 	// нет функции для получения тайла	
+if (!$functionGetURL) goto END; 	// нет функции для получения тайла	
 // есть функция получения тайла
 // определимся с наличием проблем связи и источника карты
 $bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
 //echo "bannedSources:<pre>"; print_r($bannedSources); echo "</pre>";
-if((time()-$bannedSources[$mapSourcesName]-$noInternetTimeout)<0) goto END;;	// если таймаут из конфига не истёк
+if((time()-$bannedSources[$mapSourcesName][0]-$noInternetTimeout)<0) goto END;;	// если таймаут из конфига не истёк
 // Проблем связи и источника нет - будем получать тайл
 eval($functionGetURL); 	// создадим функцию GetURL
 $tries = 1;
@@ -82,7 +82,10 @@ do {
 	//echo "Параметры:<pre>"; print_r($getURLparams); echo "</pre>";
 	$uri = getURL($z,$x,$y,$getURLparams); 	// получим url и массив с контекстом: заголовками, etc.
 	//echo "Источник:<pre>"; print_r($uri); echo "</pre>";
-	if(!$uri) goto END;; 	// по каким-то причинам нет uri тайла, очевидно, картинки нет и не будет
+	if(!$uri) {
+		error_log("ERROR: $mapSourcesName no hawe url.");
+		goto END; 	// по каким-то причинам нет uri тайла, очевидно, картинки нет и не будет
+	}
 	// Параметры запроса
 	if(is_array($uri))	list($uri,$opts) = $uri;
 	if(!$opts['http']) {
@@ -113,7 +116,7 @@ do {
 
 	// Обработка проблем ответа
 	if((!@$http_response_header)) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
-		doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник
+		doBann($mapSourcesName,$bannedSourcesFileName,'no internet connection'); 	// забаним источник
 		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
 	elseif(strpos($http_response_header[0],'403') !== FALSE) { 	// Forbidden
@@ -122,7 +125,7 @@ do {
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
 		}
 		else {	
-			doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник 
+			doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 			error_log('403 Forbidden responce');
 		}
@@ -147,7 +150,7 @@ do {
 					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
 				}
 				else {
-					doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник 
+					doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 					error_log('403 Forbidden responce');
 				}
@@ -155,7 +158,7 @@ do {
 			}
 			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'503') !== FALSE)) { 	// Service Unavailable
 				if ($tries > $maxTry-1) { 	// ждём
-					doBann($mapSourcesName,$bannedSourcesFileName); 	// напоследок забаним источник
+					doBann($mapSourcesName,$bannedSourcesFileName,'Service Unavailable'); 	// напоследок забаним источник
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 					goto END; 	 // бессмысленно ждать, уходим совсем
 				}
@@ -188,9 +191,9 @@ do {
 	$tries++;
 	if ($tries > $maxTry) {	// Ждать больше нельзя
 		$newimg = FALSE; 	// Тайла не получили
-		doBann($mapSourcesName,$bannedSourcesFileName); 	// забаним источник
+		doBann($mapSourcesName,$bannedSourcesFileName,'Many tries'); 	// забаним источник
 		//break;
-		goto END;; 	 // бессмысленно ждать, уходим совсем
+		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
 	sleep($tryTimeout);
 } while (TRUE); 	// 
@@ -215,7 +218,7 @@ if($newimg !== FALSE) {	// теперь тайл получен, возможн�
 
 // Обслужим источник
 if(($newimg !== FALSE) AND $bannedSources[$mapSourcesName]) { 	// снимем проблемы с источником, получили мы тайл или нет
-	$bannedSources[$mapSourcesName] = FALSE; 	// снимем проблемы с источником
+	unset($bannedSources[$mapSourcesName]); 	// снимем проблемы с источником
 	$umask = umask(0); 	// сменим на 0777 и запомним текущую
 	file_put_contents($bannedSourcesFileName, serialize($bannedSources));
 	@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
@@ -247,13 +250,14 @@ if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одно
 }
 } // end function createJob
 
-function doBann($r,$bannedSourcesFileName) {
+function doBann($r,$bannedSourcesFileName,$reason='') {
 /* Банит источник */
 //error_log(print_r($http_response_header,TRUE));
 //error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
 
 $curr_time = time();
-$bannedSources[$r] = $curr_time; 	// отметим проблемы с источником
+$bannedSources[$r][0] = $curr_time; 	// отметим проблемы с источником
+$bannedSources[$r][1] = $reason; 	// 
 //echo "bannedSources:<pre>"; print_r($bannedSources); echo "</pre>";
 //echo serialize($bannedSources)."<br>\n";
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
@@ -262,7 +266,7 @@ file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// зап
 @chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
 umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 //error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
-error_log("fcache.php doBann: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)."!");
+error_log("fcache.php doBann: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)." by $reason reason!");
 } // end function doBann
 ?>
 

@@ -37,6 +37,7 @@ do {
 	clearstatcache(TRUE);
 	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
 	shuffle($jobNames); 	// перемешаем массив, чтобы по возможности разные задания брались в обработку
+	$jobCNT = count($jobNames);
 	// проблемные источники
 	$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName));
 	//echo ":<pre> bannedSources "; print_r($bannedSources); echo "</pre>\n";
@@ -48,14 +49,14 @@ do {
 		$zoom = $path_parts['extension']; 	//
 		$map = $path_parts['filename'];
 		if($bannedSources[$map]) { 	// источник с проблемами
-			if((time()-$bannedSources[$map]-($noInternetTimeout*1))<0) {	// если многократный таймаут из конфига не истёк
+			if((time()-$bannedSources[$map][0]-($noInternetTimeout*1))<0) {	// если многократный таймаут из конфига не истёк
 				unset($timer[$jobName]); 	// удалим из планировки загрузки
-				echo "Бросаем файл $jobName - источник с проблемами\n\n";
+				echo "Бросаем файл $jobName - источник с проблемами {$bannedSources[$map][1]}\n\n";
 				$jobName = FALSE; 	// других может и не быть
 				continue;	// проигнорируем задание для проблемного источника
 			}
 			else { 				// 	иначе - таки запустим скачивание
-				echo "Пытаемся $jobName - источник с проблемами\n";
+				echo "Пытаемся $jobName - источник с проблемами {$bannedSources[$map][1]}\n";
 				break;
 			}
 		}
@@ -69,12 +70,14 @@ do {
 	echo "Берём файл $jobName\n";
 	//echo filesize("$jobsInWorkDir/$jobName") . " \n";
 	// Планировщик времени
-	if(count($jobNames)<count($timer)) $timer=array(); 	// статистика какого-то завершившегося задания присутствует в $timer, и среднее будет неправильно 
-	$ave = ((@max($timer)+@min($timer))/2)+$lag; 	// среднее плюс допустимое
-	if($timer[$jobName]>$ave) { 	// пропустим эту карту, если на неё уже затрачено много времени
-		echo "бросаем - на него затрачено много времени\n\n";
-		//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
-		continue;
+	if($jobCNT > 1) { 	# не надо планировать, если только одно задание
+		if($jobCNT<count($timer)) $timer=array(); 	// статистика какого-то завершившегося задания присутствует в $timer, и среднее будет неправильно 
+		$ave = ((@max($timer)+@min($timer))/2)+$lag; 	// среднее плюс допустимое
+		if($timer[$jobName]>$ave) { 	// пропустим эту карту, если на неё уже затрачено много времени
+			echo "бросаем - на него затрачено много времени\n\n";
+			//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
+			continue;
+		}
 	}
 	// Есть ли ещё файл?
 	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
