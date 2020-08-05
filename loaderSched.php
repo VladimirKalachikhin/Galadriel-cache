@@ -166,6 +166,7 @@ do {
 			echo "Запускаем загрузчик\n";
 			exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
 			//exec("$phpCLIexec loader.php > /dev/null &");
+			//exec("$phpCLIexec loader.php &");
 			$runs++;
 		}
 		else break;
@@ -175,6 +176,7 @@ do {
 			echo "Запускаем ещё загрузчик\n";
 			exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
 			//exec("$phpCLIexec loader.php > /dev/null &");
+			//exec("$phpCLIexec loader.php &");
 		}
 	}
 //LOOP:

@@ -86,6 +86,7 @@ do {
 	$s=trim(fgets($job));
 	//echo "s=$s;\n";
 	if($s===FALSE) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
+	$customExec = FALSE;
 	if($s[0]=='#') { 	// там есть указание, что запускать
 		$execString = trim(substr($s,1));
 		//echo "execString=$execString;";
@@ -95,14 +96,8 @@ do {
 			fclose($job); 	// освободим файл
 			continue;
 		}
-		$s=fgets($job);
-		if($s===FALSE) { 	// но упс - файл кончился
-			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// 
-			flock($job, LOCK_UN); 	//снимем блокировку
-			fclose($job); 	// освободим файл
-			break;
-		}
-		$s=trim($s);
+		$customExec = TRUE;
+		$s=trim(fgets($job));
 	}
 	$strSize = strlen($s); 	// размер первой строки в байтах
 	//echo "s=$s; strSize=$strSize;\n";
@@ -146,18 +141,25 @@ do {
 		$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
 		$res = FALSE;
 		$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
-		if($img!==FALSE) { 	// тайл есть
-			$imgFileTime = time()-filemtime($fileName)-$ttl; 	// прожитое тайлом время сверх положенного
-			//error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
-			if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
-				// тайл надо получать
-				//echo '$execString1="'.$execString.'";'."\n";
+		if($img!==FALSE) { 	//echo "тайл есть\n";
+			//echo '$execString="'.$execString.'";'."\n";
+			if($customExec) {
 				eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
-				//echo "$execString1\n"; 	//
-				$res = exec($execStringParsed); 	// загрузим тайл синхронно
-			} 
+				echo "Выполняется $execStringParsed\n"; 	//
+				$res = exec($execStringParsed); 	// 
+			}
+			else {
+				$imgFileTime = time()-filemtime($fileName)-$ttl; 	// прожитое тайлом время сверх положенного
+				//error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
+				if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
+					// тайл надо получать
+					eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
+					//echo "$execStringParsed\n"; 	//
+					$res = exec($execStringParsed); 	// загрузим тайл синхронно
+				} 
+			}
 		}
-		else { 	// тайла нет, тайл надо получать
+		else { 	//echo "тайла нет, тайл надо получать\n";
 			//echo '$execString1="'.$execString.'";'."\n";
 			eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
 			//echo "$execString1\n"; 	//
