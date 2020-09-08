@@ -19,7 +19,7 @@ $functionGetURL = <<<'EOFU'
 EOFU; 	// string to wrap getURL() function. This is necessery to avoid function redefinitions error.
 
 Main part - get the tile function:
-function getURL($z,$x,$y,$layer) {}
+function getURL($z,$x,$y,$getURLparams) {}
 $z - zoom
 $x - x number of tile
 $y - y number of tile

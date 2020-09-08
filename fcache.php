@@ -1,7 +1,7 @@
 <?php 
 /* Функции работы с кешем
 
-getTile($path) - получить файл из источника и положить в кеш
+getTile($path) - получить файл из источника и положить в кеш tilefromsource.php
 doBann($r,$bannedSourcesFileName) - забанить источник
 createJob($mapSourcesName,$x,$y,$z,$jobsDir,$jobsInWorkDir,$phpCLIexec,$aheadLoadStartZoom,$loaderMaxZoom)
 */
@@ -9,10 +9,10 @@ function getTile($path,$params=array(),$getURLparams=array()) {
 /* 
 	Get tile from souce
 
-Call to get tile from source, to asinchronous update cache.
-Return image or NULL and update cache.
+Call to get tile from source, to asynchronous update cache.
+Return image or NULL or FALSE and update cache.
 
-Use: $ php tilefromsource.php '/tiles/OpenTopoMap/11/1185/578.png'
+Usage: $ php tilefromsource.php '/tiles/OpenTopoMap/11/1185/578.png'
 
 Если получено 404 - сохраняет пустой тайл, в остальных случаях - переспрашивает.
 Если принятый файл - в списке мусорных,сохраняем пустой
@@ -20,7 +20,7 @@ Use: $ php tilefromsource.php '/tiles/OpenTopoMap/11/1185/578.png'
 $params - массив с параметрами вообще. В основном - для переопределения переменных из params.php
 После загрузки params.php из $params создаются переменные, переписывающие переменные из params.php
 
-$getURLparams - массив с параметрами для передаяи функции getURL(), определённой в файлк источника
+$getURLparams - массив с параметрами для передаяи функции getURL(), определённой в файле источника
 вообще говоря - произвольный, но будем считать, что туда могут передаваться стандартные переменные 
 со своим именем в качестве ключа
 */
@@ -119,15 +119,15 @@ do {
 		doBann($mapSourcesName,$bannedSourcesFileName,'no internet connection'); 	// забаним источник
 		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
-	elseif(strpos($http_response_header[0],'403') !== FALSE) { 	// Forbidden
+	elseif((strpos($http_response_header[0],'403') !== FALSE) or (strpos($http_response_header[0],'204') !== FALSE)) { 	// Forbidden or No Content
 		if($on403=='skip') {
-			error_log('Save enpty tile by 403 Forbidden responce and on403==skip parameter');
+			error_log('Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
 		}
 		else {	
 			doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-			error_log('403 Forbidden responce');
+			error_log('403 Forbidden or No Content responce');
 		}
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
@@ -144,15 +144,15 @@ do {
 				$newimg = NULL;
 				break 2; 	// бессмысленно ждать, прекращаем получение тайла
 			}
-			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'403') !== FALSE)) { 	// Forbidden.
+			elseif((substr($header,0,4)=='HTTP') AND ((strpos($header,'403') !== FALSE) or ((strpos($http_response_header[0],'204') !== FALSE)))) { 	// Forbidden.
 				if($on403=='skip') {
-					error_log('Save enpty tile by 403 Forbidden responce and on403==skip parameter');
+					error_log('Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
 				}
 				else {
 					doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-					error_log('403 Forbidden responce');
+					error_log('403 Forbidden or No Content responce');
 				}
 				break 2; 	 // бессмысленно ждать, прекращаем получение тайла
 			}
@@ -167,7 +167,7 @@ do {
 	}
 	// Обработка проблем полученного
 	$mime_type = finfo_buffer($file_info,$newimg);
-	if (substr($mime_type,0,5)=='image') {
+	if ((substr($mime_type,0,5)=='image') or (substr($mime_type,0,24)=='application/octet-stream')) { 	// и векторные тайлы
 		if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
 			if($trash) $trash = array_merge($trash,$globalTrash);
 			else $trash = $globalTrash;
