@@ -3,7 +3,7 @@ This is a simple raster map tiles cache/proxy to use on weak computers such as R
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) is a good choice too.   
 Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps without a server - directly on your smartphone in the event of a disaster.
 
-## v. 2.1
+## v. 2.2
 
 ## Features:
 1. User-defined map sources
