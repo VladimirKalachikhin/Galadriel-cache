@@ -43,7 +43,7 @@ if($img!==FALSE) { 	// тайл есть
 	$imgFileTime = time()-filemtime($fileName)-$ttl; 	// прожитое тайлом время сверх положенного
 	if($ttl AND ($imgFileTime > 0) AND $freshOnly) $img=FALSE; 	// тайл протух, но указано протухшие тайлы не показывать
 	//error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
-	showTile($img,$ext); 	// тайл есть, возможно, пустой - сначала покажем
+	showTile($img,$mime_type,$content_encoding,$ext); 	// тайл есть, возможно, пустой - сначала покажем
 	// потом, если надо, получим
 	if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
 		//error_log("No $r/$z/$x/$y tile exist?; Expired to ".(time()-filemtime($fileName)-$ttl)."sec. maxZoom=$maxZoom;");
@@ -55,7 +55,7 @@ if($img!==FALSE) { 	// тайл есть
 		file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
 		chmod("$jobsInWorkDir/$jobName",0777); 	// чтобы запуск от другого юзера
 		umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-		//error_log("Create working job: $jobsInWorkDir/$jobName;");
+		error_log("tiles.php: Create working job: $jobsInWorkDir/$jobName;");
 		if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одного планировщика
 			//error_log("Need scheduler for zoom $z");
 			exec("$phpCLIexec loaderSched.php > /dev/null 2>&1 &"); 	// если запускать сам файл, ему нужны права
@@ -66,13 +66,13 @@ else { 	// тайла нет, тайл надо получать
 	exec("$phpCLIexec tilefromsource.php $fileName"); 	// exec будет ждать завершения
 	// покажем тайл
 	$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша
-	showTile($img,$ext); 	//покажем тайл
+	showTile($img,$mime_type,$content_encoding,$ext); 	//покажем тайл
 }
 END:
 ob_clean(); 	// очистим, если что попало в буфер
 return;
 
-function showTile($tile,$ext='') {
+function showTile($tile,$mime_type='',$content_encoding='',$ext='') {
 /*
 Отдаёт тайл. Считается, что только эта функция что-то показывает клиенту
 https://gist.github.com/bubba-h57/32593b2b970366d24be7
@@ -84,18 +84,21 @@ ob_end_clean(); 			// очистим, если что попало в буфер
 ob_start();
 header("Connection: close"); 	// Tell the client to close connection
 if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
-	$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-	$mime_type = finfo_buffer($file_info,$tile);
-	$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
-	header("Expired: " . $exp_gmt);
+	if(!$mime_type) {
+		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+		$mime_type = finfo_buffer($file_info,$tile);
+	}
+	//$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
+	//header("Expired: " . $exp_gmt);
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
 	//header("Last-Modified: " . $mod_gmt);
-	header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
+	//header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
 	if($mime_type) header ("Content-Type: $mime_type");
-	else header ("Content-Type: image/$ext");
+	elseif($ext) header ("Content-Type: image/$ext");
+	if($content_encoding) header ("Content-encoding: $content_encoding");
 }
 else {
-	header("X-Debug: Not found if no tile"); // HTTP/1.1
+	header("X-Debug: Not found if no tile");
 	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");

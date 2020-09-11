@@ -113,7 +113,7 @@ do {
 
 	// Запрос - собственно, получаем файл
 	$newimg = @file_get_contents($uri, FALSE, $context); 	// 
-	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>";
+	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
 
 	// Обработка проблем ответа
 	if((!@$http_response_header)) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
@@ -122,8 +122,8 @@ do {
 	}
 	elseif((strpos($http_response_header[0],'403') !== FALSE) or (strpos($http_response_header[0],'204') !== FALSE)) { 	// Forbidden or No Content
 		if($on403=='skip') {
-			error_log('Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
+			error_log('Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 		}
 		else {	
 			doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
@@ -134,26 +134,26 @@ do {
 	}
 	elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден.
 		$newimg = NULL; 	// картинки нет, потому что её нет, сохраняем пустой тайл.
-		error_log('Save enpty tile by 404 Not Found');
+		error_log('Save enpty tile by 404 Not Found and go away');
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
 	elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
 		foreach($http_response_header as $header) {
 			if((substr($header,0,4)=='HTTP') AND (strpos($header,'200') !== FALSE)) break; 	// файл получен, перейдём к обработке
 			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'404') !== FALSE)) { 	// файл не найден.
-				error_log('Save enpty tile by 404 Not Found');
 				$newimg = NULL;
+				error_log('Save enpty tile by 404 Not Found and go away');
 				break 2; 	// бессмысленно ждать, прекращаем получение тайла
 			}
 			elseif((substr($header,0,4)=='HTTP') AND ((strpos($header,'403') !== FALSE) or ((strpos($http_response_header[0],'204') !== FALSE)))) { 	// Forbidden.
 				if($on403=='skip') {
-					error_log('Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
+					error_log('Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 				}
 				else {
 					doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-					error_log('403 Forbidden or No Content responce');
+					error_log('403 Forbidden or No Content responce - do bann');
 				}
 				break 2; 	 // бессмысленно ждать, прекращаем получение тайла
 			}
@@ -161,14 +161,16 @@ do {
 				if ($tries > $maxTry-1) { 	// ждём
 					doBann($mapSourcesName,$bannedSourcesFileName,'Service Unavailable'); 	// напоследок забаним источник
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
+					error_log('503 Service Unavailable responce - do bann and go away');
 					goto END; 	 // бессмысленно ждать, уходим совсем
 				}
 			}
 		}
 	}
 	// Обработка проблем полученного
-	$mime_type = finfo_buffer($file_info,$newimg);
-	if ((substr($mime_type,0,5)=='image') or (substr($mime_type,0,24)=='application/octet-stream')) { 	// и векторные тайлы
+	$mime_type = trim(substr(getResponceFiled($http_response_header,'Content-Type')[0],13));
+	if(!$mime_type) $mime_type = finfo_buffer($file_info,$newimg);
+	if ((substr($mime_type,0,5)=='image') or (substr($mime_type,-10)=='x-protobuf')  or (substr($mime_type,-6)=='x-gzip')) { 	// и векторные тайлы
 		if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
 			if($trash) $trash = array_merge($trash,$globalTrash);
 			else $trash = $globalTrash;
@@ -181,18 +183,21 @@ do {
 				break;
 			}
 		}
+		//echo "всё нормально, тайл получен\n";
 		break; 	// всё нормально, тайл получен
 	}
 	elseif (substr($mime_type,0,4)=='text') { 	// файла нет или не дадут. Но OpenTopo потом даёт
 		error_log($newimg);
 	}
 	else { 	// файла нет или не дадут.
+		error_log("no tile and unknown problem");
 	}
 	// Тайла не получили, надо подождать
 	$tries++;
 	if ($tries > $maxTry) {	// Ждать больше нельзя
 		$newimg = FALSE; 	// Тайла не получили
 		doBann($mapSourcesName,$bannedSourcesFileName,'Many tries'); 	// забаним источник
+		error_log("no tile by max try - do bann and go away");
 		//break;
 		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
@@ -203,6 +208,7 @@ do {
 //if($newimg !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла
 if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file_exists($fileName))))) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла, если он пустой - запишем только в том случае, если файла нет
 	
+	//echo "сохраняем тайл $fileName с mime-type $mime_type\n";
 	$umask = umask(0); 	// сменим на 0777 и запомним текущую
 	//@mkdir(dirname($fileName), 0755, true);
 	@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
@@ -270,5 +276,11 @@ umask($umask); 	// 	Вернём. Зачем? Но umask глобальна во
 //error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
 error_log("fcache.php doBann: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)." by $reason reason!");
 } // end function doBann
+
+function getResponceFiled($http_response_header,$respType) {
+/* Возвращает массив полей http ответа, начинающихся с $respType
+*/
+return array_values(array_filter($http_response_header,function ($str) use($respType){return (strpos($str,$respType) === 0);} ));
+} // end function getResponceFiled
 ?>
 
