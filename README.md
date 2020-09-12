@@ -1,7 +1,7 @@
 # GaladrielCache
-This is a simple raster map tiles cache/proxy to use on weak computers such as RaspberryPi or NAS. The author uses it in the wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.  
+This is a simple map tiles cache/proxy to use on weak computers such as RaspberryPi or NAS. The author uses it in the wi-fi router/GSM modem under OpenWRT on his sailboat Galadriel.  
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) is a good choice too.   
-Tiles stored on standard OSM z/x/y file structure, so you may use SD with maps without a server - directly on your smartphone in the event of a disaster.
+Tiles stored on standard OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
 ## v. 2.3
 
@@ -15,7 +15,7 @@ It's all. No versioning, no reprojection.
 ## Usage:
 _tiles.php_ - cache/proxy 
 ### OruxMaps configuration
-To use GaladrielCache with OruxMaps, add map definitions to OruxMaps `onlinemapsources.xml`, for example - Yandex Sat map:
+To use GaladrielCache with OruxMaps, add map definitions to OruxMaps `onlinemapsources.xml`, for example -- Yandex Sat map:
 ```
 <onlinemapsource uid="1055">
 <name>Yandex Sat via my proxy (SAT)</name>
@@ -38,7 +38,7 @@ ATTENTION! You MUST configure your MAP VIEWER for the use of specific projection
 The GaladrielCache knows nothing about projections, it's store tiles only.
 
 ### GaladrielMap configuration
-To use [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) with GaladrielCache - set `$tileCachePath` in GaladrielMap's `params.php` file. 
+To use [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) with GaladrielCache -- set `$tileCachePath` in GaladrielMap's `params.php` file. 
 
 ## Install&configure:
 You must have a web server with php support. Just copy.  
@@ -55,7 +55,7 @@ Help about map sources are in `mapsources/mapsources.txt`
 `/dev/sdb1` - your SD card
 
 ## Direct access to the cache
-If you server dead, but you have a rooted Android phone or tablet, you may:
+If you server dead, but you have a rooted Android phone or tablet, you may use raster tiles directly:
 ### Mount SD card
 1. remove SD card with the cache from the server
 2. insert the SD card with cache to Android device
