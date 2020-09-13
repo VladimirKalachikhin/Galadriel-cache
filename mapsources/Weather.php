@@ -6,21 +6,21 @@ $ext = 'png'; 	// tile image type/extension
 $minZoom = 1;
 $maxZoom = 7;
 $freshOnly = TRUE; 	// не показывать протухшие тайлы
-$opts = array(
-	'http'=>array(
-		'header'=>"User-Agent: Galadriel-map\r\n"
-	)
-);
 // 
 $data = array(
 );
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y,$getURLparms=array()) {
-if(!($layer=@$getURLparms['mapAddPath'])) $layer="wind_stream/0h";
-$url = "https://weather.openportguide.de/tiles/actual/$layer";
+if(!($layer=@$getURLparms['mapAddPath'])) $layer="/wind_stream/0h";
+$url = "https://weather.openportguide.de/tiles/actual$layer";
 $url .= "/".$z."/".$x."/".$y.".png";
-return $url;
+$opts = array(
+	'http'=>array(
+		'header'=>"User-Agent: Galadriel-map"
+	)
+);
+return array($url,$opts);
 }
 EOFU;
 // При открытии
