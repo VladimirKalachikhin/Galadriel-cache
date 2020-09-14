@@ -88,6 +88,12 @@ if($tile) { 	// тайла могло не быть в кеше, и его не 
 		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 		$mime_type = finfo_buffer($file_info,$tile);
 	}
+	elseif(($mime_type == 'application/x-protobuf') and (!$content_encoding)) {
+		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+		$file_type = finfo_buffer($file_info,$tile);
+		//header("X-Debug: $file_type");
+		if($file_type == 'application/x-gzip') $content_encoding = 'gzip';
+	}
 	//$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
 	//header("Expired: " . $exp_gmt);
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
