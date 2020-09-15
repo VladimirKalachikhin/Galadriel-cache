@@ -176,4 +176,4 @@ Use in cli _clearCache.php mapname_ to *mapname* or _clearCache.php_ to all maps
 Use in cli _clearCache.php mapname fresh_ to *mapname* or _clearCache.php fresh_ to all maps to remove from cache expired tiles.
 
 ## Support
-You can get support for GaladrielMap and GaladrielCahe for a beer [via PayPal](https://paypal.me/VladimirKalachikhin) at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)
+You can get support for GaladrielMap and GaladrielCahe for a beer [via PayPal](https://paypal.me/VladimirKalachikhin) or [YandexMoney](https://money.yandex.ru/to/4100115854556242) at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)
