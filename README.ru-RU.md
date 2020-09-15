@@ -190,4 +190,4 @@ $ php clearCache.php
 Список ненужных файлов указывается в массиве $trash в описаноо каждой карты, и/или в массиве $globalTrash файла `params.php` для всех карт. Ненужными могут быть тайлы - заглушки, или, допустим, файлы .tne, если вы используете кеш от программы SAS.Planet.
 
 ## Поддержка
-За кружку пива через PayPal можно получить консультации по адресу [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)
+За чашку кофе [через PayPal](https://paypal.me/VladimirKalachikhin?locale.x=ru_RU) можно получить консультации по адресу [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)
