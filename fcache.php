@@ -168,9 +168,10 @@ do {
 		}
 	}
 	// Обработка проблем полученного
-	$in_mime_type = trim(substr(getResponceFiled($http_response_header,'Content-Type')[0],13));
+	$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений
+	//echo "in_mime_type=$in_mime_type;\n";
 	if($in_mime_type) { 	// mime_type присланного сообщили
-		if($mime_type) { 	// mime_type того, что должно быть, указан в конфиге источника
+		if(isset($mime_type)) { 	// mime_type того, что должно быть, указан в конфиге источника
 			if($in_mime_type == $mime_type) { 	// mime_type присланного совпадает с требуемым
 				// возможно, это можно принять
 				if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
@@ -210,8 +211,8 @@ do {
 				break; 	// всё нормально, тайл получен
 			}
 			else { 	// получен не тайл или непонятный тайл
-				if (substr($mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-					error_log("fcache.php getTile: $newimg");
+				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
+					error_log("fcache.php getTile: getting text: '$newimg'");
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 				else {
@@ -240,7 +241,7 @@ do {
 			break; 	// всё нормально, тайл получен
 		}
 		else { 	// получен не тайл или непонятный тайл
-			if (substr($mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
+			if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
 				error_log("fcache.php getTile: $newimg");
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 			}
