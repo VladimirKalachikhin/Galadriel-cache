@@ -34,3 +34,8 @@ $data = array();
 $data['javascriptOpen']; 	// the javascript string, eval'ed before create map
 $data['javascriptClose']; 	// the javascript string, eval'ed after close map
 
+Vector tiles --
+must die. This is an ugly, resource-intensive format for benefit impudent merchants.
+But a MapBox .pbf vector tiles has limited support. Style .json file must have the same name as the map source file and lie there.
+ATTENTION! The stupid boys which developed MapBox format takes full url for resources. So glifs and icons lay in GaladrielMap directory, and every style file must have full path urls to it.
+
