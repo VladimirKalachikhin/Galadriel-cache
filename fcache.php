@@ -275,7 +275,7 @@ if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file
 	if( $fp = fopen($fileName, "w")) {
 		fwrite($fp, $newimg);
 		fclose($fp);
-		@chmod($fileName,0777); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
+		@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
 		
 		error_log("fcache.php getTile: Saved ".strlen($newimg)." bytes to $fileName");	
 	}
@@ -288,7 +288,7 @@ if(($newimg !== FALSE) and $bannedSources[$mapSourcesName]) { 	// снимем �
 	unset($bannedSources[$mapSourcesName]); 	// снимем проблемы с источником
 	$umask = umask(0); 	// сменим на 0777 и запомним текущую
 	file_put_contents($bannedSourcesFileName, serialize($bannedSources));
-	@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
+	@chmod($bannedSourcesFileName,0666); 	// чтобы при запуске от другого юзера была возаможность 
 	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 	error_log("fcache.php getTile:  Попытка № $tries: $mapSourcesName unbanned!");
 }
@@ -309,7 +309,7 @@ if((($z+1) > $loaderMaxZoom) OR ($z < $aheadLoadStartZoom)) return;
 $jobName = "$mapSourcesName.$z"; 	// имя файла задания
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
 file_put_contents("$jobsDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для планировщика. Понимаем, что этот тайл не будет скачан, если задание существует и скачивается. Будут скачаны только тайлы следующего масштаба.
-@chmod("$jobsDir/$jobName",0777); 	// чтобы запуск от другого юзера
+@chmod("$jobsDir/$jobName",0666); 	// чтобы запуск от другого юзера
 umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одного планировщика
 	//error_log("Need scheduler for zoom $z");
@@ -330,7 +330,7 @@ $bannedSources[$r][1] = $reason; 	//
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
 file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
 //quickFilePutContents($bannedSourcesFileName, serialize($bannedSources)); 	// запишем файл проблем
-@chmod($bannedSourcesFileName,0777); 	// чтобы при запуске от другого юзера была возаможность 
+@chmod($bannedSourcesFileName,0666); 	// чтобы при запуске от другого юзера была возаможность 
 umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 //error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
 error_log("fcache.php doBann: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)." by $reason reason!");
