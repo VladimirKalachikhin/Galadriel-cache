@@ -18,13 +18,10 @@ function getURL($z,$x,$y) {
 Это всё не препятствует обычному просмотру карты, но, если надо скачать более-менее обширные
 площади - скачивать надо, достаточно часто меняя ip. Проще всего это сделать через tor.
 Приведённая сдесь конфигурация предполагает, что на этой же машине имеется узел tor
-и proxy lightdm, сконфигурированный только для приёма http и передаче их tor'у по socs.
+и proxy polipo или privoxy, сконфигурированный только для приёма http и передаче их tor'у по socs.
 У tor должен быть включен управляющий сокет.
-Если клиент умеет сессии - то команда tor'у сменить выходную ноду передаётся через несколько
-тайлов, если нет (загрузчик в cli, например) - выходная нода меняется каждый тайл.
-Разумеется, смена выходной ноды не гарантирует смену ip, но в среднем всё работает.
 
-По умолчанию всё это отключено. Для включения нужно раскомментировать параметр 'proxy' в массиве $opts
+По умолчанию всё это отключено. Для включения нужно раскомментировать параметр 'proxy' и 'timeout' в массиве $opts
 
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
@@ -34,7 +31,7 @@ $server = array('a','b','c');
 // tor MUST have in torrc: ControlPort 9051 without authentication: CookieAuthentication 0 and #HashedControlPassword
 // Alternative: set own port, config tor password by tor --hash-password my_password and stay password in `echo authenticate '\"\"'`
 $getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	
-$tilesPerNode = 10; 	// попытка смены ip предпринимается каждые столько тайлов
+$tilesPerNode = 10; 	// change ip after попытка смены ip предпринимается каждые столько тайлов
 
 $userAgents = array();
 $userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
@@ -58,19 +55,26 @@ $opts = array(
 	'http'=>array(
 		'method'=>"GET",
 		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
-		//'proxy'=>'tcp://127.0.0.1:8123',
+		//'proxy'=>'tcp://127.0.0.1:8118',
+		//'timeout' => 60,
 		'request_fulluri'=>TRUE
 	)
 );
 //print_r($opts);
 if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
-	//error_log("Are session support present? _SESSION['tilesPerNode']=".$_SESSION['tilesPerNode']);
-	if ((!$_SESSION['tilesPerNode']) OR ($_SESSION['tilesPerNode'] > $tilesPerNode)) { 	// если сессии нет совсем или уже пора
-		error_log("getting new Tor exit node");
-		exec($getTorNewNode);	// сменим выходную ноду Tor
-		$_SESSION['tilesPerNode'] = 1;
+	$dirName = sys_get_temp_dir()."/OpenTopoMapCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
+	if(file_exists($dirName) === FALSE) { 	// не будем сбрасывать кеш -- пусть кешируется
+		mkdir($dirName, 0777,true); 	// 
+		chmod($dirName,0777); 	// права будут только на каталог OpenTopoMapCacheInfo. Если он вложенный, то на предыдущие, созданные по true в mkdir, прав не будет. Тогда надо использовать umask.
 	}
-	else $_SESSION['tilesPerNode']++;
+	$tilesCnt = @file_get_contents("$dirName/tilesCnt");
+	if ($tilesCnt > $tilesPerNode) { 	// если уже пора
+		echo"getting new Tor exit node\n";
+		exec($getTorNewNode);	// сменим выходную ноду Tor
+		$tilesCnt = 1;
+	}
+	else $tilesCnt++;
+	file_put_contents("$dirName/tilesCnt",$tilesCnt);
 }
 return array($url,$opts);
 }

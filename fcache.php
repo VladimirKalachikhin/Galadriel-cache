@@ -284,7 +284,7 @@ if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file
 }
 
 // Обслужим источник
-if(($newimg !== FALSE) and $bannedSources[$mapSourcesName]) { 	// снимем проблемы с источником, получили мы тайл или нет
+if(($newimg !== FALSE) and @$bannedSources[$mapSourcesName]) { 	// снимем проблемы с источником, получили мы тайл или нет
 	unset($bannedSources[$mapSourcesName]); 	// снимем проблемы с источником
 	$umask = umask(0); 	// сменим на 0777 и запомним текущую
 	file_put_contents($bannedSourcesFileName, serialize($bannedSources));
