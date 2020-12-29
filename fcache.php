@@ -67,6 +67,7 @@ elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapA
 else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
 $getURLparams['mapAddPath'] = $mapAddPath;
 //echo "fileName=$fileName; <br>\n";
+$newimg = FALSE; 	// тайл получить не удалось
 if (!$functionGetURL) goto END; 	// нет функции для получения тайла	
 // есть функция получения тайла
 // определимся с наличием проблем связи и источника карты
@@ -84,7 +85,7 @@ do {
 	$uri = getURL($z,$x,$y,$getURLparams); 	// получим url и массив с контекстом: заголовками, etc.
 	//echo "Источник:<pre>"; print_r($uri); echo "</pre>\n";
 	if(!$uri) {
-		error_log("fcache.php getTile: ERROR: $mapSourcesName no hawe url.");
+		echo"fcache.php getTile: ERROR: $mapSourcesName no hawe url.\n";
 		goto END; 	// по каким-то причинам нет uri тайла, очевидно, картинки нет и не будет
 	}
 	// Параметры запроса
