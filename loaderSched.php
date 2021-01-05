@@ -8,33 +8,32 @@ chdir($path_parts['dirname']); // задаем директорию выполн
 
 require('fcommon.php');
 require('params.php'); 	// пути и параметры
-$bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
-//@unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников - он мог сохраниться из-за краха
 
-//$loaderMaxZoom = 12; 	// скачивать до этого масштаба или максимального масштаба карты, если он меньше
-//print_r($path_parts);
-$fullSelfName = realpath(getcwd()).'/'.$path_parts['basename'];
-$pID = getmypid(); 	// process ID
+$pID = IRun(); 	// Запущен ли я? Возвращает process ID
+if(!$pID) {
+	echo "I'm already ruunning, exiting.\n";
+	return;
+}
 file_put_contents("$jobsDir/$pID.slock", "$pID"); 	// положим флаг, что запустились
 //echo "pID=$pID;\n";
-$inCron = false;
+// Занесём себя в cron
+$fullSelfName = realpath(getcwd()).'/'.$path_parts['basename'];
+exec("crontab -l | grep -v '$fullSelfName'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
+exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.$fullSelfName.'") | crontab -'); 	// каждую минуту
 echo "Планировщик запустился с pID $pID\n";
-//error_log("Планировщик: Планировщик запустился с pID $pID");
+
+$bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
+//@unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников - он мог сохраниться из-за краха
 do {
 	$jobs = scandir($jobsDir);
 	$loaderPIDs = array(); 	// запущенные процессы загрузки
-	$schedulerPIDs = array(); 	// запущенные процессы управления загрузками
 	//echo ":<pre>"; print_r($jobs); echo "</pre>";
 	array_walk($jobs,function (&$name,$ind) {
-			global $loaderPIDs, $schedulerPIDs, $pID;
+			global $loaderPIDs;
 			if(strpos($name,'~')!==FALSE) $name = NULL; 	// скрытые файлы
 			if(strpos($name,'.')===FALSE) $name = NULL; 	// служебные файлы - без расширения
 			if($name[0]=='.') $name = NULL; 	// скрытые файлы и каталоги
-			if(substr($name,-5)=='slock') { 	// выберем оттуда флаги запущенных планировщиков
-				$schPID = substr($name,0,strpos($name,'.')); 	// имена файлов-PID процессов-планировщиков
-				if($schPID <> $pID) $schedulerPIDs[] = $schPID; 	// если это не я
-				$name = NULL;
-			}
+			if(substr($name,-5)=='slock') $name = NULL; 	// флаги запущенных планировщиков
 			if(substr($name,-4)=='lock') { 	// выберем оттуда флаги запущенных загрузчиков
 				$loaderPIDs[] = substr($name,0,strpos($name,'.')); 	// имена файлов-PID процессов-загрузчиков
 				$name = NULL;
@@ -45,31 +44,9 @@ do {
 	if(!$jobs[0]) unset($jobs[0]); 	// 
 	//echo "Очередь заданий перед началом обработки:"; print_r($jobs); echo "\n";
 	//echo "Вероятно, есть загрузчики: "; print_r($loaderPIDs); echo "\n";
-	//echo "Вероятно, есть планировщики: ";print_r($schedulerPIDs); echo "\n";
 	//exit;
-	// Проверим, запущен ли я
-	$runsS = FALSE;
-	foreach($schedulerPIDs as $schedulerRunPID) {
-		if(file_exists( "/proc/$schedulerRunPID")) $runsS = $schedulerRunPID; 	// процесс с таким PID работает, и это не я
-		else unlink("$jobsDir/$schedulerRunPID.slock"); 	// файл-флаг остался от чего-то, но процесс с таким PID не работает - удалим
-	}
-	if($runsS) {
-		echo "Я - $pID, ещё один планировщик с PID $runsS уже работает!\n";
-		//error_log("Планировщик: Я - $pID, ещё один планировщик с PID $runsS уже работает!");
-		if($pID > $runsS) break; 	// если уже есть работающий планировщик, который был запущен раньше - убъём себя. Планировщики, запускающиеся по крону - должны умереть, если они не единственные.
-	}
-	// Всё, я работаю
-	// Занесём себя в cron
-	
-	if(! $inCron) { 	// стараемся, чтобы в cron была только одна запись о запуске нас. Хотя это не должно плохо кончаться
-		// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
-		exec("crontab -l | grep -v '$fullSelfName'  | crontab -");
-		exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.$fullSelfName.'") | crontab -'); 	// каждую минуту
-		$inCron = TRUE;
-	}
-	
 	// Проверим наличие, установим и снимем задания
-	foreach($jobs as $i => $job) {
+	foreach($jobs as $i => $job) { 	// Ддля каждого файла задания
 		//echo "Очередь заданий к началу обработки:"; print_r($jobs); echo "\n";
 		if(!is_file("$jobsDir/$job")) { 	// это не задание
 			//echo "$i -е задание $job не является заданием\n";
@@ -78,40 +55,32 @@ do {
 		}
 		//echo "$jobsDir/$job \n$jobsInWorkDir/$job \n";
 		echo "Имеется задание $job\n";
-		//error_log("Планировщик: Имеется задание $job");
 		$path_parts = pathinfo($job);
 		$mapName = $path_parts['filename'];
 		$Zoom = $path_parts['extension'];
 		//echo "mapName=$mapName; Zoom=$Zoom;\n";
-		include("$mapSourcesDir/$mapName.php"); 	// загрузим параметры карты
+		include_once("$mapSourcesDir/$mapName.php"); 	// загрузим параметры карты
 		if($loaderMaxZoom > $maxZoom) $loaderMaxZoom = $maxZoom; 	// $maxZoom - из параметров карты
 		if($Zoom > $loaderMaxZoom) {
 			echo "Это задание имеет масштаб больше разрешённого, убъём задание\n";
-			//error_log("Планировщик: Это задание имеет масштаб больше разрешённого, убъём задание");
 			unlink("$jobsDir/$job");	// убъём задание
 			unset($jobs[$i]);
 			continue;
 		}
 		if(!file_exists("$jobsInWorkDir/$job")) { 	// задание не выполняется
 			echo "Новое задание $job\n";
-			//error_log("Планировщик: Новое задание $job");
-			if(!$functionGetURL) {
+			if(!$functionGetURL) { 	// карту нельзя скачать
 				echo "Карту нельзя скачать - нет функции для этого\n";
-				//error_log("Планировщик: Карту нельзя скачать - нет функции для этого");
-				unlink("$jobsDir/$job");	// карту нельзя скачать, убъём задание
+				unlink("$jobsDir/$job");	// убъём задание для планировщика
 				unset($jobs[$i]);
 				continue;
 			}
 			echo "Поставим его на скачивание\n";
-			//error_log("Планировщик: Поставим его на скачивание");
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			$res = copy("$jobsDir/$job","$jobsInWorkDir/$job"); 	// поставим на скачивание
-			chmod("$jobsInWorkDir/$job",0777); 	// чтобы запуск от другого юзера
+			chmod("$jobsInWorkDir/$job",0666); 	// чтобы запуск от другого юзера
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-			if($res) {
-				$loaderPIDs[] = -1; 	// добавим заведомо несуществующий PID к списку запуценных загрузчиков, в знак того, что загрузчик надо запустить
-				continue;
-			}
+			if($res) continue;
 			else {
 				echo "ERROR: Поставить задание на скачивание не удалось.\nКаталог $jobsInWorkDir/$job отсутствует? На него нет прав?\n";
 				//error_log("LoaderShed: ERROR run job file.\nIs $jobsInWorkDir/$job exists?\n");
@@ -123,56 +92,61 @@ do {
 		//echo "Размер $jobsInWorkDir/$job - $fs байт.\n";
 		if($fs<=4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
 			echo "Задание $job завершилось\n";
-			//error_log("Планировщик: Задание $job завершилось");
 			unlink("$jobsInWorkDir/$job");	// 
-			require_once("$mapSourcesDir/$mapName.php"); 	// загрузим параметры карты
-			if($Zoom >= $loaderMaxZoom) {
+			if($Zoom >= $loaderMaxZoom) { 	//
 				echo "Всё скачали, убъём задание\n";
-				//error_log("Планировщик: Всё скачали, убъём задание");
 				unlink("$jobsDir/$job");	// всё скачали, убъём задание
 				unset($jobs[$i]);
 				continue;
 			}
 			$nextJob = createNextZoomLevel("$jobsDir/$job",$minZoom); 	// создать файл с номерами тайлов следующего уровня, а текущий убъём ,$minZoom - из парамеров карты. При этом, если закончившееся задание было дополнено во время скачивания, то дополнения в этом задании пропадут. Но в следующий масштаб они попадут.
 			echo "Создали новое задание $nextJob; \n";
-			//error_log("Планировщик: Создали новое задание $nextJob; ");
 			if($nextJob) { 	// его может не быть, если он уже есть
 				$newZoom = substr($nextJob, strrpos($nextJob,'.')+1); 	// 
 				if($newZoom > $maxZoom) unlink("$nextJob");	// что-то не так с масштабами?
 				else {
 					echo "Поставим на скачивание масштаб $newZoom\n";
-					//error_log("Планировщик: Поставим на скачивание масштаб $newZoom");
 					$umask = umask(0); 	// сменим на 0777 и запомним текущую
 					copy("$nextJob","$jobsInWorkDir/" . basename($nextJob)); 	// поставим на скачивание следующий уровень
-					chmod("$jobsInWorkDir/" . basename($nextJob),0777); 	// чтобы запуск от другого юзера
+					chmod("$jobsInWorkDir/" . basename($nextJob),0666); 	// чтобы запуск от другого юзера
 					umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-					$loaderPIDs[] = -1; 	// добавим заведомо несуществующий PID к списку запуценных загрузчиков, в знак того, что загрузчик надо запустить
 				}
 			}
 		}
-		elseif(!$loaderPIDs) $loaderPIDs[] = -1; 	// задание поставлено на загрузку, но нет ни одного загрузчика
 		//echo "Очередь заданий к концу обработки:"; print_r($jobs); echo "\n";
 	}
-	// Запустим указанное в конфиге количество загрузчиков
-	$runs=0;
-	foreach($loaderPIDs as $loaderRunPID) { 	// 
-		if(file_exists( "/proc/$loaderRunPID")){ 	// процесс с таким PID работает
-			echo "Работает загрузчик $loaderRunPID\n";
-			$runs++;
-			continue;
+	// Если есть задания для загрузчиков -- созданные выше, или добавленные со стороны
+	$loaderJobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
+	foreach($loaderJobNames as $i => $jobName) { 	// 
+		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+		$fs = filesize("$jobsInWorkDir/$jobName"); 	// выполняющееся скачивание
+		if($fs<=4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
+			echo "Удаляем выполнившийся файл задания $jobsInWorkDir/$jobName\n";
+			unlink("$jobsInWorkDir/$jobName");	
+			unset($loaderJobNames[$i]);
 		}
-		@unlink("$jobsDir/$loaderRunPID.lock"); 	// процесса с таким PID нет, удалим файл с PID. Но и файла к этому моменту может уже не быть
-		if($runs<$maxLoaderRuns) {
-			echo "Запускаем загрузчик\n";
-			exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
-			//exec("$phpCLIexec loader.php > /dev/null &");
-			//exec("$phpCLIexec loader.php &");
-			$runs++;
-		}
-		else break;
 	}
-	if($runs) { 	// если уже запущено меньше разрешённого количества загрузчиков. Иначе - не было заданий
-		for($runs; $runs<$maxLoaderRuns; $runs++) { 	// запустим ещё
+	if($loaderJobNames) { 	// 
+		echo "Есть задания для загрузчиков -- запускаем загрузчики\n";
+		// Запустим указанное в конфиге количество загрузчиков
+		$runs=0;
+		foreach($loaderPIDs as $loaderRunPID) { 	// в $loaderPIDs выше могли быть добавлены левые pid с целью запустить загрузчики
+			if(file_exists( "/proc/$loaderRunPID")){ 	// процесс с таким PID работает
+				echo "Работает загрузчик $loaderRunPID\n";
+				$runs++;
+				continue;
+			}
+			@unlink("$jobsDir/$loaderRunPID.lock"); 	// процесса с таким PID нет, удалим файл с PID. Но и файла к этому моменту может уже не быть
+			if($runs<$maxLoaderRuns) {
+				echo "Запускаем загрузчик\n";
+				exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
+				//exec("$phpCLIexec loader.php > /dev/null &");
+				//exec("$phpCLIexec loader.php &");
+				$runs++;
+			}
+			else break;
+		}
+		for($runs; $runs<$maxLoaderRuns; $runs++) { 	// если уже запущено меньше разрешённого количества загрузчиков - запустим ещё
 			echo "Запускаем ещё загрузчик\n";
 			exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
 			//exec("$phpCLIexec loader.php > /dev/null &");
@@ -182,21 +156,14 @@ do {
 //LOOP:
 	//echo "runs=$runs; nextJob=$nextJob;\n";
 	sleep(5);
-} while($jobs);
+} while($jobs); 	// пока есть задания для планировщика. Загрузчики останутся работать.
 
-if(! $runsS) { 	// нет других запущенных экземпляров планировщика
-	// удалим себя из cron
-	exec("crontab -l | grep -v '$fullSelfName'  | crontab -");
-	// удалим файл с информацией о проблемах источников
-	@unlink($bannedSourcesFileName);	
-	// удалим файлы выполняющихся заданий: раз мы здесь, задания на выполнение иссякли, и ничего больше скачивать не нужно
-	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
-	foreach($jobNames as $jobName) { 	// 
-		//echo "Delete needless executing job file $jobsInWorkDir/$jobName\n";
-		echo "Удаляем ненужный выполняющийся файл задания $jobsInWorkDir/$jobName\n";
-		unlink("$jobsInWorkDir/$jobName");	
-	}
-}
+// удалим себя из cron
+exec("crontab -l | grep -v '$fullSelfName'  | crontab -");
+
+// удалим файл с информацией о проблемах источников
+@unlink($bannedSourcesFileName);	
+
 unlink("$jobsDir/$pID.slock");	// 
 echo "Планировщик $pID завершился\n";
 //error_log("Планировщик: Планировщик $pID завершился");
@@ -248,11 +215,48 @@ do {
 		}
 	}
 	fclose($newJob);
-	chmod($nextJobName,0777); 	// чтобы запуск от другого юзера
+	chmod($nextJobName,0666); 	// чтобы запуск от другого юзера
 	fclose($oldJob);
 	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 	unlink($jobName);	// прибъём старое задание
 } while($zoom<$minZoom);
 return $nextJobName;
 } // end function createNextZoomLevel
+
+function IRun() {
+/* Возвращает FALSE если такой процесс уже запущен
+если нет -- PID этого процесса
+*/
+global $phpCLIexec;
+$pid = getmypid();
+$this_phpCLIexec = pathinfo($phpCLIexec,PATHINFO_BASENAME);
+//echo "pid=$pid; phpCLIexec=$phpCLIexec; this_phpCLIexec=$this_phpCLIexec;\n";
+//echo "ps -A w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME)." -s$netAISserverURI'\n";
+exec("ps -A w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME)."'",$psList);
+//print_r($psList); //
+$run = $pid;
+foreach($psList as $str) {
+	if(strpos($str,(string)$pid)!==FALSE) continue;
+	$str = explode(' ',trim($str)); 	// массив слов
+	foreach($str as $w) {
+		if(!$w) continue;
+		$w = pathinfo($w,PATHINFO_BASENAME);
+		//echo "|$w|\n";
+		switch($w){
+		case 'watch':
+		case 'ps':
+		case 'grep':
+		case 'sh':
+		case 'bash': 	// если встретилось это слово -- это не та строка
+			break 2;
+		case $this_phpCLIexec:
+			$run=FALSE;
+			break 3;
+		}
+	}
+}
+return $run;
+}
+
+
 ?>

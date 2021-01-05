@@ -83,7 +83,7 @@ do {
 	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
 	if(!$job) break; 	// файла не оказалось
 	flock($job,LOCK_EX) or exit("loader.php Unable locking job file Error");
-	$s=trim(fgets($job));
+	$s=fgets($job);
 	//echo "s=$s;\n";
 	if($s===FALSE) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
 	$customExec = FALSE;
@@ -97,7 +97,7 @@ do {
 			continue;
 		}
 		$customExec = TRUE;
-		$s=trim(fgets($job));
+		$s=fgets($job);
 	}
 	$strSize = strlen($s); 	// размер первой строки в байтах
 	//echo "s=$s; strSize=$strSize;\n";
