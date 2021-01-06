@@ -316,7 +316,7 @@ if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file
 	//@mkdir(dirname($fileName), 0755, true);
 	@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
 	//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
-	if( $fp = fopen($fileName, "w")) {
+	if( $fp = @fopen($fileName, "w")) {
 		fwrite($fp, $newimg);
 		fclose($fp);
 		@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
