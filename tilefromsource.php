@@ -152,12 +152,12 @@ do {
 		$opts['http']['timeout'] = (float)$getTimeout;	// таймаут ожидания получения тайла, сек
 	}
 	//echo "opts :<pre>"; print_r($opts); echo "</pre>";
-	//echo "$uri\n";
+	echo "$uri\n";
 	$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 
 	// Запрос - собственно, получаем файл
 	$newimg = @file_get_contents($uri, FALSE, $context); 	// 
-	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
+	echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
 
 	// Обработка проблем ответа
 	if(!@$http_response_header) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?

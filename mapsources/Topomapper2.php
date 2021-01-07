@@ -15,7 +15,7 @@ function getURL($z,$x,$y) {
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=ESRI_Sat
 */
 $url = 'http://88.99.52.155/cgi-bin/tapp/tilecache.py/1.0.0/topomapper_v2';
-$url .= "/".$z."/".$x."/".$y;
+$url .= "/$z/$x/$y";
 return $url;
 }
 EOFU;
