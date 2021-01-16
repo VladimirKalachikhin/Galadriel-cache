@@ -1,0 +1,61 @@
+<?php
+/*
+Invaluable help and all the necessary information:
+https://www.wellenvogel.net/software/avnav/docs/mapsources.html?lang=en
+*/
+require_once('fcommon.php');
+$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
+// $ttl = 0; 	// тайлы не протухают никогда
+$ext = 'png'; 	// tile image type/extension
+$ContentType = 'image/png'; 	// if content type differ then file extension
+$minZoom = 6;
+$maxZoom = 20;
+$trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
+);
+$functionGetURL = <<<'EOFU'
+function getURL($z,$x,$y,$getURLparams) {
+/* 
+// lon,x		lat,y
+// 13.447265625,54.110942942725,13.4912109375,54.13669645687
+// левый - нижний				правый - верхний
+*/
+//echo "BSH Параметры:<pre>"; print_r($getURLparams); echo "</pre>";
+$userAgents = array();
+$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
+$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
+$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
+$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36';
+$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
+$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/604.5.6 (KHTML, like Gecko) Version/11.0.3 Safari/604.5.6';
+$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
+$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
+$userAgents[] = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0';
+$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0';
+$userAgent = $userAgents[array_rand($userAgents)];
+
+$RequestHead='Referer: https://www.geoseaportal.de/';
+
+$opts = array(
+	'http'=>array(
+		'method'=>"GET",
+		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
+		//'proxy'=>'tcp://127.0.0.1:8118',
+		//'timeout' => 60,
+		'request_fulluri'=>TRUE
+	)
+);
+
+$url = 'https://www.geoseaportal.de/wss/service/';
+$url .= $getURLparams['map'].'/guest?';
+$url .= 'SRS=EPSG%3A4326&SERVICE=WMS&STYLES=&BGCOLOR='.$getURLparams['bgcolor'].'&TRANSPARENT=TRUE&VERSION=1.1.1';
+$url .= '&LAYERS='.$getURLparams['layers'];
+
+$leftBottom = tileNum2degree($z,$x,$y+1);
+$rightTop = tileNum2degree($z,$x+1,$y);
+$request = '&REQUEST=GetMap&FORMAT=image%2Fpng&BBOX='.$leftBottom['lon'].','.$leftBottom['lat'].','.$rightTop['lon'].','.$rightTop['lat'].'&WIDTH=256&HEIGHT=256';
+
+$url .= $request;
+return array($url,$opts);
+}
+EOFU;
+?>
