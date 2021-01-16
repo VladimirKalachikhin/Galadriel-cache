@@ -1,11 +1,24 @@
 <?php
 /*
+pixResolution - Размер пикселя указанного масштаба на указанной долготе в метрах
 tileNum2degree - Tile numbers to lon./lat. left top corner
 tileNum2mercOrd - Tile numbers to linear coordinates left top corner on mercator ellipsoidal
 merc_x - Долготу в линейную координату x, Меркатор на эллипсоиде
 merc_y - Широту в линейную координату y, Меркатор на эллипсоиде
+coord2tileNum - координаты в номер тайла
 nextZoom - Возвращает четыре номера тайлов следующего (большего) масштаба
+
+quickFilePutContents - запись файла в tmp, а затем переименование
 */
+function pixResolution($lat_deg,$zoom,$tile_size=256,$equator=40075016.686){
+/* Размер пикселя указанного масштаба на указанной долготе в метрах
+$equator - длина экватора в метрах, по умолчанию -- WGS-84
+https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
+*/
+$z0rez = $equator / $tile_size; 	// разрешение тайла масштаба 0 на экваторе
+return $z0rez * cos($lat_deg) / pow(2, $zoom);
+} // end function pixResolution
+
 function tileNum2degree($zoom,$xtile,$ytile) {
 /* Tile numbers to lon./lat. left top corner
 // http://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
@@ -54,6 +67,13 @@ function merc_y($lat,$r_major=6378137.000,$r_minor=6356752.3142) {
     $y = - $r_major * log($ts);
     return $y;
 }
+
+function coord2tileNum($lon,$lat,$zoom){
+/* координаты в градусах в номер тайла */
+$xtile = floor((($lon + 180) / 360) * pow(2, $zoom));
+$ytile = floor((1 - log(tan(deg2rad($lat)) + 1 / cos(deg2rad($lat))) / pi()) /2 * pow(2, $zoom));
+return array($xtile,$ytile);
+} // end function coord2tileNum
 
 function nextZoom($xy){
 /* Возвращает четыре номера тайлов следующего (большего) масштаба
