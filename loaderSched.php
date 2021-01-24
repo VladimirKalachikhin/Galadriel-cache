@@ -232,8 +232,8 @@ $pid = getmypid();
 $this_phpCLIexec = pathinfo($phpCLIexec,PATHINFO_BASENAME);
 //echo "pid=$pid; phpCLIexec=$phpCLIexec; this_phpCLIexec=$this_phpCLIexec;\n";
 //echo "ps -A w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME)." -s$netAISserverURI'\n";
-//exec("ps -A w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME)."'",$psList);
-exec("ps w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME)."'",$psList); 	// for OpenWRT. For others -- let's hope so all run from one user
+exec("ps -A w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME)."'",$psList);
+if(!$psList) exec("ps w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME)."'",$psList); 	// for OpenWRT. For others -- let's hope so all run from one user
 //print_r($psList); //
 $run = $pid;
 foreach($psList as $str) {
