@@ -3,7 +3,7 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles stored on standard OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.4
+## v. 2.5
 
 ## Features:
 1. User-defined map sources
@@ -13,7 +13,7 @@ Tiles stored on standard OSM z/x/y file structure, so you may use SD with raster
 It's all. No versioning, no reprojection.
 
 ## Usage:
-_tiles.php_ - cache/proxy 
+_tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_ - cache/proxy 
 ### OruxMaps configuration
 To use GaladrielCache with OruxMaps, add map definitions to OruxMaps `onlinemapsources.xml`, for example -- Yandex Sat map:
 ```
@@ -174,6 +174,10 @@ Avoid creating job files that have a custom command and do not have one for one 
 ## clearCache
 Use in cli _clearCache.php mapname_ to *mapname* or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is maybe blank tiles or .tne files from SAS.Planet.  
 Use in cli _clearCache.php mapname fresh_ to *mapname* or _clearCache.php fresh_ to all maps to remove from cache expired tiles.
+
+## Coverage
+GaladrielCache supports calculate coverage feature. To get the transparent tile with cover map add '_COVER' to map name. This return current_zoom+8 zoom level coverage. It is clear that every pixel of this tile indicate one tile +8 zoom level.  
+Additionally displayed coverage of loader's max zoom level.
 
 ## Support
 You can get support for GaladrielMap and GaladrielCahe for a beer [via PayPal](https://paypal.me/VladimirKalachikhin) or [YandexMoney](https://yasobe.ru/na/galadrielmap) at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)

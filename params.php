@@ -51,6 +51,9 @@ $loaderMaxZoom = 16; 	// loader download tiles to this zoom only, not to map or 
 // 	Предварительная загрузка тайлов большего масштаба запускается при просмотре тайла указанного масштаба
 $aheadLoadStartZoom = 14; // start of the ahead loading from this zoom 
 
+// Определение покрытия Tiles cover detection
+$tileCacheServerPath = '/tileproxy'; 	// web path to GaladrielCache
+
 // Ситемные параметры System
 // Вызов php из командной строки
 //$phpCLIexec = '/usr/bin/php-cli'; 	// php-cli executed name on your OS

@@ -12,7 +12,7 @@ if(@$argv) { 	// cli
 	//print_r($options);
 	if($options) {
 		$x = intval($options['x']);
-		$y = intval($options['y']);
+		$y = filter_var($_REQUEST['y'],FILTER_SANITIZE_URL); 	// 123456.png
 		$z = intval($options['z']);
 		$r = filter_var($options['r'],FILTER_SANITIZE_URL);
 		$uri = "$r/$z/$x/$y";
@@ -101,7 +101,12 @@ else {
 //echo "mapSourcesName=$mapSourcesName; mapAddPath=$mapAddPath; z=$z; x=$x; y=$y; <br>\n";
 //echo "path_parts['dirname']=".$path_parts['dirname']."<br>mapSourcesDir=$mapSourcesDir;<br>tileCacheDir=$tileCacheDir;<br>\n";
 // определимся с источником карты
-require_once("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда. Может случиться, что с именем что-то не так - подавим ошибку
+if($pos=strpos($mapSourcesName,'_COVER')) { 	// нужно показать покрытие, а не саму карту
+	require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
+	$getURLparams['r'] = substr($mapSourcesName,0,$pos); 	// для tilesCOVER нужно указывать имя той карты, покрытие которой надо получить, без _COVER
+	$getURLparams['tileCacheServerPath'] = $tileCacheServerPath; // 
+}
+else require("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда.
 if($ext) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.$ext"; 	// в конфиге источника указано расширение
 elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.".$path_parts['extension'];
 else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
@@ -125,6 +130,7 @@ $file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к о�
 do {
 	$newimg = FALSE; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
 	//echo "Параметры:<pre>"; print_r($getURLparams); echo "</pre>";
+	//echo "tileCacheServerPath=$tileCacheServerPath;\n";
 	$uri = getURL($z,$x,$y,$getURLparams); 	// получим url и массив с контекстом: заголовками, etc.
 	//echo "Источник:<pre>"; print_r($uri); echo "</pre>\n";
 	if(!$uri) {
@@ -157,11 +163,11 @@ do {
 
 	// Запрос - собственно, получаем файл
 	$newimg = @file_get_contents($uri, FALSE, $context); 	// 
-	echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
+	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
 
 	// Обработка проблем ответа
-	if(!@$http_response_header) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
-		doBann($mapSourcesName,$bannedSourcesFileName,'no internet connection'); 	// забаним источник
+	if(!$newimg and !@$http_response_header) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
+		doBann($mapSourcesName,$bannedSourcesFileName,"no internet connection with $uri"); 	// забаним источник
 		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
 	elseif((strpos($http_response_header[0],'403') !== FALSE) or (strpos($http_response_header[0],'204') !== FALSE)) { 	// Forbidden or No Content

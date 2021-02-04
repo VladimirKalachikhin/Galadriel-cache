@@ -12,7 +12,7 @@ chdir($path_parts['dirname']); // задаем директорию выполн
 require('params.php'); 	// пути и параметры
 
 $x = intval($_REQUEST['x']);
-$y = intval($_REQUEST['y']);
+$y = filter_var($_REQUEST['y'],FILTER_SANITIZE_URL); 	// 123456.png
 $z = intval($_REQUEST['z']);
 $r = filter_var($_REQUEST['r'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
@@ -27,7 +27,10 @@ if((!$x) OR (!$y) OR (!$z) OR (!$r)) {
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
 $sourceName = $sourcePath[0];
-require("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+if($pos=strpos($sourceName,'_COVER')) { 	// нужно показать покрытие, а не саму карту
+	require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
+}
+else require("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 // возьмём тайл
 $path_parts = pathinfo($y); // 
 $y = $path_parts['filename'];
