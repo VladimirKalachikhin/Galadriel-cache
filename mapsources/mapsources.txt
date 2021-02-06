@@ -7,6 +7,7 @@ None of the parameters in map describe file are required. If necessary, default 
 
 Map describe file may content:
 $ttl = 86400*30*12*3; // cache timeout in seconds.  86400 sec = 1 day. After this, tile trying to reload from source. If 0 - never trying to reload.
+$noTileReTry=$ttl; 	// empty tile timeout, good if < $ttl sec. Время, через которое протухает тайл нулевого размера, обозначающий нерешаемые проблемы скачивания.
 $freshOnly = FALSE; 	// Normally, outdated tiles first showing, then - downloaded. If TRUE - first loaded.
 $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/jpeg'; 	// if content type differ then file extension

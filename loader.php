@@ -86,7 +86,6 @@ do {
 	$s=fgets($job);
 	//echo "s=$s;\n";
 	if($s===FALSE) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
-	$customExec = FALSE;
 	if($s[0]=='#') { 	// там есть указание, что запускать
 		$execString = trim(substr($s,1));
 		//echo "execString=$execString;";
@@ -96,7 +95,6 @@ do {
 			fclose($job); 	// освободим файл
 			continue;
 		}
-		$customExec = TRUE;
 		$s=fgets($job);
 	}
 	$strSize = strlen($s); 	// размер первой строки в байтах
@@ -129,7 +127,10 @@ do {
 	// Запустим скачивание
 	$str = "";
 	if(is_numeric($xy[0]) AND is_numeric($xy[1])) {
-		require("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+		if($pos=strpos($map,'_COVER')) { 	// нужно показать покрытие, а не саму карту
+			require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
+		}
+		else require("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 		// возьмём тайл
 		$path_parts = pathinfo($xy[1]); // 
 		if(!$path_parts['extension']) {
@@ -139,31 +140,32 @@ do {
 		$fileName = "$tileCacheDir/$map/$zoom/".$xy[0]."/".$xy[1]; 	// из кэша, однако наличие версионности игнорируется
 		//echo "file=$fileName; <br>\n";
 		$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
-		$res = FALSE;
-		$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, возможно, за приделами разрешённых масштабов
-		if($img!==FALSE) { 	//echo "тайл есть\n";
-			//echo '$execString="'.$execString.'";'."\n";
-			if($customExec) {
-				eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
-				echo "Выполняется $execStringParsed\n"; 	//
-				$res = exec($execStringParsed); 	// 
+
+		$doLoading = FALSE; 	
+		$imgFileTime = @filemtime($fileName); 	// файла может не быть
+		if($imgFileTime) { 	// файл есть
+			if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
+				$doLoading = TRUE; 	// 
 			}
-			else {
-				$imgFileTime = time()-filemtime($fileName)-$ttl; 	// прожитое тайлом время сверх положенного
-				//error_log("Get      $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
-				if((($z <= $maxZoom) AND ($z >= $minZoom)) AND ($ttl AND ($imgFileTime > 0))) { 	// если масштаб допустим, есть функция получения тайла, и нет в кэше или файл протух
-					// тайл надо получать
-					eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
-					//echo "$execStringParsed\n"; 	//
-					$res = exec($execStringParsed); 	// загрузим тайл синхронно
-				} 
+			else { 	// файл свежий
+				$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
+				if(!$img) { 	// файл нулевой длины
+				 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
+					if(($imgFileTime+$ttl) > time()) { 	// файл протух
+						$doLoading = TRUE; 	// 
+					}
+				}
 			}
 		}
-		else { 	//echo "тайла нет, тайл надо получать\n";
-			//echo '$execString1="'.$execString.'";'."\n";
+		else { 	// файла нет
+			$doLoading = TRUE; 	// 
+		}
+		// Решение принято, выполняем
+		$res = FALSE;
+		if($doLoading){
 			eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
-			//echo "$execString1\n"; 	//
-			$res = exec($execStringParsed); 	// загрузим тайл синхронно
+			echo "Выполняется $execStringParsed\n"; 	//
+			$res = exec($execStringParsed); 	// 
 		}
 		//echo "res=$res; \n";
 		if($res==1) { 	// загрузка тайла плохо кончилась

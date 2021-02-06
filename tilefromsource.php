@@ -12,7 +12,7 @@ if(@$argv) { 	// cli
 	//print_r($options);
 	if($options) {
 		$x = intval($options['x']);
-		$y = filter_var($_REQUEST['y'],FILTER_SANITIZE_URL); 	// 123456.png
+		$y = filter_var($options['y'],FILTER_SANITIZE_URL); 	// 123456.png
 		$z = intval($options['z']);
 		$r = filter_var($options['r'],FILTER_SANITIZE_URL);
 		$uri = "$r/$z/$x/$y";
@@ -26,6 +26,7 @@ else {
 }
 
 //echo "Исходный uri=$uri; <br>\n";
+error_log("Исходный uri=$uri;");
 if($uri) $img=getTile($uri,$params); 	// fcache.php собственно, получение
 
 session_write_close();

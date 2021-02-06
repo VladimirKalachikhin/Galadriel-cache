@@ -1,5 +1,5 @@
 <?php
-//ob_start(); 	// попробуем перехватить любой вывод скрипта
+ob_start(); 	// попробуем перехватить любой вывод скрипта
 $path_parts = pathinfo(__FILE__); // определяем каталог скрипта
 chdir($path_parts['dirname']); // задаем директорию выполнение скрипта
 
@@ -21,7 +21,8 @@ if((!$x) OR (!$y) OR (!$z) OR (!$r)) {
 $mapAddPath = strstr($r,'/'); 	// путь к подкартам
 $r = substr($r,0,strlen($r)-strlen($mapAddPath)); 	// имя карты
 
-require_once("$mapSourcesDir/$r.php"); 	// параметры карты
+require("$mapSourcesDir/$r.php"); 	// параметры карты
+if($z+8>$maxZoom) goto END; 	// нет смысла считать покрытие тайлов, которых заведомо нет
 $path_parts = pathinfo($y); // 
 $y = $path_parts['filename'];
 // Расширение из конфига имеет преимущество!
@@ -81,7 +82,7 @@ for($ix=$coverX;$ix<$coverX+256;$ix++){
 	}
 }
 
-//ob_clean(); 	// очистим, если что попало в буфер
+ob_clean(); 	// очистим, если что попало в буфер
 header ("Content-Type: image/png");
 imagepng($img);
 END:

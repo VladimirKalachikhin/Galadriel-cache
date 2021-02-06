@@ -6,6 +6,7 @@
 
 $ttl = 86400*30*12*3; //cache timeout in seconds время, через которое тайл считается протухшим, 3 года.
 $ttl = 0; //cache timeout in seconds время, через которое тайл считается протухшим, никогда
+$noTileReTry=$ttl; 	// empty tile timeout, good if < $ttl sec. Время, через которое протухает тайл нулевого размера, обозначающий нерешаемые проблемы скачивания.
 $freshOnly = FALSE; 	// показывать протухшие тайлы. Сперва тайл будет показан, а потом начнётся скачивание свежего. Если TRUE - старый тайл не будет показан, будет показан свежий, если удастся его скачать.
 $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/jpeg'; 	// if content type differ then file extension
