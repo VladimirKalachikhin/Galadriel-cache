@@ -1,6 +1,7 @@
 <?php
-$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
+$ttl = 60*60*24*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 //$ttl = 0; 	// тайлы не протухают никогда
+$noTileReTry = 60*60; 	// no tile timeout, sec. Время, через которое переспрашивать тайлы, которые не удалось скачать. OpenTopoMap банит скачивальщиков, поэтому короткое.
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 18;
@@ -55,8 +56,8 @@ $opts = array(
 	'http'=>array(
 		'method'=>"GET",
 		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
-		//'proxy'=>'tcp://127.0.0.1:8118',
-		//'timeout' => 60,
+		'proxy'=>'tcp://127.0.0.1:8118',
+		'timeout' => 60,
 		'request_fulluri'=>TRUE
 	)
 );
@@ -74,7 +75,8 @@ if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять в�
 		$tilesCnt = 1;
 	}
 	else $tilesCnt++;
-	file_put_contents("$dirName/tilesCnt",$tilesCnt);
+	file_put_contents("$dirName/tilesCnt_OpenTopoMap",$tilesCnt);
+	@chmod("$dirName/tilesCnt_OpenTopoMap",0666); 	// всем всё, чтобы работало от любого юзера. Но изменить права существующего файла, созданного другим юзером не удастся.
 }
 return array($url,$opts);
 }

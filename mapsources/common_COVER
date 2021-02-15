@@ -19,7 +19,7 @@ if(!$tileCacheServerPath) $tileCacheServerPath = $getURLparams['tileCacheServerP
 //echo "getURL tileCacheServerPath=$tileCacheServerPath;\n";
 $opts = array(
 	'http'=>array(
-		'timeout' => 120,
+		'timeout' => 180,
 		'request_fulluri'=>TRUE
 	)
 );
