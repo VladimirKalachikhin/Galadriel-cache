@@ -139,7 +139,7 @@ mount -rw -t ext4 /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 5. Mark _01_mountExtSDcard_ as runed in boot
 
 ## Loader
-GaladrielCache includes a dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Start _loaderSched.php_ in cli. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) has a GUI for it. 
+GaladrielCache includes a dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Start _loaderSched.php_ in cli. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) has a GUI for it.  
 For example:  
 _OpenSeaMap.9_
 ```
@@ -157,7 +157,7 @@ You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-ma
 
 ### Use Loader to copy part of the cache
 Add to the first line of csv job file some copy command. In this case, Loader starts this command instead of loading tile. 
-This first line must be started from #. 
+This first line must be started from #.  
 For example:  
 _OpenSeaMap.9_
 ```
