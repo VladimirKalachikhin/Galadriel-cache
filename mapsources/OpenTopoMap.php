@@ -56,8 +56,8 @@ $opts = array(
 	'http'=>array(
 		'method'=>"GET",
 		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
-		'proxy'=>'tcp://127.0.0.1:8118',
-		'timeout' => 60,
+		//'proxy'=>'tcp://127.0.0.1:8118',
+		//'timeout' => 60,
 		'request_fulluri'=>TRUE
 	)
 );
@@ -76,7 +76,7 @@ if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять в�
 	}
 	else $tilesCnt++;
 	file_put_contents("$dirName/tilesCnt_OpenTopoMap",$tilesCnt);
-	@chmod("$dirName/tilesCnt_OpenTopoMap",0666); 	// всем всё, чтобы работало от любого юзера. Но изменить права существующего файла, созданного другим юзером не удастся.
+	@chmod("$dirName/tilesCnt",0666); 	// всем всё, чтобы работало от любого юзера. Но изменить права существующего файла, созданного другим юзером не удастся.
 }
 return array($url,$opts);
 }

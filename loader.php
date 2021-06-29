@@ -142,9 +142,11 @@ do {
 		$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
 
 		$doLoading = FALSE; 	
-		$imgFileTime = @filemtime($fileName); 	// файла может не быть
+		$imgFileTime = filemtime($fileName); 	// файла может не быть
+		//echo "imgFileTime=$imgFileTime;\n";
 		if($imgFileTime) { 	// файл есть
-			if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
+			if($execString) $doLoading = TRUE; 	// копирование кеша
+			elseif(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 				$doLoading = TRUE; 	// 
 			}
 			else { 	// файл свежий
@@ -158,8 +160,10 @@ do {
 			}
 		}
 		else { 	// файла нет
-			$doLoading = TRUE; 	// 
+			if($execString) $doLoading = FALSE; 	// копирование кеша
+			else $doLoading = TRUE; 	// 
 		}
+		//echo "doLoading=$doLoading;\n";
 		// Решение принято, выполняем
 		$res = FALSE;
 		if($doLoading){
@@ -179,12 +183,12 @@ do {
 			fclose($job); 	// освободим файл
 			$str = ", но тайл будет запрошен повторно";
 		}
+		$now=microtime(TRUE)-$now;
+		$timer[$jobName] += $now;
+		echo "Карта $map, загрузка состоялась:$doLoading; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
+		echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
+		echo "	\n\n";
 	}
-	$now=microtime(TRUE)-$now;
-	$timer[$jobName] += $now;
-	echo "Карта $map, на неё затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
-	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
-	echo "	\n\n";
 	//exit;
 } while($jobName);
 @flock($job, LOCK_UN); 	// на всякий случай - снимем блокировку		

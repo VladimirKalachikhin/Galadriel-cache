@@ -26,7 +26,7 @@ else {
 }
 
 //echo "Исходный uri=$uri; <br>\n";
-error_log("Исходный uri=$uri;");
+//error_log("Исходный uri=$uri;");
 if($uri) $img=getTile($uri,$params); 	// fcache.php собственно, получение
 
 session_write_close();
@@ -159,7 +159,7 @@ do {
 		$opts['http']['timeout'] = (float)$getTimeout;	// таймаут ожидания получения тайла, сек
 	}
 	//echo "opts :<pre>"; print_r($opts); echo "</pre>";
-	echo "$uri\n";
+	echo "Get tile from: $uri\n";
 	$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 
 	// Запрос - собственно, получаем файл
