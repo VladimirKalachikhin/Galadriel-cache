@@ -29,6 +29,7 @@ $maxTry = 5 * $maxTry; 	// увеличим количество попыток 
 $pID = getmypid(); 	// process ID
 $timer = array(); 	// массив для подсчёта затраченного времени
 $lag = 300; 	// сек, на которое может отличатся время, затраченное на карту, от среднего, чтобы карта не подвергалась регулировке затраченного времени. Чем больше - тем ближе скорость скачивания к скорости отдачи для примерно одинаковых по производительности источников, но больше тормозит всё самый медленный.
+$customExec = FALSE;
 file_put_contents("$jobsDir/$pID.lock", "$pID"); 	// положим флаг, что запустились
 echo "Стартовал загрузчик $pID\n";
 do {
@@ -87,6 +88,7 @@ do {
 	//echo "s=$s;\n";
 	if($s===FALSE) break; 	// файл оказался пуст - выход.Хотя это мог быть и не последний файл....
 	if($s[0]=='#') { 	// там есть указание, что запускать
+		$customExec = TRUE;
 		$execString = trim(substr($s,1));
 		//echo "execString=$execString;";
 		if(!$execString) {
@@ -142,10 +144,10 @@ do {
 		$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
 
 		$doLoading = FALSE; 	
-		$imgFileTime = filemtime($fileName); 	// файла может не быть
+		$imgFileTime = @filemtime($fileName); 	// файла может не быть
 		//echo "imgFileTime=$imgFileTime;\n";
 		if($imgFileTime) { 	// файл есть
-			if($execString) $doLoading = TRUE; 	// копирование кеша
+			if($customExec) $doLoading = TRUE; 	// копирование кеша
 			elseif(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 				$doLoading = TRUE; 	// 
 			}
@@ -160,7 +162,7 @@ do {
 			}
 		}
 		else { 	// файла нет
-			if($execString) $doLoading = FALSE; 	// копирование кеша
+			if($customExec) $doLoading = FALSE; 	// копирование кеша
 			else $doLoading = TRUE; 	// 
 		}
 		//echo "doLoading=$doLoading;\n";
