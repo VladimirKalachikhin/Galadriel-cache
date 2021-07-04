@@ -7,7 +7,7 @@ $ttl = 60*60*1; //cache timeout in seconds время, через которое
 $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/png'; 	// if content type differ then file extension
 $minZoom = 0;
-$maxZoom = 16;
+$maxZoom = 24;
 $freshOnly = TRUE; 	// не показывать протухшие тайлы
 
 $functionGetURL = <<<'EOFU'

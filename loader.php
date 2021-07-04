@@ -176,6 +176,7 @@ do {
 		//echo "res=$res; \n";
 		if($res==1) { 	// загрузка тайла плохо кончилась
 			//file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND | LOCK_EX); 	// вернём номер тайла в файл задания для загрузчика
+			
 			$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
 			flock($job,LOCK_EX) or exit("loader.php 2 Unable locking job file Error");
 			fseek($job,0,SEEK_END); 	// сдвинем указатель в конец
@@ -183,11 +184,12 @@ do {
 			fflush($job);
 			flock($job, LOCK_UN); 	//снимем блокировку		
 			fclose($job); 	// освободим файл
-			$str = ", но тайл будет запрошен повторно";
+			
+			$str = ", но тайл ".$xy[0].",".$xy[1]." будет запрошен повторно";
 		}
 		$now=microtime(TRUE)-$now;
 		$timer[$jobName] += $now;
-		echo "Карта $map, загрузка состоялась:$doLoading; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
+		echo "Карта $map, загрузка состоялась?:$doLoading; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
 		echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
 		echo "	\n\n";
 	}

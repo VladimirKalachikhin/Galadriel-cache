@@ -8,6 +8,7 @@ $ContentType = 'image/png'; 	// if content type differ then file extension
 $minZoom = 0;
 $maxZoom = 19;
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
+'00000000' 	// zero length file
 );
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {

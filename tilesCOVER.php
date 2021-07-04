@@ -24,7 +24,7 @@ $r = substr($r,0,strlen($r)-strlen($mapAddPath)); 	// имя карты
 
 //echo "x=$x; y=$y; z=$z; r=$r;<br>\n";
 require("$mapSourcesDir/$r.php"); 	// параметры карты
-if($z+8>$maxZoom) goto END; 	// нет смысла считать покрытие тайлов, которых заведомо нет
+//if($z+8>$maxZoom) goto END; 	// нет смысла считать покрытие тайлов, которых заведомо нет. Зато есть смысл посмотреть номера тайлов масштаба $loaderMaxZoom
 $path_parts = pathinfo($y); // 
 $y = $path_parts['filename'];
 // Расширение из конфига имеет преимущество!
@@ -68,20 +68,22 @@ if($bigZ<8){	// будем показывать тайлы масштаба $loa
 	}
 }
 
-// левый верхний тайл масштаба +8
-$coverX = 2**8*$x; 	
-$coverY = 2**8*$y;
-$coverZ = $z+8; 	
-//echo "$coverZ: $coverX / $coverY\n";
-for($ix=$coverX;$ix<$coverX+256;$ix++){
-	for($jy=$coverY;$jy<$coverY+256;$jy++){
-		$tileName = "$tileCacheDir/$r$mapAddPath/$coverZ/$ix/$jy.$ext";
-		$tileSize = @filesize($tileName);
-		//$tileSize = file_exists($tileName);
-		//echo "$tileName $tileSize<br>\n";
-		//echo ($ix-$coverX).",".($jy-$coverY)."\n";
-		if($tileSize){
-			imagesetpixel($img,$ix-$coverX,$jy-$coverY,$yesColor);
+if($z+8<=$maxZoom){ 	// нет смысла считать покрытие тайлов, которых заведомо нет
+	// левый верхний тайл масштаба +8
+	$coverX = 2**8*$x; 	
+	$coverY = 2**8*$y;
+	$coverZ = $z+8; 	
+	//echo "$coverZ: $coverX / $coverY\n";
+	for($ix=$coverX;$ix<$coverX+256;$ix++){
+		for($jy=$coverY;$jy<$coverY+256;$jy++){
+			$tileName = "$tileCacheDir/$r$mapAddPath/$coverZ/$ix/$jy.$ext";
+			$tileSize = @filesize($tileName);
+			//$tileSize = file_exists($tileName);
+			//echo "$tileName $tileSize<br>\n";
+			//echo ($ix-$coverX).",".($jy-$coverY)."\n";
+			if($tileSize){
+				imagesetpixel($img,$ix-$coverX,$jy-$coverY,$yesColor);
+			}
 		}
 	}
 }
