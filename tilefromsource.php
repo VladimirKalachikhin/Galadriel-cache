@@ -8,6 +8,7 @@ chdir($selfPath); // задаем директорию выполнение ск
 
 $params = array();
 if(@$argv) { 	// cli
+	//print_r($argv);
 	$options = getopt("z:x:y:r:",array('maxTry::','tryTimeout::'));
 	//print_r($options);
 	if($options) {
@@ -27,7 +28,7 @@ else {
 
 //echo "Исходный uri=$uri; <br>\n";
 //error_log("Исходный uri=$uri;");
-if($uri) $img=getTile($uri,$params); 	// fcache.php собственно, получение
+if($uri) $img=getTile($uri,$params); 	// собственно, получение
 
 session_write_close();
 if(@$argv) {
@@ -135,7 +136,7 @@ do {
 	$uri = getURL($z,$x,$y,$getURLparams); 	// получим url и массив с контекстом: заголовками, etc.
 	//echo "Источник:<pre>"; print_r($uri); echo "</pre>\n";
 	if(!$uri) {
-		echo"fcache.php getTile: ERROR: $mapSourcesName no hawe url.\n";
+		echo"getTile: ERROR: $mapSourcesName no hawe url.\n";
 		goto END; 	// по каким-то причинам нет uri тайла, очевидно, картинки нет и не будет
 	}
 	// Параметры запроса
@@ -174,18 +175,18 @@ do {
 	elseif((strpos($http_response_header[0],'403') !== FALSE) or (strpos($http_response_header[0],'204') !== FALSE)) { 	// Forbidden or No Content
 		if($on403=='skip') {
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
-			error_log('fcache.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
+			error_log('tilefromsource.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 		}
 		else {	
 			doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-			error_log('fcache.php getTile: 403 Forbidden or No Content responce');
+			error_log('tilefromsource.php getTile: 403 Forbidden or No Content responce');
 		}
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
 	elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден.
 		$newimg = NULL; 	// картинки нет, потому что её нет, сохраняем пустой тайл.
-		error_log('fcache.php getTile: Save enpty tile by 404 Not Found and go away');
+		error_log('tilefromsource.php getTile: Save enpty tile by 404 Not Found and go away');
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
 	elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
@@ -193,18 +194,18 @@ do {
 			if((substr($header,0,4)=='HTTP') AND (strpos($header,'200') !== FALSE)) break; 	// файл получен, перейдём к обработке
 			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'404') !== FALSE)) { 	// файл не найден.
 				$newimg = NULL;
-				error_log('fcache.php getTile: Save enpty tile by 404 Not Found and go away');
+				error_log('tilefromsource.php getTile: Save enpty tile by 404 Not Found and go away');
 				break 2; 	// бессмысленно ждать, прекращаем получение тайла
 			}
 			elseif((substr($header,0,4)=='HTTP') AND ((strpos($header,'403') !== FALSE) or ((strpos($http_response_header[0],'204') !== FALSE)))) { 	// Forbidden.
 				if($on403=='skip') {
 					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
-					error_log('fcache.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
+					error_log('tilefromsource.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 				}
 				else {
 					doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-					error_log('fcache.php getTile: 403 Forbidden or No Content responce - do bann');
+					error_log('tilefromsource.php getTile: 403 Forbidden or No Content responce - do bann');
 				}
 				break 2; 	 // бессмысленно ждать, прекращаем получение тайла
 			}
@@ -212,7 +213,7 @@ do {
 				if ($tries > $maxTry-1) { 	// ждём
 					doBann($mapSourcesName,$bannedSourcesFileName,'Service Unavailable'); 	// напоследок забаним источник
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-					error_log('fcache.php getTile: 503 Service Unavailable responce - do bann and go away');
+					error_log('tilefromsource.php getTile: 503 Service Unavailable responce - do bann and go away');
 					goto END; 	 // бессмысленно ждать, уходим совсем
 				}
 			}
@@ -221,6 +222,7 @@ do {
 	// Обработка проблем полученного
 	$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений
 	//echo "in_mime_type=$in_mime_type;\n";
+	//echo "trash "; print_r($trash); echo "\n";
 	if($in_mime_type) { 	// mime_type присланного сообщили
 		if(isset($mime_type)) { 	// mime_type того, что должно быть, указан в конфиге источника
 			if($in_mime_type == $mime_type) { 	// mime_type присланного совпадает с требуемым
@@ -232,7 +234,7 @@ do {
 				if(@$trash) { 	// имеется список ненужных тайлов
 					$imgHash = hash('crc32b',$newimg);
 					if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-						error_log('fcache.php getTile: Save enpty tile because it in trash list');
+						error_log('tilefromsource.php getTile: Save enpty tile because it in trash list');
 						$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
 						break; 	// прекращаем попытки получить
 					}
@@ -240,7 +242,7 @@ do {
 				break; 	// всё нормально, тайл получен
 			}
 			else { 	// mime_type присланного не совпадает с требуемым
-				error_log("fcache.php getTile: Reciewed $in_mime_type, but expected $mime_type. Skip, continue.");
+				error_log("tilefromsource.php getTile: Reciewed $in_mime_type, but expected $mime_type. Skip, continue.");
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем, продолжаем попытки получить
 			}
 		}
@@ -254,7 +256,7 @@ do {
 				if(@$trash) { 	// имеется список ненужных тайлов
 					$imgHash = hash('crc32b',$newimg);
 					if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-						error_log('fcache.php getTile: Save enpty tile because it in trash list');
+						error_log('tilefromsource.php getTile: Save enpty tile because it in trash list');
 						$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
 						break; 	// прекращаем попытки получить
 					}
@@ -263,11 +265,11 @@ do {
 			}
 			else { 	// получен не тайл или непонятный тайл
 				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-					error_log("fcache.php getTile: getting text: '$newimg'");
+					error_log("tilefromsource.php getTile: getting text: '$newimg'");
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 				else {
-					error_log("fcache.php getTile: No tile and unknown responce");
+					error_log("tilefromsource.php getTile: No tile and unknown responce");
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 			}
@@ -284,7 +286,7 @@ do {
 			if(@$trash) { 	// имеется список ненужных тайлов
 				$imgHash = hash('crc32b',$newimg);
 				if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-					error_log('fcache.php getTile: Save enpty tile because it in trash list');
+					error_log('tilefromsource.php getTile: Save enpty tile because it in trash list');
 					$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
 					break; 	// прекращаем попытки получить
 				}
@@ -293,11 +295,11 @@ do {
 		}
 		else { 	// получен не тайл или непонятный тайл
 			if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-				error_log("fcache.php getTile: $newimg");
+				error_log("tilefromsource.php getTile: $newimg");
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 			}
 			else {
-				error_log("fcache.php getTile: No tile and unknown responce");
+				error_log("tilefromsource.php getTile: No tile and unknown responce");
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 			}
 		}
@@ -307,7 +309,7 @@ do {
 	if ($tries > $maxTry) {	// Ждать больше нельзя
 		$newimg = FALSE; 	// Тайла не получили
 		doBann($mapSourcesName,$bannedSourcesFileName,'Many tries'); 	// забаним источник
-		error_log("fcache.php getTile: no tile by max try - do bann and go away");
+		error_log("tilefromsource.php getTile: no tile by max try - do bann and go away");
 		//break;
 		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
@@ -328,7 +330,7 @@ if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file
 		fclose($fp);
 		@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
 		
-		error_log("fcache.php getTile: Saved ".strlen($newimg)." bytes to $fileName");	
+		error_log("tilefromsource.php getTile: Saved ".strlen($newimg)." bytes to $fileName\n");	
 	}
 	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 		
@@ -341,7 +343,7 @@ if(($newimg !== FALSE) and @$bannedSources[$mapSourcesName]) { 	// снимем 
 	file_put_contents($bannedSourcesFileName, serialize($bannedSources));
 	@chmod($bannedSourcesFileName,0666); 	// чтобы при запуске от другого юзера была возаможность 
 	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-	error_log("fcache.php getTile:  Попытка № $tries: $mapSourcesName unbanned!");
+	error_log("tilefromsource.php getTile:  Попытка № $tries: $mapSourcesName unbanned!");
 }
 
 END:
@@ -365,7 +367,7 @@ file_put_contents($bannedSourcesFileName, serialize($bannedSources)); 	// зап
 @chmod($bannedSourcesFileName,0666); 	// чтобы при запуске от другого юзера была возаможность 
 umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 //error_log("doBann: bannedSources ".print_r($bannedSources,TRUE));
-error_log("fcache.php doBann: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)." by $reason reason!");
+error_log("tilefromsource.php doBann: $r banned at ".gmdate("D, d M Y H:i:s", $curr_time)." by $reason reason!");
 } // end function doBann
 
 function getResponceFiled($http_response_header,$respType) {
