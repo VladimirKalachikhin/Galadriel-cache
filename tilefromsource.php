@@ -109,6 +109,23 @@ if($pos=strpos($mapSourcesName,'_COVER')) { 	// нужно показать по
 	$getURLparams['tileCacheServerPath'] = $tileCacheServerPath; // 
 }
 else require("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда.
+/* Исторически require файла с описанием источника карты происходило в корне каждого скрипта
+и global там вполне срабатывало. Но со временем это require переместилось в функции, и все файлы источников
+использующие в функции getURL свои переменные через global -- сломались.
+Можно использовать костыль getURLparams, но он, вроде, не для этого. А для чего -- я забыл...
+Поэтому в здесь все (?) известные переменные из файла источника делаются глобальными принудительно.
+*/
+$GLOBALS['ttl'] = $ttl;
+$GLOBALS['noTileReTry'] = $noTileReTry;
+$GLOBALS['freshOnly'] = $freshOnly;
+$GLOBALS['ext'] = $ext;
+$GLOBALS['ContentType'] = $ContentType;
+$GLOBALS['minZoom'] = $minZoom;
+$GLOBALS['maxZoom'] = $maxZoom;
+$GLOBALS['EPSG'] = $EPSG;
+$GLOBALS['on403'] = $on403;
+$GLOBALS['trash'] = $trash;
+
 if($ext) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.$ext"; 	// в конфиге источника указано расширение
 elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.".$path_parts['extension'];
 else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
@@ -125,6 +142,7 @@ $bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// с
 if(!$bannedSources) $bannedSources = array();
 //echo "bannedSources:<pre>"; print_r($bannedSources); echo "</pre>";
 if((time()-@$bannedSources[$mapSourcesName][0]-$noInternetTimeout)<0) goto END;;	// если таймаут из конфига не истёк
+
 // Проблем связи и источника нет - будем получать тайл
 eval($functionGetURL); 	// создадим функцию GetURL
 $tries = 1;
@@ -375,4 +393,5 @@ function getResponceFiled($http_response_header,$respType) {
 */
 return array_values(array_filter($http_response_header,function ($str) use($respType){return (strpos($str,$respType) === 0);} ));
 } // end function getResponceFiled
+
 ?>
