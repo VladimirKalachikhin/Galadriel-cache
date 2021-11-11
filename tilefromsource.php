@@ -125,6 +125,8 @@ $GLOBALS['maxZoom'] = $maxZoom;
 $GLOBALS['EPSG'] = $EPSG;
 $GLOBALS['on403'] = $on403;
 $GLOBALS['trash'] = $trash;
+$GLOBALS['mime_type'] = $mime_type;
+$GLOBALS['content_encoding'] = $content_encoding;
 
 if($ext) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.$ext"; 	// в конфиге источника указано расширение
 elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.".$path_parts['extension'];

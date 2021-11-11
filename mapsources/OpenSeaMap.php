@@ -31,8 +31,6 @@ function getURL($z,$x,$y) {
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
 //error_log("OpenSeaMap $z,$x,$y");
-$getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	// set it if you hawe Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
-$tilesPerNode = 10; 	// попытка смены ip предпринимается каждые столько тайлов
 
 $userAgents = array();
 $userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
@@ -61,15 +59,30 @@ $opts = array(
 	)
 );
 //print_r($opts);
-if($getTorNewNode AND $opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
-	//error_log("Are session support present? _SESSION['tilesPerNode']=".$_SESSION['tilesPerNode']);
-	if ((!$_SESSION['tilesPerNode']) OR ($_SESSION['tilesPerNode'] > $tilesPerNode)) { 	// если сессии нет совсем или уже пора
-		error_log("getting new Tor exit node");
-		exec($getTorNewNode);	// сменим выходную ноду Tor
-		$_SESSION['tilesPerNode'] = 1;
+// set it if you hawe Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
+// tor MUST have in torrc: ControlPort 9051 without authentication: CookieAuthentication 0 and #HashedControlPassword
+// Alternative: set own port, config tor password by tor --hash-password my_password and stay password in `echo authenticate '\"\"'`
+$getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	
+$tilesPerNode = 10; 	// change ip after попытка смены ip предпринимается каждые столько тайлов
+$map = 'OpenSeaMap';	// нужно только для смены выходной ноды
+if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
+	$dirName = sys_get_temp_dir()."/tileproxyCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
+	if(file_exists($dirName) === FALSE) { 	// не будем сбрасывать кеш -- пусть кешируется
+		mkdir($dirName, 0777,true); 	// 
+		chmod($dirName,0777); 	// права будут только на каталог OpenTopoMapCacheInfo. Если он вложенный, то на предыдущие, созданные по true в mkdir, прав не будет. Тогда надо использовать umask.
 	}
-	else $_SESSION['tilesPerNode']++;
+	$tilesCntFile = "$dirName/tilesCnt_$map";
+	$tilesCnt = @file_get_contents($tilesCntFile);
+	if ($tilesCnt > $tilesPerNode) { 	// если уже пора
+		echo"getting new Tor exit node\n";
+		exec($getTorNewNode);	// сменим выходную ноду Tor
+		$tilesCnt = 1;
+	}
+	else $tilesCnt++;
+	file_put_contents($tilesCntFile,$tilesCnt);
+	@chmod($tilesCntFile,0666); 	// всем всё, чтобы работало от любого юзера. Но изменить права существующего файла, созданного другим юзером не удастся.
 }
+
 return array($url,$opts);
 }
 EOFU;
