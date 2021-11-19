@@ -18,9 +18,7 @@
 ВНИМАНИЕ! Загрузчик может загружать только карты с одним вариантом, типа map/z/y/x !!!
 Версионные карты (типа Weather) не могут быть загружены загрузчиком !!!!
 */
-
-$path_parts = pathinfo(__FILE__); // определяем каталог скрипта
-chdir($path_parts['dirname']); // сменим каталог выполнение скрипта
+chdir(__DIR__); // задаем директорию выполнение скрипта
 
 require('params.php'); 	// пути и параметры
 $bannedSourcesFileName = "$jobsDir/bannedSources";
@@ -170,8 +168,11 @@ do {
 		$res = FALSE;
 		if($doLoading){
 			eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
-			echo "Выполняется $execStringParsed\n"; 	//
-			$res = exec($execStringParsed); 	// 
+			if(thisRun($execStringParsed)) $res=0; 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Не сильно тормозит?
+			else{ 
+				echo "Выполняется $execStringParsed\n"; 	//
+				$res = exec($execStringParsed); 	// 
+			}
 		}
 		//echo "res=$res; \n";
 		if($res==1) { 	// загрузка тайла плохо кончилась
@@ -199,5 +200,22 @@ do {
 @fclose($job); 	// освободим файл
 unlink("$jobsDir/$pID.lock");	// 
 echo "Загрузчик $pID завершился\n";
+
+function thisRun($exec) {
+/**/
+exec("ps -A w | grep '$exec'",$psList);
+if(!$psList) exec("ps w | grep '$exec'",$psList); 	// for OpenWRT. For others -- let's hope so all run from one user
+//print_r($psList); //
+$run = FALSE;
+foreach($psList as $str) {
+	if(strpos($str,(string)$pid)!==FALSE) continue;
+	if(strpos($str,'grep')!==FALSE) continue;
+	if(strpos($str,$exec)!==FALSE){
+		$run=TRUE;
+		break;
+	}
+}
+return $run;
+}
 
 ?>

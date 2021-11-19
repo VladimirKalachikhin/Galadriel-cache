@@ -6,9 +6,9 @@ ob_start(); 	// попробуем перехватить любой вывод 
 Если полученный тайл ещё не показывали (он новый) - показываем.
 */
 //$now = microtime(TRUE);
-$path_parts = pathinfo(__FILE__); // определяем каталог скрипта
-chdir($path_parts['dirname']); // задаем директорию выполнение скрипта
+chdir(__DIR__); // задаем директорию выполнение скрипта
 
+$freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли
 require('params.php'); 	// пути и параметры
 
 $x = intval($_REQUEST['x']);
@@ -16,7 +16,6 @@ $y = filter_var($_REQUEST['y'],FILTER_SANITIZE_URL); 	// 123456.png
 $z = intval($_REQUEST['z']);
 $r = filter_var($_REQUEST['r'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-$freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли
 
 if((!$x) OR (!$y) OR (!$z) OR (!$r)) {
 	showTile(NULL); 	// покажем 404
@@ -92,6 +91,7 @@ else { 	// файла нет
 }
 // Решение принято, выполняем
 //error_log("tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;");
+//echo "tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;<br>\n";
 switch($showTHENloading){
 case 1: 	// сперва показывать, потом скачивать 
 	showTile($img,$mime_type,$content_encoding,$ext); 	// тайл есть, возможно, пустой
@@ -100,14 +100,18 @@ case 1: 	// сперва показывать, потом скачивать
 	//createJob($sourceName,$z,$x,$y,TRUE);	// скачать только этот тайл
 	createJob($sourceName,$z,$x,$y);	// 
 	break;
-case 2: 	//сперва скачивать, потом показывать
-	exec("$phpCLIexec tilefromsource.php $fileName"); 	// exec будет ждать завершения
+case 2: 	//echo "сперва скачивать, потом показывать<br>\n";
+	$execStr = "$phpCLIexec tilefromsource.php $fileName";
+	if(thisRun($execStr)) sleep(1); 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Не сильно тормозит?
+	else exec($execStr); 	// exec будет ждать завершения
 	// покажем тайл
 	$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, скачивание могло плохо кончиться
+	//echo $img;
 	showTile($img,$mime_type,$content_encoding,$ext); 	//покажем тайл
 
 	// Опережающее скачивание при показе - должно помочь с крупными масштабами
-	if($img and ($z >= $aheadLoadStartZoom)) { 	// поставим задание на получение всех нижележащих тайлов, если этот тайл удачно скачался
+	if($img and ($z >= $aheadLoadStartZoom)) { 	//echo "поставим задание на получение всех нижележащих тайлов, если этот тайл удачно скачался<br>\n";
+		//echo "$sourceName,$z,$x,$y<br>\n";
 		createJob($sourceName,$z,$x,$y); 	// скачать начиная с этого тайла
 	}
 	break;
@@ -189,5 +193,22 @@ if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одно
 	exec("$phpCLIexec loaderSched.php > /dev/null 2>&1 &"); 	// асинхронно. если запускать сам файл, ему нужны права
 }
 } // end function createJob
+
+function thisRun($exec) {
+/**/
+exec("ps -A w | grep '$exec'",$psList);
+if(!$psList) exec("ps w | grep '$exec'",$psList); 	// for OpenWRT. For others -- let's hope so all run from one user
+//print_r($psList); //
+$run = FALSE;
+foreach($psList as $str) {
+	if(strpos($str,(string)$pid)!==FALSE) continue;
+	if(strpos($str,'grep')!==FALSE) continue;
+	if(strpos($str,$exec)!==FALSE){
+		$run=TRUE;
+		break;
+	}
+}
+return $run;
+}
 
 ?>

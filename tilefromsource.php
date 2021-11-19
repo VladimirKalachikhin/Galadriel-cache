@@ -1,10 +1,7 @@
 <?php 
 //ob_start(); 	// попробуем перехватить любой вывод скрипта
 session_start(); 	// оно не нужно, но в источниках может использоваться, например, в navionics
-
-$path_parts = pathinfo(__FILE__); // определяем каталог скрипта
-$selfPath = $path_parts['dirname'];
-chdir($selfPath); // задаем директорию выполнение скрипта
+chdir(__DIR__); // задаем директорию выполнение скрипта
 
 $params = array();
 if(@$argv) { 	// cli
@@ -133,7 +130,7 @@ elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapA
 else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
 $getURLparams['mapAddPath'] = $mapAddPath;
 //echo "fileName=$fileName; <br>\n";
-$newimg = FALSE; 	// тайл получить не удалось
+$newimg = FALSE; 	// исходная ситуация -- тайл получить не удалось
 if (!$functionGetURL) { 	// нет функции для получения тайла	
 	$newimg = NULL; 	// типа, тайл получен
 	goto END;
