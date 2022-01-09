@@ -196,11 +196,13 @@ if(!glob("$jobsDir/*.slock")) { 	// если не запущено ни одно
 
 function thisRun($exec) {
 /**/
+$pid = getmypid();
 exec("ps -A w | grep '$exec'",$psList);
 if(!$psList) exec("ps w | grep '$exec'",$psList); 	// for OpenWRT. For others -- let's hope so all run from one user
 //print_r($psList); //
 $run = FALSE;
 foreach($psList as $str) {
+	//error_log("$str;\n");
 	if(strpos($str,(string)$pid)!==FALSE) continue;
 	if(strpos($str,'grep')!==FALSE) continue;
 	if(strpos($str,$exec)!==FALSE){
@@ -208,6 +210,7 @@ foreach($psList as $str) {
 		break;
 	}
 }
+//error_log("tiles.php thisRun:$run;\n");
 return $run;
 }
 
