@@ -16,9 +16,8 @@ if(!$pID) {
 file_put_contents("$jobsDir/$pID.slock", "$pID"); 	// положим флаг, что запустились
 //echo "pID=$pID;\n";
 // Занесём себя в cron
-$fullSelfName = realpath(getcwd()).'/'.$path_parts['basename'];
-exec("crontab -l | grep -v '$fullSelfName'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
-exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.$fullSelfName.'") | crontab -'); 	// каждую минуту
+exec("crontab -l | grep -v '".__FILE__."'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
+exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.__FILE__.'") | crontab -'); 	// каждую минуту
 echo "Планировщик запустился с pID $pID\n";
 
 $bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит

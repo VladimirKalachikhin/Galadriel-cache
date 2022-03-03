@@ -56,6 +56,6 @@ $tileCacheServerPath = '/tileproxy'; 	// web path to GaladrielCache
 
 // Ситемные параметры System
 // Вызов php из командной строки
-//$phpCLIexec = '/usr/bin/php-cli'; 	// php-cli executed name on your OS
-$phpCLIexec = '/usr/bin/php'; 	// php-cli executed name on your OS
+//$phpCLIexec = 'php-cli'; 	// php-cli executed name on your OS
+$phpCLIexec = 'php'; 	// php-cli executed name on your OS
 ?>
