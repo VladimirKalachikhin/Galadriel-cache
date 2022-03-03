@@ -6,7 +6,7 @@ chdir(__DIR__); // задаем директорию выполнение скр
 $params = array();
 if(@$argv) { 	// cli
 	//print_r($argv);
-	$options = getopt("z:x:y:r:",array('maxTry::','tryTimeout::'));
+	$options = getopt("z:x:y:r:",array('maxTry:','tryTimeout:'));
 	//print_r($options);
 	if($options) {
 		$x = intval($options['x']);
@@ -65,6 +65,7 @@ $getURLparams - массив с параметрами для передаяи �
 */
 require('params.php'); 	// пути и параметры
 if($params) extract($params,EXTR_OVERWRITE);
+//echo "maxTry=$maxTry;\n"; print_r($params);
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
 $selfPath = $path_parts['dirname'];
@@ -282,7 +283,7 @@ do {
 			}
 			else { 	// получен не тайл или непонятный тайл
 				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-					error_log("tilefromsource.php getTile: getting text: '$newimg'");
+					error_log("tilefromsource.php getTile: getting text instead tile: '$newimg'");
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 				else {

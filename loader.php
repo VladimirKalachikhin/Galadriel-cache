@@ -31,14 +31,14 @@ $customExec = FALSE;
 file_put_contents("$jobsDir/$pID.lock", "$pID"); 	// положим флаг, что запустились
 echo "Стартовал загрузчик $pID\n";
 do {
-	$execString = '$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$r --maxTry$maxTry'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
+	$execString = '$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$r --maxTry $maxTry'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
 	
 	clearstatcache(TRUE);
 	$jobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
 	shuffle($jobNames); 	// перемешаем массив, чтобы по возможности разные задания брались в обработку
 	$jobCNT = count($jobNames);
 	// проблемные источники
-	$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName));
+	$bannedSources = unserialize(@file_get_contents($bannedSourcesFileName));	// заполняется tilefromsource.php
 	//echo ":<pre> bannedSources "; print_r($bannedSources); echo "</pre>\n";
 	//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
 	// Выбор файла задания
@@ -125,75 +125,68 @@ do {
 	//echo "xy :<pre> "; print_r($xy); echo "</pre>\n";
 	$now = microtime(TRUE);
 	// Запустим скачивание
-	$str = "";
-	if(is_numeric($xy[0]) AND is_numeric($xy[1])) {
-		if($pos=strpos($map,'_COVER')) { 	// нужно показать покрытие, а не саму карту
-			require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
-		}
-		else require("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
-		// возьмём тайл
-		$path_parts = pathinfo($xy[1]); // 
-		if(!$path_parts['extension']) {
-			if($ext) $xy[1] = $xy[1].".$ext"; 	// в конфиге источника указано расширение
-			else $xy[1] = $xy[1].".png";
-		}
-		$fileName = "$tileCacheDir/$map/$zoom/".$xy[0]."/".$xy[1]; 	// из кэша, однако наличие версионности игнорируется
-		//echo "file=$fileName; <br>\n";
-		$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
+	if(!is_numeric($xy[0]) or !is_numeric($xy[1])) continue;
+	if($pos=strpos($map,'_COVER')) { 	// нужно показать покрытие, а не саму карту
+		require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
+	}
+	else require("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+	// возьмём тайл
+	$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
+	if($ext) $y .= ".$ext"; 	// в конфиге источника указано расширение
+	else $y .= ".png";
+	$fileName = "$tileCacheDir/$map/$zoom/$x/$y"; 	// из кэша, однако наличие версионности игнорируется
+	//echo "file=$fileName; <br>\n";
 
-		$doLoading = FALSE; 	
-		$imgFileTime = @filemtime($fileName); 	// файла может не быть
-		//echo "imgFileTime=$imgFileTime;\n";
-		if($imgFileTime) { 	// файл есть
-			if($customExec) $doLoading = TRUE; 	// копирование кеша
-			elseif(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
-				$doLoading = TRUE; 	// 
-			}
-			else { 	// файл свежий
-				$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
-				if(!$img) { 	// файл нулевой длины
-				 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
-					if(($imgFileTime+$ttl) > time()) { 	// файл протух
-						$doLoading = TRUE; 	// 
-					}
+	$doLoading = FALSE; 	
+	$imgFileTime = @filemtime($fileName); 	// файла может не быть
+	//echo "imgFileTime=$imgFileTime;\n";
+	if($imgFileTime) { 	// файл есть
+		if($customExec) $doLoading = TRUE; 	// копирование кеша
+		elseif(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
+			$doLoading = TRUE; 	// 
+		}
+		else { 	// файл свежий
+			$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
+			if(!$img) { 	// файл нулевой длины
+			 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
+				if(($imgFileTime+$ttl) > time()) { 	// файл протух
+					$doLoading = TRUE; 	// 
 				}
 			}
 		}
-		else { 	// файла нет
-			if($customExec) $doLoading = FALSE; 	// копирование кеша
-			else $doLoading = TRUE; 	// 
-		}
-		//echo "doLoading=$doLoading;\n";
-		// Решение принято, выполняем
-		$res = FALSE;
-		if($doLoading){
-			eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
-			if(thisRun($execStringParsed)) $res=0; 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Не сильно тормозит?
-			else{ 
-				echo "Выполняется $execStringParsed\n"; 	//
-				$res = exec($execStringParsed); 	// 
-			}
-		}
-		//echo "res=$res; \n";
-		if($res==1) { 	// загрузка тайла плохо кончилась
-			//file_put_contents("$jobsInWorkDir/$jobName", $xy[0].",".$xy[1]."\n",FILE_APPEND | LOCK_EX); 	// вернём номер тайла в файл задания для загрузчика
-			
-			$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
-			flock($job,LOCK_EX) or exit("loader.php 2 Unable locking job file Error");
-			fseek($job,0,SEEK_END); 	// сдвинем указатель в конец
-			fwrite($job, $xy[0].",".$xy[1]."\n");
-			fflush($job);
-			flock($job, LOCK_UN); 	//снимем блокировку		
-			fclose($job); 	// освободим файл
-			
-			$str = ", но тайл ".$xy[0].",".$xy[1]." будет запрошен повторно";
-		}
-		$now=microtime(TRUE)-$now;
-		$timer[$jobName] += $now;
-		echo "Карта $map, загрузка состоялась?:$doLoading; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
-		echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
-		echo "	\n\n";
 	}
+	else { 	// файла нет
+		if($customExec) $doLoading = FALSE; 	// копирование кеша
+		else $doLoading = TRUE; 	// 
+	}
+	//echo "doLoading=$doLoading;\n";
+	// Решение принято, выполняем
+	$res = FALSE;
+	if($doLoading){
+		eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
+		if(thisRun($execStringParsed)) $res=0; 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Не сильно тормозит?
+		else{ 
+			echo "Выполняется $execStringParsed\n"; 	//
+			$res = exec($execStringParsed); 	// 
+		}
+	}
+	//echo "res=$res; \n";
+	$str = "";
+	if($res==1) { 	// загрузка тайла плохо кончилась
+		$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
+		flock($job,LOCK_EX) or exit("loader.php 2 Unable locking job file Error");
+		fseek($job,0,SEEK_END); 	// сдвинем указатель в конец
+		fwrite($job, $xy[0].",".$xy[1]."\n");
+		fflush($job);
+		flock($job, LOCK_UN); 	//снимем блокировку		
+		fclose($job); 	// освободим файл
+		$str = ", но тайл ".$xy[0].",".$xy[1]." будет запрошен повторно";
+	}
+	$now=microtime(TRUE)-$now;
+	$timer[$jobName] += $now;
+	echo "Карта $map, загрузка состоялась?:$doLoading; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
+	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
+	echo "	\n\n";
 	//exit;
 } while($jobName);
 @flock($job, LOCK_UN); 	// на всякий случай - снимем блокировку		
@@ -203,12 +196,13 @@ echo "Загрузчик $pID завершился\n";
 
 function thisRun($exec) {
 /**/
+global $pID;
 exec("ps -A w | grep '$exec'",$psList);
 if(!$psList) exec("ps w | grep '$exec'",$psList); 	// for OpenWRT. For others -- let's hope so all run from one user
 //print_r($psList); //
 $run = FALSE;
 foreach($psList as $str) {
-	if(strpos($str,(string)$pid)!==FALSE) continue;
+	if(strpos($str,(string)$pID)!==FALSE) continue;
 	if(strpos($str,'grep')!==FALSE) continue;
 	if(strpos($str,$exec)!==FALSE){
 		$run=TRUE;
