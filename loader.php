@@ -184,7 +184,7 @@ do {
 	}
 	$now=microtime(TRUE)-$now;
 	$timer[$jobName] += $now;
-	echo "Карта $map, загрузка состоялась?:$doLoading; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
+	echo "Карта $map, загрузка состоялась?:".!$res."; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
 	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
 	echo "	\n\n";
 	//exit;

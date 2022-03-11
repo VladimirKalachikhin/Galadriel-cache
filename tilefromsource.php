@@ -154,7 +154,7 @@ do {
 	$uri = getURL($z,$x,$y,$getURLparams); 	// получим url и массив с контекстом: заголовками, etc.
 	//echo "Источник:<pre>"; print_r($uri); echo "</pre>\n";
 	if(!$uri) {
-		echo"getTile: ERROR: $mapSourcesName no hawe url.\n";
+		error_log("getTile: ERROR: $mapSourcesName no hawe url.\n");
 		goto END; 	// по каким-то причинам нет uri тайла, очевидно, картинки нет и не будет
 	}
 	// Параметры запроса
@@ -284,6 +284,7 @@ do {
 			else { 	// получен не тайл или непонятный тайл
 				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
 					error_log("tilefromsource.php getTile: getting text instead tile: '$newimg'");
+					error_log("$uri: http_response_header:".implode("\n",$http_response_header));
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 				else {
@@ -314,6 +315,7 @@ do {
 		else { 	// получен не тайл или непонятный тайл
 			if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
 				error_log("tilefromsource.php getTile: $newimg");
+				error_log("$uri: http_response_header:".implode("\n",$http_response_header));
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 			}
 			else {
@@ -348,7 +350,7 @@ if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file
 		fclose($fp);
 		@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
 		
-		error_log("tilefromsource.php getTile: Saved ".strlen($newimg)." bytes to $fileName\n");	
+		error_log("tilefromsource.php getTile: Saved ".strlen($newimg)." bytes to $fileName from $uri\n");	
 	}
 	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 		

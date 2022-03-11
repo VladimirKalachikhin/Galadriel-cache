@@ -1,7 +1,9 @@
 <?php
-$ttl = 60*60*24*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
-//$ttl = 0; 	// тайлы не протухают никогда
-$noTileReTry = 60*60; 	// no tile timeout, sec. Время, через которое переспрашивать тайлы, которые не удалось скачать. OpenTopoMap банит скачивальщиков, поэтому короткое.
+/* http://opennauticalchart.org/
+https://wiki.opennauticalchart.org/index.php?title=Main_Page
+*/
+$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
+// $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 18;
@@ -19,17 +21,15 @@ function getURL($z,$x,$y) {
 Это всё не препятствует обычному просмотру карты, но, если надо скачать более-менее обширные
 площади - скачивать надо, достаточно часто меняя ip. Проще всего это сделать через tor.
 Приведённая сдесь конфигурация предполагает, что на этой же машине имеется узел tor
-и proxy polipo или privoxy, сконфигурированный только для приёма http и передаче их tor'у по socs.
+и proxy lightdm, сконфигурированный только для приёма http и передаче их tor'у по socs. 
+Или иной такой же прокси, или сам tor настроен как http proxy.
 У tor должен быть включен управляющий сокет.
 
-По умолчанию всё это отключено. Для включения нужно раскомментировать параметр 'proxy' и 'timeout' в массиве $opts
+По умолчанию всё это отключено. Для включения нужно раскомментировать параметр 'proxy' в массиве $opts
 
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
-//error_log("OpenTopoMap $z,$x,$y");
-
-$server = array('a','b','c');
-$url = 'https://'.$server[array_rand($server)] . '.tile.opentopomap.org';
+//error_log("OpenNauticalChart $z,$x,$y");
 
 $userAgents = array();
 $userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
@@ -44,27 +44,27 @@ $userAgents[] = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101
 $userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0';
 $userAgent = $userAgents[array_rand($userAgents)];
 
-$RequestHead='Referer: http://openstreet.com';
-//$RequestHead='';
+//$RequestHead='Referer: http://opennauticalchart.org/';
+$RequestHead='';
 
+$url = 'http://t1.openseamap.org/seamark';
 $url .= "/".$z."/".$x."/".$y.".png";
 $opts = array(
 	'http'=>array(
 		'method'=>"GET",
 		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
-		'proxy'=>'tcp://127.0.0.1:8118',
-		'timeout' => 60,
+		//'proxy'=>'tcp://127.0.0.1:8118',
+		//'timeout' => 60,
 		'request_fulluri'=>TRUE
 	)
 );
 //print_r($opts);
-
 // set it if you hawe Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
 // tor MUST have in torrc: ControlPort 9051 without authentication: CookieAuthentication 0 and #HashedControlPassword
 // Alternative: set own port, config tor password by tor --hash-password my_password and stay password in `echo authenticate '\"\"'`
 $getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	
 $tilesPerNode = 10; 	// change ip after попытка смены ip предпринимается каждые столько тайлов
-$map = 'OpenTopoMap';	// нужно только для смены выходной ноды
+$map = 'OpenSeaMap';	// нужно только для смены выходной ноды
 if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
 	$dirName = sys_get_temp_dir()."/tileproxyCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
 	if(file_exists($dirName) === FALSE) { 	// не будем сбрасывать кеш -- пусть кешируется
