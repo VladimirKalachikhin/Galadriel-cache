@@ -184,4 +184,8 @@ GaladrielCache supports calculate coverage feature. To get the transparent tile 
 Additionally displayed coverage of loader's max zoom level.
 
 ## Support
-You can get support for GaladrielMap and GaladrielCahe for a beer [via PayPal](https://paypal.me/VladimirKalachikhin) or [YandexMoney](https://yasobe.ru/na/galadrielmap) at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)
+[Discussions](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
+
+The forum will be more lively if you make a donation [via PayPal](https://paypal.me/VladimirKalachikhin)  at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com) or at [ЮMoney](https://yasobe.ru/na/galadrielmap)
+
+[Paid personal consalting](https://kwork.ru/it-support/20093939/galadrielmap-installation-configuration-and-usage-consulting)  

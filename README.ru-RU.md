@@ -197,4 +197,8 @@ $ php clearCache.php
 Дополнительно будут показаны границы имеющихся тайлов максимального для загрузчика масштаба.
 
 ## Поддержка
-За чашку кофе [через ЯндексДеньги](https://yasobe.ru/na/galadrielmap) или [PayPal](https://paypal.me/VladimirKalachikhin?locale.x=ru_RU) можно получить консультации по адресу [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com)
+[Форум](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
+
+Форум будет живее, если вы сделаете пожертвование [через PayPal](https://paypal.me/VladimirKalachikhin) по адресу [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com) или на [ЮМани](https://yasobe.ru/na/galadrielmap).
+
+Вы можете получить [индивидуальную платную консультацию](https://kwork.ru/training-consulting/20093293/konsultatsii-po-ustanovke-i-ispolzovaniyu-galadrielmap) по вопросам установки и использования GaladrielCache.

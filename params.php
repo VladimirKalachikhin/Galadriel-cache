@@ -32,11 +32,12 @@ $noInternetTimeout = 20; 	// no try the source this time if no internet connecti
 //$globalProxy = 'tcp://127.0.0.1:8118'; 	// Global Proxy. May be tor via Polipo, for example. If not defined - not used.
 
 // Глобальный список мусорных тайлов. Тайлы с такой суммой crc32 заменяются пустыми, но будет предпринята попытка их получить снова через $noTileReTry
-/*
+
 // crc32 of junk tiles '00000000' zero length file and '0940c426' empty png are not trash!
 $globalTrash = array(
+'f821973a'	// белый тайл. Борьба с русскими?
 );
-*/ 
+ 
 // Загрузчик Tile loader.
 // Пути paths
 // 	Путь к каталогу заданий планировщика, в файловой системе
