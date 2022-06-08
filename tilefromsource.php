@@ -178,7 +178,7 @@ do {
 		$opts['http']['timeout'] = (float)$getTimeout;	// таймаут ожидания получения тайла, сек
 	}
 	//echo "opts :<pre>"; print_r($opts); echo "</pre>";
-	echo "Get tile from: $uri\n";
+	echo "\nGet tile from: $uri\n";
 	$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 
 	// Запрос - собственно, получаем файл
@@ -193,18 +193,18 @@ do {
 	elseif((strpos($http_response_header[0],'403') !== FALSE) or (strpos($http_response_header[0],'204') !== FALSE)) { 	// Forbidden or No Content
 		if($on403=='skip') {
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
-			error_log('tilefromsource.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
+			error_log('\n tilefromsource.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 		}
 		else {	
 			doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-			error_log('tilefromsource.php getTile: 403 Forbidden or No Content responce');
+			error_log('\n tilefromsource.php getTile: 403 Forbidden or No Content responce');
 		}
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
 	elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден.
 		$newimg = NULL; 	// картинки нет, потому что её нет, сохраняем пустой тайл.
-		error_log('tilefromsource.php getTile: Save enpty tile by 404 Not Found and go away');
+		error_log('\n tilefromsource.php getTile: Save enpty tile by 404 Not Found and go away');
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
 	elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
@@ -212,18 +212,18 @@ do {
 			if((substr($header,0,4)=='HTTP') AND (strpos($header,'200') !== FALSE)) break; 	// файл получен, перейдём к обработке
 			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'404') !== FALSE)) { 	// файл не найден.
 				$newimg = NULL;
-				error_log('tilefromsource.php getTile: Save enpty tile by 404 Not Found and go away');
+				error_log('\n tilefromsource.php getTile: Save enpty tile by 404 Not Found and go away');
 				break 2; 	// бессмысленно ждать, прекращаем получение тайла
 			}
 			elseif((substr($header,0,4)=='HTTP') AND ((strpos($header,'403') !== FALSE) or ((strpos($http_response_header[0],'204') !== FALSE)))) { 	// Forbidden.
 				if($on403=='skip') {
 					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл. $on403 - параметр источника - что делать при 403. Умолчально - ждать
-					error_log('tilefromsource.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
+					error_log('\n tilefromsource.php getTile: Save enpty tile by 403 Forbidden or No Content responce and on403==skip parameter');
 				}
 				else {
 					doBann($mapSourcesName,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-					error_log('tilefromsource.php getTile: 403 Forbidden or No Content responce - do bann');
+					error_log('\n tilefromsource.php getTile: 403 Forbidden or No Content responce - do bann');
 				}
 				break 2; 	 // бессмысленно ждать, прекращаем получение тайла
 			}
@@ -231,7 +231,7 @@ do {
 				if ($tries > $maxTry-1) { 	// ждём
 					doBann($mapSourcesName,$bannedSourcesFileName,'Service Unavailable'); 	// напоследок забаним источник
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-					error_log('tilefromsource.php getTile: 503 Service Unavailable responce - do bann and go away');
+					error_log('\n tilefromsource.php getTile: 503 Service Unavailable responce - do bann and go away');
 					goto END; 	 // бессмысленно ждать, уходим совсем
 				}
 			}
@@ -252,7 +252,7 @@ do {
 				if(@$trash) { 	// имеется список ненужных тайлов
 					$imgHash = hash('crc32b',$newimg);
 					if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-						error_log('tilefromsource.php getTile: Save enpty tile because it in trash list');
+						error_log('\n tilefromsource.php getTile: Save enpty tile because it in trash list');
 						$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
 						break; 	// прекращаем попытки получить
 					}
@@ -260,7 +260,7 @@ do {
 				break; 	// всё нормально, тайл получен
 			}
 			else { 	// mime_type присланного не совпадает с требуемым
-				error_log("tilefromsource.php getTile: Reciewed $in_mime_type, but expected $mime_type. Skip, continue.");
+				error_log("\n tilefromsource.php getTile: Reciewed $in_mime_type, but expected $mime_type. Skip, continue.");
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем, продолжаем попытки получить
 			}
 		}
@@ -274,7 +274,7 @@ do {
 				if(@$trash) { 	// имеется список ненужных тайлов
 					$imgHash = hash('crc32b',$newimg);
 					if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-						error_log('tilefromsource.php getTile: Save enpty tile because it in trash list');
+						error_log('\n tilefromsource.php getTile: Save enpty tile because it in trash list');
 						$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
 						break; 	// прекращаем попытки получить
 					}
@@ -283,12 +283,12 @@ do {
 			}
 			else { 	// получен не тайл или непонятный тайл
 				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-					error_log("tilefromsource.php getTile: getting text instead tile: '$newimg'");
-					error_log("$uri: http_response_header:".implode("\n",$http_response_header));
+					error_log("\n tilefromsource.php getTile: getting text instead tile: '$newimg'");
+					//error_log("\n $uri: http_response_header:".implode("\n",$http_response_header));
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 				else {
-					error_log("tilefromsource.php getTile: No tile and unknown responce");
+					error_log("\n tilefromsource.php getTile: No tile and unknown responce");
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 			}
@@ -305,7 +305,7 @@ do {
 			if(@$trash) { 	// имеется список ненужных тайлов
 				$imgHash = hash('crc32b',$newimg);
 				if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-					error_log('tilefromsource.php getTile: Save enpty tile because it in trash list');
+					error_log('\n tilefromsource.php getTile: Save enpty tile because it in trash list');
 					$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
 					break; 	// прекращаем попытки получить
 				}
@@ -314,12 +314,12 @@ do {
 		}
 		else { 	// получен не тайл или непонятный тайл
 			if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-				error_log("tilefromsource.php getTile: $newimg");
+				error_log("\n tilefromsource.php getTile: $newimg");
 				error_log("$uri: http_response_header:".implode("\n",$http_response_header));
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 			}
 			else {
-				error_log("tilefromsource.php getTile: No tile and unknown responce");
+				error_log("\n tilefromsource.php getTile: No tile and unknown responce");
 				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 			}
 		}
@@ -329,7 +329,7 @@ do {
 	if ($tries > $maxTry) {	// Ждать больше нельзя
 		$newimg = FALSE; 	// Тайла не получили
 		doBann($mapSourcesName,$bannedSourcesFileName,'Many tries'); 	// забаним источник
-		error_log("tilefromsource.php getTile: no tile by max try - do bann and go away");
+		error_log("\n tilefromsource.php getTile: no tile by max try - do bann and go away");
 		//break;
 		goto END; 	 // бессмысленно ждать, уходим совсем
 	}
@@ -350,7 +350,7 @@ if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file
 		fclose($fp);
 		@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
 		
-		error_log("tilefromsource.php getTile: Saved ".strlen($newimg)." bytes to $fileName from $uri\n");	
+		error_log("\n tilefromsource.php getTile: Saved ".strlen($newimg)." bytes to $fileName from $uri\n");	
 	}
 	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 		
@@ -363,7 +363,7 @@ if(($newimg !== FALSE) and @$bannedSources[$mapSourcesName]) { 	// снимем 
 	file_put_contents($bannedSourcesFileName, serialize($bannedSources));
 	@chmod($bannedSourcesFileName,0666); 	// чтобы при запуске от другого юзера была возаможность 
 	umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-	error_log("tilefromsource.php getTile:  Попытка № $tries: $mapSourcesName unbanned!");
+	error_log("\n tilefromsource.php getTile:  Попытка № $tries: $mapSourcesName unbanned!");
 }
 
 END:

@@ -90,7 +90,7 @@ return $nextZoom;
 function quickFilePutContents($fileName,$content) {
 /**/
 $tmpFileName = tempnam('','');
-echo "$tmpFileName \n";
+//echo "$tmpFileName \n";
 file_put_contents($tmpFileName,$content);
 rename($tmpFileName,$fileName);
 }

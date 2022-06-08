@@ -51,7 +51,7 @@ $opts = array(
 	'http'=>array(
 		'method'=>"GET",
 		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
-		//'proxy'=>'tcp://127.0.0.1:8118',
+		'proxy'=>'tcp://127.0.0.1:8118',
 		'timeout' => 60,
 		'request_fulluri'=>TRUE
 	)
