@@ -4,7 +4,7 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.5.2
+## v. 2.5.3
 
 ## Features:
 1. User-defined map sources, with versioning, if need
@@ -44,13 +44,25 @@ The GaladrielCache knows nothing about projections, it's store tiles only.
 ### GaladrielMap configuration
 To use [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) with GaladrielCache -- set `$tileCachePath` in GaladrielMap's `params.php` file. 
 
+### OSM "slippy map" tilenames
+Some applications cannot use tiles other than in [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames) format. To use the GaladrielCache with these applications, you can configure the Apache2 as follows:  
+```
+<IfModule rewrite_module>
+	RewriteEngine On
+	RewriteRule ^tiles/([A-Za-z]+)/([0-9]+)/([0-9]+)/([0-9.a-z]+)$ tiles.php?r=$1&z=$2&x=$3&y=$4
+</IfModule>
+```
+and refer to the cache:  
+_tiles/map_Name/Zoom/X_tile/Y_tile_  
+with or without extension.
+
 ## Install&configure:
 You must have a web server with php support. Just copy.  
 Paths and other settings are described in `params.php`
 Custom sources are in `mapsources/*`
 Help about map sources are in `mapsources/mapsources.txt`
 
-## Prepare SD card to cache:
+## Prepare SD card to cache
 ```
 # mkfs.ext4 -O 64bit,metadata_csum -b 4096 -i 4096 /dev/sdb1
 ```

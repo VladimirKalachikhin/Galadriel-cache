@@ -44,6 +44,18 @@ GaladrielCache ничего не знает о проекциях. Он прос
 ### Конфигурирование GaladrielMap
 Для использования [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) с GaladrielCache -- установите параметр `$tileCachePath` в конфигурационном файле GaladrielMap `params.php` как описанов этом файле. 
 
+### Адреса тайлов OSM
+Некоторые приложения могут обращаться к тайлом только по адресу в формате [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames). Для использования GaladrielCache с такими приложениями можно сконфигурировать Apache2 следующим образом:  
+```
+<IfModule rewrite_module>
+	RewriteEngine On
+	RewriteRule ^tiles/([A-Za-z]+)/([0-9]+)/([0-9]+)/([0-9.a-z]+)$ tiles.php?r=$1&z=$2&x=$3&y=$4
+</IfModule>
+```
+После этого к GaladrielCache можно будет обратиться:
+_tiles/map_Name/Zoom/X_tile/Y_tile_   
+с указанием в конце расширения файла изображения, или без указания, в зависимости от конфигурации карты.
+
 ## Установка и конфигурирование:
 Должен быть веб-сервер с поддержкой php. Просто скопируйте содержимое каталога GaladrielCache в нужное место.<br>
 Кофигурация путей и другие параметры описаны в `params.php` Настройте.  

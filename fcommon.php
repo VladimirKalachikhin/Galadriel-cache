@@ -16,7 +16,7 @@ $equator - длина экватора в метрах, по умолчанию 
 https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
 */
 $z0rez = $equator / $tile_size; 	// разрешение тайла масштаба 0 на экваторе
-return $z0rez * cos($lat_deg) / pow(2, $zoom);
+return $z0rez * cos(deg2rad($lat_deg)) / pow(2, $zoom);
 } // end function pixResolution
 
 function tileNum2degree($zoom,$xtile,$ytile) {
