@@ -45,7 +45,7 @@ GaladrielCache ничего не знает о проекциях. Он прос
 Для использования [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) с GaladrielCache -- установите параметр `$tileCachePath` в конфигурационном файле GaladrielMap `params.php` как описанов этом файле. 
 
 ### Адреса тайлов OSM
-Некоторые приложения могут обращаться к тайлом только по адресу в формате [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames). Для использования GaladrielCache с такими приложениями можно сконфигурировать Apache2 следующим образом:  
+Некоторые приложения (AvNav?) могут обращаться к тайлом только по адресу в формате [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames). Для использования GaladrielCache с такими приложениями можно сконфигурировать Apache2 следующим образом:  
 ```
 <IfModule rewrite_module>
 	RewriteEngine On
