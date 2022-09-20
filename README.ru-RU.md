@@ -49,7 +49,7 @@ GaladrielCache ничего не знает о проекциях. Он прос
 ```
 <IfModule rewrite_module>
 	RewriteEngine On
-	RewriteRule ^tiles/([A-Za-z]+)/([0-9]+)/([0-9]+)/([0-9.a-z]+)$ tiles.php?r=$1&z=$2&x=$3&y=$4
+	RewriteRule ^tiles/(.+)/([0-9]+)/([0-9]+)/([0-9.a-z]+)$ tiles.php?r=$1&z=$2&x=$3&y=$4
 </IfModule>
 ```
 После этого к GaladrielCache можно будет обратиться:

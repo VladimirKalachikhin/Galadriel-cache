@@ -49,7 +49,7 @@ Some applications (AvNav?) cannot use tiles other than in [OSM "slippy map" tile
 ```
 <IfModule rewrite_module>
 	RewriteEngine On
-	RewriteRule ^tiles/([A-Za-z]+)/([0-9]+)/([0-9]+)/([0-9.a-z]+)$ tiles.php?r=$1&z=$2&x=$3&y=$4
+	RewriteRule ^tiles/(.+)/([0-9]+)/([0-9]+)/([0-9.a-z]+)$ tiles.php?r=$1&z=$2&x=$3&y=$4
 </IfModule>
 ```
 and refer to the cache:  

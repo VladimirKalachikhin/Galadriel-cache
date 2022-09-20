@@ -4,7 +4,7 @@
 $ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
 // $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'jpg'; 	// tile image type/extension
-$ContentType = 'image/jpeg'; 	// if content type differ then file extension
+//$ContentType = 'image/jpeg'; 	// if content type differ then file extension
 $minZoom = 1;
 $maxZoom = 13;
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
