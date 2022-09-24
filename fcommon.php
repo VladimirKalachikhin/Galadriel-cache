@@ -1,6 +1,6 @@
 <?php
 /*
-pixResolution - Размер пикселя указанного масштаба на указанной долготе в метрах
+pixResolution - Размер пикселя указанного масштаба на указанной широте в метрах
 tileNum2degree - Tile numbers to lon./lat. left top corner
 tileNum2mercOrd - Tile numbers to linear coordinates left top corner on mercator ellipsoidal
 merc_x - Долготу в линейную координату x, Меркатор на эллипсоиде
@@ -11,7 +11,7 @@ nextZoom - Возвращает четыре номера тайлов след�
 quickFilePutContents - запись файла в tmp, а затем переименование
 */
 function pixResolution($lat_deg,$zoom,$tile_size=256,$equator=40075016.686){
-/* Размер пикселя указанного масштаба на указанной долготе в метрах
+/* Размер пикселя указанного масштаба на указанной широте в метрах
 $equator - длина экватора в метрах, по умолчанию -- WGS-84
 https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
 */
@@ -38,6 +38,16 @@ $lon_deg = $deg['lon'];
 $lat_deg = $deg['lat'];
 //return array('x'=>round(merc_x($lon_deg),10),'y'=>round(merc_y($lat_deg),10));
 return array('x'=>merc_x($lon_deg,$r_major),'y'=>merc_y($lat_deg,$r_major,$r_minor));
+}
+
+function tileNum2ord($zoom,$xtile,$ytile) {
+/* Меркатор на сфере
+Tile numbers to linear coordinates left top corner on mercator spherical
+*/
+$deg = tileNum2degree($zoom,$xtile,$ytile);
+$lon_deg = $deg['lon'];
+$lat_deg = $deg['lat'];
+return array('x'=>lon2x($lon_deg),'y'=>lat2y($lat_deg));
 }
 
 function merc_x($lon,$r_major=6378137.000) {
@@ -67,6 +77,26 @@ function merc_y($lat,$r_major=6378137.000,$r_minor=6356752.3142) {
     $y = - $r_major * log($ts);
     return $y;
 }
+/* Меркатор на сфере 
+https://wiki.openstreetmap.org/wiki/Mercator#PHP
+*/
+function lon2x($lon){
+// Долготу в линейную координату x
+	return deg2rad($lon) * 6378137.0;
+}
+function lat2y($lat){
+// Широту в линейную координату x
+	return log(tan(M_PI_4 + deg2rad($lat) / 2.0)) * 6378137.0; 
+}
+function x2lon($x){
+// Линейную координату x в долготу
+	return rad2deg($x / 6378137.0); 
+}
+function y2lat($y){
+// Линейную координату y в широту
+	return rad2deg(2.0 * atan(exp($y / 6378137.0)) - M_PI_2);
+}
+
 
 function coord2tileNum($lon,$lat,$zoom){
 /* координаты в градусах в номер тайла */
