@@ -4,7 +4,7 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.5.3
+## v. 2.5.4
 
 ## Features:
 1. User-defined map sources, with versioning, if need
@@ -68,7 +68,7 @@ Help about map sources are in `mapsources/mapsources.txt`
 ```
 `-b 4096 -i 4096` set block to 4096 bytes and increase i-nodes to max.  
 `-O 64bit,metadata_csum` needs for compability with old Android devices.  
-`/dev/sdb1` - your SD card
+`/dev/sdb1` - your SD card partition.
 
 ## Direct access to the cache
 If you server dead, but you have a rooted Android phone or tablet, you may use raster tiles directly:
@@ -199,6 +199,6 @@ Additionally displayed coverage of loader's max zoom level.
 ## Support
 [Discussions](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
 
-The forum will be more lively if you make a donation [via PayPal](https://paypal.me/VladimirKalachikhin)  at [galadrielmap@gmail.com](mailto:galadrielmap@gmail.com) or at [ЮMoney](https://yasobe.ru/na/galadrielmap)
+The forum will be more lively if you make a donation at [ЮMoney](https://sobe.ru/na/galadrielmap)
 
 [Paid personal consulting](https://kwork.ru/it-support/20093939/galadrielmap-installation-configuration-and-usage-consulting)  
