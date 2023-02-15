@@ -5,19 +5,10 @@ Map name are directory name in $tileCacheDir.
 The map describe file include() to main programm, so check the php syntax!
 None of the parameters in map describe file are required. If necessary, default parameters will be used.
 
+The list of variables used in the description of the source is in mapsourcesVariablesList.php
+You CANNOT modify this file.
+
 Map describe file may content:
-$ttl = 86400*30*12*3; // cache timeout in seconds.  86400 sec = 1 day. After this, tile trying to reload from source. If 0 - never trying to reload.
-$noTileReTry=$ttl; 	// empty tile timeout, good if < $ttl sec. Время, через которое протухает тайл нулевого размера, обозначающий нерешаемые проблемы скачивания.
-$freshOnly = FALSE; 	// Normally, outdated tiles first showing, then - downloaded. If TRUE - first loaded.
-$ext = 'png'; 	// tile image type/extension
-$ContentType = 'image/jpeg'; 	// if content type differ then file extension
-$minZoom = 0; 	// map min zoom
-$maxZoom = 19; 	// map max zoom
-$EPSG=4326; 	// map projection, for map viewer (such as web client) or get tile algorithm. Not used for cache/proxy.
-$on403 = 'wait'; 	// Forbidden action: skip, wait. By default - wait, source will be banned on $noInternetTimeout (params.php) time. 'Skip' eq 'File not found'.
-$trash = array(); 	// array of crc32 of bad, junk or other unwanted tiles or other files. This tiles not be stored to cache.
-$functionGetURL = <<<'EOFU'
-EOFU; 	// string to wrap getURL() function. This is necessery to avoid function redefinitions error.
 
 Main part - get the tile function:
 function getURL($z,$x,$y,$getURLparams) {}
@@ -30,7 +21,7 @@ About stream_context parameters see http://php.net/manual/en/context.php
 
 For this function use utilites from fcommon.php
 
-You can influence to GaladrielMap by
+You can influence from map source file to GaladrielMap by
 $data = array();
 $data['javascriptOpen']; 	// the javascript string, eval'ed before create map
 $data['javascriptClose']; 	// the javascript string, eval'ed after close map
