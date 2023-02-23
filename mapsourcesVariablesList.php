@@ -9,6 +9,7 @@ $freshOnly = FALSE; 	// Normally, outdated tiles first showing, then - downloade
 $ext = 'png'; 	// tile image type/extension
 // Если тайл содержит изображение не того типа, на который указывает расширение - будет использован этот тип
 $ContentType = 'image/jpeg'; 	// if content type differ then file extension
+$content_encoding = '';
 // Минимальный масштаб карты
 $minZoom = 1; 	// map min zoom
 // Максимальный масштаб карты
@@ -24,5 +25,7 @@ $trash = array(); 	// array of crc32 of bad, junk or other unwanted tiles or oth
 $functionGetURL = ''; 	// string to wrap getURL() function. This is necessery to avoid function redefinitions error.
 // Для взаимодействия с GaladrielMap
 $data = array();	// to influence from map source file to GaladrielMap
+// Для контроля источника: номер правильного тайла и его CRC32b хеш, например [15,20337,10160,'d205b575']
+$trueTile=array();	// to source check; tile number and CRC32b hash
 
 ?>

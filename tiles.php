@@ -53,7 +53,9 @@ $fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
 */
 $showTHENloading = 0; 	
 
+//clearstatcache();
 $imgFileTime = @filemtime($fileName); 	// файла может не быть
+//echo "tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
 if($imgFileTime) { 	// файл есть
 	if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 		//error_log("tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. freshOnly=$freshOnly; maxZoom=$maxZoom;");
@@ -94,7 +96,7 @@ else { 	// файла нет
 //echo "tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;<br>\n";
 switch($showTHENloading){
 case 1: 	// сперва показывать, потом скачивать 
-	showTile($img,$mime_type,$content_encoding,$ext); 	// тайл есть, возможно, пустой
+	showTile($img,$ContentType,$content_encoding,$ext); 	// тайл есть, возможно, пустой
 	//exec("$phpCLIexec tilefromsource.php $fileName > /dev/null 2>&1 &"); 	// exec не будет ждать завершения
 	// вместо получения - положим в очередь
 	//createJob($sourceName,$z,$x,$y,TRUE);	// скачать только этот тайл
@@ -107,7 +109,7 @@ case 2: 	//echo "сперва скачивать, потом показыват�
 	// покажем тайл
 	$img = @file_get_contents($fileName); 	// попробуем взять тайл из кеша, скачивание могло плохо кончиться
 	//if($img) echo "Тайл скачался <br>\n";	else echo "Тайл не скачался <br>\n";
-	showTile($img,$mime_type,$content_encoding,$ext); 	//покажем тайл
+	showTile($img,$ContentType,$content_encoding,$ext); 	//покажем тайл
 
 	// Опережающее скачивание при показе - должно помочь с крупными масштабами
 	if($img and ($z >= $aheadLoadStartZoom)) { 	//echo "поставим задание на получение всех нижележащих тайлов, если этот тайл удачно скачался<br>\n";
@@ -116,7 +118,7 @@ case 2: 	//echo "сперва скачивать, потом показыват�
 	}
 	break;
 default: 	// только показывать 
-	showTile($img,$mime_type,$content_encoding,$ext); 	// тайл есть, возможно, пустой
+	showTile($img,$ContentType,$content_encoding,$ext); 	// тайл есть, возможно, пустой
 }
 END:
 ob_clean(); 	// очистим, если что попало в буфер

@@ -4,6 +4,9 @@ $ttl = 86400*365; // 1 year cache timeout in seconds время, через ко
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
+// Для контроля источника: номер правильного тайла и его CRC32b хеш
+$trueTile=array(15,19796,10302,'cd6edc0c');	// to source check; tile number and CRC32b hash
+
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
 $server = array();

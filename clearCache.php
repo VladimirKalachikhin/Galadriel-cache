@@ -36,7 +36,7 @@ array_walk($mapsInfo,function (&$name,$ind) {
 	}); 	// 
 //echo ":<pre>"; print_r($mapsInfo); echo "</pre>";
 foreach($mapsInfo as $mapName) {
-	echo "Processing $mapName<br>\n";
+	echo "Processing $mapName\n";
 	clearMap($mapName,$fresh);
 }
 
@@ -52,10 +52,10 @@ if($globalTrash) { 	// имеется глобальный список нену
 }
 //echo "trash:<pre>"; print_r($trash); echo "</pre>\n";
 //echo "$tileCacheDir/$mapName\n";
-clearMapLayer("$tileCacheDir/$mapName",$trash,$fresh,$ttl); 	// рекурсивно обойдём дерево, потому что кеш может быть версионным
+clearMapLayer("$tileCacheDir/$mapName",$trash,$fresh,$ttl,$noTileReTry,$ext); 	// рекурсивно обойдём дерево, потому что кеш может быть версионным
 } // end function clearMap
 
-function clearMapLayer($indir,$trash=array(),$fresh=FALSE,$ttl=0,$ext='png') {
+function clearMapLayer($indir,$trash=array(),$fresh=FALSE,$ttl=0,$noTileReTry=0,$ext='png') {
 /*
 //$zooms = preg_grep('~.[0-9]$~',glob("$indir/*",GLOB_ONLYDIR)); 	// клёво же!
 */
@@ -66,9 +66,19 @@ foreach($files as $file) {
 	if(is_dir($file))	clearMapLayer($file,$trash,$fresh,$ttl);
 	else {
 		//echo $file.' '.preg_match('~/*[0-9]\.'.$ext.'$~',$file)."\n";
-		if($fresh AND $ttl AND (preg_match('~/*[0-9]\.'.$ext.'$~',$file)==1) AND ((time()-@filemtime($file)-$ttl)>0)) { 	// если это тайл и он протух и сказано освежить
-			echo "deleting stinking tile $file\n";
-			unlink($file);
+		if($fresh){
+			if(filesize($file)){	// 
+				if($ttl AND (preg_match('~/*[0-9]\.'.$ext.'$~',$file)==1) AND ((time()-@filemtime($file)-$ttl)>0)) { 	// если это тайл и он протух и сказано освежить
+					echo "deleting stinking tile $file\n";
+					unlink($file);
+				}
+			}
+			else {	// файл нулевого размера
+				if($noTileReTry AND (preg_match('~/*[0-9]\.'.$ext.'$~',$file)==1) AND ((time()-@filemtime($file)-$noTileReTry)>0)) { 
+					echo "deleting empty stinking tile $file\n";
+					unlink($file);
+				}
+			}
 		}
 		elseif($trash){
 			$crc32 = hash_file('crc32b',$file);

@@ -1,16 +1,18 @@
 <?php
 /* OpenSeaMap http://www.openseamap.org/
 */
-$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
+//$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
+$ttl = 86400*30*3; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 // $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 18;
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, тайлы с дурацкими надписями. '1556c7bd' чистый голубой квадрат 'c7b10d34' чистый голубой квадрат - не мусор! Иначе такие тайлы будут скачиваться снова и снова, а их много.
-
 $trash = array(
 '00000000' 	// zero length file
 );
+// Для контроля источника: номер правильного тайла и его CRC32b хеш
+$trueTile=array(15,19095,9521,'18e7effa');	// to source check; tile number and CRC32b hash
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
