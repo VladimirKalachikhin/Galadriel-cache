@@ -190,13 +190,18 @@ do {
 	$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 
 	// Запрос - собственно, получаем файл
-	$newimg = @file_get_contents($uri, FALSE, $context); 	// 
+	$newimg = file_get_contents($uri, FALSE, $context); 	// 
 	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
 
 	// Обработка проблем ответа
-	if(!$newimg and !@$http_response_header) { 	 //echo "связи нет  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
-		doBann($mapSourcesName,$bannedSourcesFileName,"no internet connection with $uri"); 	// забаним источник
-		goto END; 	 // бессмысленно ждать, уходим совсем
+	if(!$newimg and !@$http_response_header) { 	 //echo "связи нет или Connection refused  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
+		if ($tries > $maxTry-1) { 	// сперва ждём
+			doBann($mapSourcesName,$bannedSourcesFileName,'No internet connection or Connection refused'); 	// напоследок забаним источник
+			$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
+			$msg = 'tilefromsource.php getTile: No internet connection or Connection refused - do bann and go away';
+			error_log($msg);
+			goto END; 	 // бессмысленно ждать, уходим совсем
+		}
 	}
 	elseif((strpos($http_response_header[0],'403') !== FALSE) or (strpos($http_response_header[0],'204') !== FALSE)) { 	// Forbidden or No Content
 		if($on403=='skip') {
