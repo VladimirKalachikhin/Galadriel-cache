@@ -1,4 +1,5 @@
 <?php
+$humanName = array('ru'=>'Погода, слой','en'=>'Weather layer');
 //$ttl = 86400; // 1 day cache timeout in seconds время, через которое тайл считается протухшим
 $ttl = 60*60*6; // 1 day cache timeout in seconds время, через которое тайл считается протухшим
 // $ttl = 0; 	// тайлы не протухают никогда

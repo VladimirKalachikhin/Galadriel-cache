@@ -1,6 +1,7 @@
 <?php
 /*
 */
+$humanName = array('ru'=>'Топографические карты Генерального штаба','en'=>'Russian military maps');
 $ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
 // $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'jpg'; 	// tile image type/extension

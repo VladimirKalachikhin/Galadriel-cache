@@ -4,6 +4,7 @@
 //require_once('../fcommon.php');
 require_once('fcommon.php');
 
+$humanName = array('ru'=>'народный слой глубин OpenSeaMap','en'=>'OpenSeaMap folk bathymetry');
 //$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
 $ttl = 86400*30; //cache timeout in seconds время, через которое тайл считается протухшим, один месяц
 // $ttl = 0; 	// тайлы не протухают никогда

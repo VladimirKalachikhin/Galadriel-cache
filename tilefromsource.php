@@ -79,7 +79,7 @@ $getURLparams - массив с параметрами для передаяи �
 global $ttl, $noTileReTry, $freshOnly, $ext, $ContentType, $minZoom, $maxZoom, $EPSG, $on403, $trash, $content_encoding, $trueTile;
 require('params.php'); 	// пути и параметры
 if($params) extract($params,EXTR_OVERWRITE);
-//echo "maxTry=$maxTry;\n"; print_r($params);
+//echo "maxTry=$maxTry; tryTimeout=$tryTimeout;\n"; print_r($params);
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 $path_parts = pathinfo($_SERVER['SCRIPT_FILENAME']); // 
 $selfPath = $path_parts['dirname'];
@@ -258,36 +258,71 @@ do {
 		}
 	}
 	// Обработка проблем полученного
-	$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений
-	//echo "in_mime_type=$in_mime_type;\n";
-	//echo "trash "; print_r($trash); echo "\n";
-	if($in_mime_type) { 	// mime_type присланного сообщили
-		if(isset($mime_type)) { 	// mime_type того, что должно быть, указан в конфиге источника
-			if($in_mime_type == $mime_type) { 	// mime_type присланного совпадает с требуемым
-				// возможно, это можно принять
-				if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
-					if($trash) $trash = array_merge($trash,$globalTrash);
-					else $trash = $globalTrash;
+	if($http_response_header){
+		$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений
+		//echo "in_mime_type=$in_mime_type;\n";
+		//echo "trash "; print_r($trash); echo "\n";
+		if($in_mime_type) { 	// mime_type присланного сообщили
+			if(isset($mime_type)) { 	// mime_type того, что должно быть, указан в конфиге источника
+				if($in_mime_type == $mime_type) { 	// mime_type присланного совпадает с требуемым
+					// возможно, это можно принять
+					if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
+						if($trash) $trash = array_merge($trash,$globalTrash);
+						else $trash = $globalTrash;
+					}
+					if(@$trash) { 	// имеется список ненужных тайлов
+						$imgHash = hash('crc32b',$newimg);
+						if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
+							$msg = 'tilefromsource.php getTile: Save enpty tile because it in trash list';
+							error_log($msg);
+							$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
+							break; 	// прекращаем попытки получить
+						}
+					}
+					break; 	// всё нормально, тайл получен
 				}
-				if(@$trash) { 	// имеется список ненужных тайлов
-					$imgHash = hash('crc32b',$newimg);
-					if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-						$msg = 'tilefromsource.php getTile: Save enpty tile because it in trash list';
+				else { 	// mime_type присланного не совпадает с требуемым
+					$msg = "tilefromsource.php getTile: Reciewed $in_mime_type, but expected $mime_type. Skip, continue.";
+					error_log($msg);
+					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем, продолжаем попытки получить
+				}
+			}
+			else { 	// требуемый mime_type в конфиге не указан
+				if ((substr($in_mime_type,0,5)=='image') or (substr($in_mime_type,-10)=='x-protobuf')) { 	// тайл - картинка или векторный тайл
+					// возможно, это можно принять
+					if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
+						if($trash) $trash = array_merge($trash,$globalTrash);
+						else $trash = $globalTrash;
+					}
+					if(@$trash) { 	// имеется список ненужных тайлов
+						$imgHash = hash('crc32b',$newimg);
+						if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
+							$msg = 'tilefromsource.php getTile: Save enpty tile because it in trash list';
+							error_log($msg);
+							$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
+							break; 	// прекращаем попытки получить
+						}
+					}
+					break; 	// всё нормально, тайл получен
+				}
+				else { 	// получен не тайл или непонятный тайл
+					if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
+						$msg = "tilefromsource.php getTile: server return '{$http_response_header[0]}' and text instead tile: '$newimg'";
 						error_log($msg);
-						$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
-						break; 	// прекращаем попытки получить
+						//error_log("$uri: http_response_header:".implode("\n",$http_response_header));
+						$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
+					}
+					else {
+						$msg = 'tilefromsource.php getTile: No tile and unknown responce';
+						error_log($msg);
+						$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 					}
 				}
-				break; 	// всё нормально, тайл получен
-			}
-			else { 	// mime_type присланного не совпадает с требуемым
-				$msg = "tilefromsource.php getTile: Reciewed $in_mime_type, but expected $mime_type. Skip, continue.";
-				error_log($msg);
-				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем, продолжаем попытки получить
 			}
 		}
-		else { 	// требуемый mime_type в конфиге не указан
-			if ((substr($in_mime_type,0,5)=='image') or (substr($in_mime_type,-10)=='x-protobuf')) { 	// тайл - картинка или векторный тайл
+		else { 	// mime_type присланного не сообщили
+			$in_mime_type = finfo_buffer($file_info,$newimg); 	// определим mime_type присланного
+			if ((substr($in_mime_type,0,5)=='image') or (substr($in_mime_type,-6)=='x-gzip')  or (substr($in_mime_type,-10)=='x-protobuf')) { 	//  тайл - картинка или, возможно, векторный тайл, хотя gzip ни о чём не говорит, а x-protobuf так не определяется.
 				// возможно, это можно принять
 				if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
 					if($trash) $trash = array_merge($trash,$globalTrash);
@@ -306,7 +341,7 @@ do {
 			}
 			else { 	// получен не тайл или непонятный тайл
 				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-					$msg = "tilefromsource.php getTile: server return '{$http_response_header[0]}' and text instead tile: '$newimg'";
+					$msg = "tilefromsource.php getTile: $newimg";
 					error_log($msg);
 					//error_log("$uri: http_response_header:".implode("\n",$http_response_header));
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
@@ -318,40 +353,7 @@ do {
 				}
 			}
 		}
-	}
-	else { 	// mime_type присланного не сообщили
-		$in_mime_type = finfo_buffer($file_info,$newimg); 	// определим mime_type присланного
-		if ((substr($in_mime_type,0,5)=='image') or (substr($in_mime_type,-6)=='x-gzip')  or (substr($in_mime_type,-10)=='x-protobuf')) { 	//  тайл - картинка или, возможно, векторный тайл, хотя gzip ни о чём не говорит, а x-protobuf так не определяется.
-			// возможно, это можно принять
-			if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
-				if($trash) $trash = array_merge($trash,$globalTrash);
-				else $trash = $globalTrash;
-			}
-			if(@$trash) { 	// имеется список ненужных тайлов
-				$imgHash = hash('crc32b',$newimg);
-				if(in_array($imgHash,$trash,TRUE)) { 	// принятый тайл - мусор, TRUE - для сравнения без преобразования типов
-					$msg = 'tilefromsource.php getTile: Save enpty tile because it in trash list';
-					error_log($msg);
-					$newimg = NULL; 	// тайл принят нормально, но он мусор, сохраним пустой тайл
-					break; 	// прекращаем попытки получить
-				}
-			}
-			break; 	// всё нормально, тайл получен
-		}
-		else { 	// получен не тайл или непонятный тайл
-			if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
-				$msg = "tilefromsource.php getTile: $newimg";
-				error_log($msg);
-				//error_log("$uri: http_response_header:".implode("\n",$http_response_header));
-				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-			}
-			else {
-				$msg = 'tilefromsource.php getTile: No tile and unknown responce';
-				error_log($msg);
-				$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
-			}
-		}
-	}
+	}	// какой-нибудь http_response_header будет, если коммуникация состоялась. Его не будет только при отсутствии интернета.
 	// Тайла не получили, надо подождать
 	$tries++;
 	if ($tries > $maxTry) {	// Ждать больше нельзя

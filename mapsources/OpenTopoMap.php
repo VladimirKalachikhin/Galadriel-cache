@@ -1,4 +1,5 @@
 <?php
+$humanName = array('ru'=>'Топокарта OpenTopoMap','en'=>'OpenTopoMap');
 //$ttl = 60*60*24*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 $ttl = 60*60*24*30*6; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 //$ttl = 0; 	// тайлы не протухают никогда

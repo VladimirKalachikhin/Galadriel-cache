@@ -27,5 +27,6 @@ $functionGetURL = ''; 	// string to wrap getURL() function. This is necessery to
 $data = array();	// to influence from map source file to GaladrielMap
 // Для контроля источника: номер правильного тайла и его CRC32b хеш, например [15,20337,10160,'d205b575']
 $trueTile=array();	// to source check; tile number and CRC32b hash
-
+// Человеко-читаемые наименования карт, массив вида 'ru'=>'','en'=>''
+$humanName = array();	// Human readable maps names
 ?>
