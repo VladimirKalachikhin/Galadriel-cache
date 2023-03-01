@@ -1,5 +1,7 @@
 <?php
 /* Для каждого источника, для которого указан $trueTile, скачивает этот тайл и заносит в лог результат
+Еженедельный запуск (“At 00:00 on Sunday.”):
+0 0 * * 0	/usr/bin/php /home/www-data/tileproxy/checkSources.php
 */
 chdir(__DIR__); // задаем директорию выполнение скрипта
 require('params.php'); 	// пути и параметры

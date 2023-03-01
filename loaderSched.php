@@ -14,8 +14,8 @@ if(!$pID) {
 	return;
 }
 file_put_contents("$jobsDir/$pID.slock", "$pID"); 	// положим флаг, что запустились
-//echo "pID=$pID;\n";
-// Занесём себя в cron
+echo "pID=$pID;__FILE__=".__FILE__.";\n";
+// Занесём себя в crontab grep -v - инвертировать результат, т.е., в crontab заносится всё, кроме __FILE__
 exec("crontab -l | grep -v '".__FILE__."'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
 exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.__FILE__.'") | crontab -'); 	// каждую минуту
 echo "Планировщик запустился с pID $pID\n";
@@ -157,7 +157,7 @@ do {
 } while($jobs); 	// пока есть задания для планировщика. Загрузчики останутся работать.
 
 // удалим себя из cron
-exec("crontab -l | grep -v '$fullSelfName'  | crontab -");
+exec("crontab -l | grep -v '".__FILE__."'  | crontab -");
 
 // удалим файл с информацией о проблемах источников
 @unlink($bannedSourcesFileName);	
@@ -242,6 +242,8 @@ foreach($psList as $str) {
 		$w = pathinfo($w,PATHINFO_BASENAME);
 		//echo "|$w|\n";
 		switch($w){
+		case 'sudo':
+		case 'runuser':
 		case 'watch':
 		case 'ps':
 		case 'grep':

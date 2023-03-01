@@ -1,7 +1,7 @@
 <?php
 /* OpenSeaMap http://www.openseamap.org/
 */
-$humanName = array('ru'=>'Морская карта OpenSea','en'=>'OpenSeaMap');
+$humanName = array('ru'=>'Морской слой OpenSea','en'=>'OpenSeaMap');
 //$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 $ttl = 86400*30*3; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 // $ttl = 0; 	// тайлы не протухают никогда
