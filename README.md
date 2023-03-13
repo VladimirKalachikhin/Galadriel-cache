@@ -15,6 +15,9 @@ Tiles stored on OSM z/x/y file structure, so you may use SD with raster maps wit
 
 But no reprojection.
 
+## Compatibility
+Linux, PHP < 8. The cretinous decisions made at PHP 8 do not allow the GaladrielCache to work at PHP 8, and I do not want to follow these decisions.
+
 ## Usage:
 _tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_
 
