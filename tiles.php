@@ -9,7 +9,7 @@ ob_start(); 	// попробуем перехватить любой вывод 
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
 $freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли
-require('params.php'); 	// пути и параметры
+require('./params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
 
 $x = intval($_REQUEST['x']);
 $y = intval(filter_var($_REQUEST['y'],FILTER_SANITIZE_URL)); 	// 123456.png
@@ -22,7 +22,6 @@ if((!$x) OR (!$y) OR (!$z) OR (!$r)) {
 	error_log("Incorrect tile info: $r/$z/$x/$y");		
 	goto END;
 }
-
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
 $sourceName = $sourcePath[0];
@@ -30,68 +29,76 @@ if($pos=strpos($sourceName,'_COVER')) { 	// нужно показать покр
 	require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
 }
 else require("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
-// возьмём тайл
-$path_parts = pathinfo($y); // 
-$y = $path_parts['filename'];
-// Расширение из конфига имеет преимущество!
-if(!$ext) $ext = $path_parts['extension']; 	// в конфиге источника не указано расширение -- используем из запроса
-if(!$ext) $ext='png'; 	// совсем нет -- умолчальное
-$fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
-//echo "file=$fileName; <br>\n"; 
-/*
-Нужно понять -- тайл сначала показывать, потом скачивать, или сначала скачивать, а потом показывать
-если тайла нет -- сперва скачивать, потом показывать
-если тайл есть, он не нулевой длины, и не протух -- просто показать
-если тайл есть, он не нулевой длины, и протух, и указано протухшие не показывать -- скачать, потом показать
-если тайл есть, он не нулевой длины, и протух, и не указано протухшие не показывать -- показать, потом скачать
-если файл есть, но нулевой длины -- использовать специальное время протухания 
-*/
-/* $showTHENloading
-0; 	// только показывать 
-1; 	// сперва показывать, потом скачивать 
-2; 	//сперва скачивать, потом показывать
-*/
-$showTHENloading = 0; 	
+//error_log("function_exists('getTile'):".function_exists('getTile'));
+if($functionGetTile){	// у карты есть собственная функция получения тайла
+	eval($functionGetTile);
+	extract(getTile($r,$z,$x,$y),EXTR_OVERWRITE);
+}
+else {
+	// возьмём тайл
+	$path_parts = pathinfo($y); // 
+	$y = $path_parts['filename'];
+	// Расширение из конфига имеет преимущество!
+	if(!$ext) $ext = $path_parts['extension']; 	// в конфиге источника не указано расширение -- используем из запроса
+	if(!$ext) $ext='png'; 	// совсем нет -- умолчальное
+	$fileName = "$tileCacheDir/$r/$z/$x/$y.$ext"; 	// из кэша
+	//echo "file=$fileName; <br>\n"; 
+	/*
+	Нужно понять -- тайл сначала показывать, потом скачивать, или сначала скачивать, а потом показывать
+	если тайла нет -- сперва скачивать, потом показывать
+	если тайл есть, он не нулевой длины, и не протух -- просто показать
+	если тайл есть, он не нулевой длины, и протух, и указано протухшие не показывать -- скачать, потом показать
+	если тайл есть, он не нулевой длины, и протух, и не указано протухшие не показывать -- показать, потом скачать
+	если файл есть, но нулевой длины -- использовать специальное время протухания 
+	*/
+	/* $showTHENloading
+	0; 	// только показывать 
+	1; 	// сперва показывать, потом скачивать 
+	2; 	//сперва скачивать, потом показывать
+	*/
+	$showTHENloading = 0; 	
 
-//clearstatcache();
-$imgFileTime = @filemtime($fileName); 	// файла может не быть
-//echo "tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
-if($imgFileTime) { 	// файл есть
-	if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
-		//error_log("tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. freshOnly=$freshOnly; maxZoom=$maxZoom;");
-		if($freshOnly) { 	// протухшие не показывать
-			$showTHENloading = 2; 	//сперва скачивать, потом показывать
+	//clearstatcache();
+	$imgFileTime = @filemtime($fileName); 	// файла может не быть
+	//echo "tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
+	if($imgFileTime) { 	// файл есть
+		if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
+			//error_log("tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. freshOnly=$freshOnly; maxZoom=$maxZoom;");
+			if($freshOnly) { 	// протухшие не показывать
+				$showTHENloading = 2; 	//сперва скачивать, потом показывать
+			}
+			else { 	// протухшие показывать
+				$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
+				//error_log("tiles.php: Get rotten tile $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
+				$showTHENloading = 1; 	// сперва показывать, потом скачивать
+			}
 		}
-		else { 	// протухшие показывать
+		else { 	// файл свежий
 			$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
-			//error_log("tiles.php: Get rotten tile $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
-			$showTHENloading = 1; 	// сперва показывать, потом скачивать
-		}
-	}
-	else { 	// файл свежий
-		$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
-		//error_log("tiles.php: Get fresh tile $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
-		if($img) { 	// файл не нулевой длины
-			$showTHENloading = 0; 	// только показывать
-		}
-		else { 	// файл нулевой длины
-		 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
-			if(($imgFileTime+$ttl) < time()) { 	// файл протух
-				if($freshOnly) { 	// протухшие не показывать
-					$showTHENloading = 2; 	//сперва скачивать, потом показывать
-				}
-				else {
-					$showTHENloading = 1; 	// сперва показывать, потом скачивать
+			//error_log("tiles.php: Get fresh tile $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
+			if($img) { 	// файл не нулевой длины
+				$showTHENloading = 0; 	// только показывать
+			}
+			else { 	// файл нулевой длины
+			 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
+				if(($imgFileTime+$ttl) < time()) { 	// файл протух
+					if($freshOnly) { 	// протухшие не показывать
+						$showTHENloading = 2; 	//сперва скачивать, потом показывать
+					}
+					else {
+						$showTHENloading = 1; 	// сперва показывать, потом скачивать
+					}
 				}
 			}
 		}
 	}
+	else { 	// файла нет
+		//error_log("tiles.php: No $r/$z/$x/$y tile exist?");
+		$showTHENloading = 2; 	//сперва скачивать, потом показывать
+	}
 }
-else { 	// файла нет
-	//error_log("tiles.php: No $r/$z/$x/$y tile exist?");
-	$showTHENloading = 2; 	//сперва скачивать, потом показывать
-}
-// Решение принято, выполняем
+
+// Так или иначе - тайл получен или не получен, и решение, что делать - выработано
 //error_log("tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;");
 //echo "tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;<br>\n";
 switch($showTHENloading){
@@ -137,23 +144,27 @@ ob_end_clean(); 			// очистим, если что попало в буфер
 ob_start();
 header("Connection: close"); 	// Tell the client to close connection
 if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
-	if(!$mime_type) {
-		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-		$mime_type = finfo_buffer($file_info,$tile);
-	}
-	elseif(($mime_type == 'application/x-protobuf') and (!$content_encoding)) {
-		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-		$file_type = finfo_buffer($file_info,$tile);
-		//header("X-Debug: $file_type");
-		if($file_type == 'application/x-gzip') $content_encoding = 'gzip';
-	}
 	//$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
 	//header("Expired: " . $exp_gmt);
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
 	//header("Last-Modified: " . $mod_gmt);
 	//header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
-	if($mime_type) header ("Content-Type: $mime_type");
+	if(($ext == 'pbf') or ($mime_type == 'application/x-protobuf')){
+		if(!$content_encoding){
+			$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+			$file_type = finfo_buffer($file_info,$tile);
+			//header("X-Debug: $file_type");
+			if($file_type == 'application/x-gzip') $content_encoding = 'gzip';
+		}
+		header ("Content-Type: application/x-protobuf");
+	}
+	elseif($mime_type) header ("Content-Type: $mime_type");
 	elseif($ext) header ("Content-Type: image/$ext");
+	else{
+		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+		$mime_type = finfo_buffer($file_info,$tile);
+		if($mime_type) header ("Content-Type: $mime_type");
+	}
 	if($content_encoding) header ("Content-encoding: $content_encoding");
 }
 else {
