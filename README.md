@@ -2,18 +2,19 @@
 # GaladrielCache [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 This is a simple map tiles cache/proxy to use on weak computers such as RaspberryPi or NAS. The author uses it in the [wi-fi router/GSM modem under OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware) on his sailboat Galadriel.  
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
-Tiles stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
+Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.5.9
+## v. 2.6.0
 
 ## Features:
-1. User-defined map sources, with versioning, if need
-2. Flexible and robust tile loading with proxy support
-3. Prior loading of large zoom levels
-4. Asynchronous cache freshing
-5. Separated robust loader
+1. User-defined internet map sources, with versioning, if needed.
+2. Flexible and robust tile loading with proxy support.
+3. Prior loading of large zoom levels.
+4. Asynchronous cache freshing.
+5. Separated robust loader.
+6. Serves [MBTiles](https://github.com/mapbox/mbtiles-spec/blob/master/1.3/spec.md) local maps.
 
-But no reprojection.
+But no reprojection. Map projection is a client application problem.
 
 ## Compatibility
 Linux, PHP < 8. The cretinous decisions made at PHP 8 do not allow the GaladrielCache to work at PHP 8, and I do not want to follow these decisions.
@@ -59,6 +60,10 @@ and refer to the cache:
 _tiles/map_Name/Zoom/X_tile/Y_tile_  
 with or without extension.
 
+### MBTiles
+The file with map on mbtiles format must have `.mbtiles` extension and located in _$tileCacheDir_ directory. The map description file must have same name as map file, but with _.php_ extension of course, and and, similarly to other such files be locate in _mapsources/_ directory.  
+It doesn't matter to the GaladrielCache whether vector or raster tiles are in the map file. The corresponding configuration should be in the map description file.
+
 ## Install&configure:
 You must have a web server with php support. Just copy.  
 Paths and other settings are described in `params.php`
@@ -71,7 +76,8 @@ Help about map sources are in `mapsources/mapsources.txt`
 ```
 `-b 4096 -i 4096` set block to 4096 bytes and increase i-nodes to max.  
 `-O 64bit,metadata_csum` needs for compability with old Android devices.  
-`/dev/sdb1` - your SD card partition.
+`/dev/sdb1` - your SD card partition.  
+However, default formatting in vfat allows you to store a sufficient amount of tiles on the map for practical purposes.
 
 ## Direct access to the cache
 If you server dead, but you have a rooted Android phone or tablet, you may use raster tiles directly:

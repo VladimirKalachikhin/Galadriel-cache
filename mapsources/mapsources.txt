@@ -1,7 +1,7 @@
 In mapsources/ directory are stored files fully describing map and map source, include uri, projection and get tile algorithm.
 
 The filename are map name and .php ext.
-Map name are directory name in $tileCacheDir.
+Map name are directory name or .mbtiles file name in $tileCacheDir.
 The map describe file include() to main programm, so check the php syntax!
 None of the parameters in map describe file are required. If necessary, default parameters will be used.
 
@@ -10,7 +10,7 @@ You CANNOT modify this file.
 
 Map describe file may content:
 
-Main part - get the tile function:
+Main part - get the url of tile function:
 function getURL($z,$x,$y,$getURLparams) {}
 $z - zoom
 $x - x number of tile
@@ -20,6 +20,22 @@ Must return string of uri for get tile, or array of two items: string uri and ar
 About stream_context parameters see http://php.net/manual/en/context.php
 
 For this function use utilites from fcommon.php
+
+Other function - getTile() - is alternative way to get tile from local storage.
+There is only one such function: getting a tile from a MBTiles format file. For MBTiles map the map description file can only consist of:
+<?php
+$functionGetTile = <<<'EOFU'
+function getTile($r,$z,$x,$y){
+	require_once('MBTilesClient.php');
+	return serveMBTiles($r,$z,$x,$y);
+} // end function getTile
+EOFU;
+?>
+but for vector tiles you should specify
+$ext = 'pbf';
+$ContentType = 'application/x-protobuf';
+$content_encoding = 'gzip';
+and have a style file.
 
 You can influence from map source file to GaladrielMap by
 $data = array();
