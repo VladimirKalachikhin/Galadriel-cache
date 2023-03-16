@@ -1,8 +1,8 @@
 <?php
 /*
 */
-$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
-// $ttl = 0; 	// тайлы не протухают никогда
+//$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
+$ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/png'; 	// if content type differ then file extension
 $minZoom = 3;

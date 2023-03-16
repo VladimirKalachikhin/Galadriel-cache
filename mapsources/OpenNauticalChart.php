@@ -2,7 +2,7 @@
 /* http://opennauticalchart.org/
 https://wiki.opennauticalchart.org/index.php?title=Main_Page
 */
-$humanName = array('ru'=>'Морскаой слой OpenNautical','en'=>'OpenNautical chart');
+$humanName = array('ru'=>'Морской слой OpenNautical','en'=>'OpenNautical chart');
 //$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 $ttl = 86400*30*3; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 // $ttl = 0; 	// тайлы не протухают никогда
