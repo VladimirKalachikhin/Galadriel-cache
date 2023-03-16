@@ -16,7 +16,7 @@ WHERE name='format'
 ");
 $metadata = $res->fetchArray(SQLITE3_ASSOC);
 if($metadata) $ext = $metadata['value'];
-if($ext=='pbf') return;	// векторные тайлы не умеем
+//if($ext=='pbf') return;	// векторные тайлы не умеем
 
 $sockName = "/tmp/tileproxy_$r";
 $masterSock = socket_create(AF_UNIX, SOCK_STREAM, 0);

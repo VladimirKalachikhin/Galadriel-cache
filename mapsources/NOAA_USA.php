@@ -1,6 +1,7 @@
 <?php
 /*
 */
+$humanName = array('ru'=>'Морская карта NOAA, USA, старая','en'=>'NOAA USA nautical chart, old');
 //$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
 $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
