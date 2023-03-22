@@ -88,7 +88,7 @@ do {
 	if($s[0]=='#') { 	// там есть указание, что запускать
 		$customExec = TRUE;
 		$execString = trim(substr($s,1));
-		//echo "execString=$execString;";
+		//echo "execString=$execString;\n";
 		if(!$execString) {
 			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// грохнем файл задания, с которым непонятно что делать
 			flock($job, LOCK_UN); 	//снимем блокировку

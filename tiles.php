@@ -101,13 +101,17 @@ else {
 // Так или иначе - тайл получен или не получен, и решение, что делать - выработано
 //error_log("tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;");
 //echo "tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;<br>\n";
+//$file_info = finfo_open(FILEINFO_MIME); 	// подготовимся к определению mime-type
+//$file_type = finfo_buffer($file_info,$img);
+//echo "$file_type\n";
+
 switch($showTHENloading){
 case 1: 	// сперва показывать, потом скачивать 
 	showTile($img,$ContentType,$content_encoding,$ext); 	// тайл есть, возможно, пустой
 	//exec("$phpCLIexec tilefromsource.php $fileName > /dev/null 2>&1 &"); 	// exec не будет ждать завершения
 	// вместо получения - положим в очередь
-	//createJob($sourceName,$z,$x,$y,TRUE);	// скачать только этот тайл
-	createJob($sourceName,$z,$x,$y);	// 
+	if($z >= $aheadLoadStartZoom) createJob($sourceName,$z,$x,$y); 	//echo "поставим задание на получение всех нижележащих тайлов, если этот тайл удачно скачался<br>\n";
+	else createJob($sourceName,$z,$x,$y,TRUE);	// скачать только этот тайл
 	break;
 case 2: 	//echo "сперва скачивать, потом показывать<br>\n";
 	$execStr = "$phpCLIexec tilefromsource.php $fileName";
@@ -192,12 +196,21 @@ global $jobsDir,$jobsInWorkDir,$phpCLIexec,$aheadLoadStartZoom,$loaderMaxZoom,$m
 //echo "mapSourcesName=$mapSourcesName; z=$z; jobsDir=$jobsDir; phpCLIexec=$phpCLIexec, aheadLoadStartZoom=$aheadLoadStartZoom, loaderMaxZoom=$loaderMaxZoom\n";
 if(($z > $loaderMaxZoom) OR ($z < $aheadLoadStartZoom)) $oneOnly=TRUE; 	// масштаб вне указанного для планировщика
 $jobName = "$mapSourcesName.$z"; 	// имя файла задания
-// в обеих случаях нужно положить в каталог заданий для загрузчика, ибо аналогичное задание уже может выполняться, и если его дать планировщику, то оно исчезнет
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
 //error_log("tiles.php createJob: Update loader job $jobsInWorkDir/$jobName by $x,$y");
-file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
-@chmod("$jobsInWorkDir/$jobName",0666); 	// чтобы запуск от другого юзера
-if(!$oneOnly) { 	// если нужно загрузить всё
+if($oneOnly) { 	// нужно загрузить только один тайл
+	// нужно положить задание в каталог заданий для загрузчика, есть там такое, или нет
+	file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
+	@chmod("$jobsDir/$jobName",0666); 	// чтобы запуск от другого юзера
+}
+else { 	// нужно загрузить всё
+	// нужно добавить к заданию для загрузчика, если там такое есть
+	// ибо если просто дать его планировщику, то оно исчезнет
+	if(file_exists("$jobsInWorkDir/$jobName")){
+		file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
+		@chmod("$jobsDir/$jobName",0666); 	// чтобы запуск от другого юзера
+	}
+	// дадим задание планировщику
 	file_put_contents("$jobsDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для планировщика. Понимаем, что этот тайл не будет скачан, если задание существует и скачивается. Будут скачаны только тайлы следующего масштаба. Но выше мы положили то же самое в задание для загрузчика.
 	@chmod("$jobsDir/$jobName",0666); 	// чтобы запуск от другого юзера
 }
