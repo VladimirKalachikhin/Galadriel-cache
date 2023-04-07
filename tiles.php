@@ -11,17 +11,19 @@ chdir(__DIR__); // задаем директорию выполнение скр
 $freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли
 require('./params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
 
-$x = intval($_REQUEST['x']);
-$y = intval(filter_var($_REQUEST['y'],FILTER_SANITIZE_URL)); 	// 123456.png
-$z = intval($_REQUEST['z']);
+$x = filter_var($_REQUEST['x'],FILTER_SANITIZE_NUMBER_INT);
+$y = filter_var($_REQUEST['y'],FILTER_SANITIZE_URL); 	// 123456.png
+$z = filter_var($_REQUEST['z'],FILTER_SANITIZE_NUMBER_INT);
 $r = filter_var($_REQUEST['r'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-
-if((!$x) OR (!$y) OR (!$z) OR (!$r)) {
+if(($x===false) OR ($y===false) OR ($z===false) OR ($r===false)) {
 	showTile(NULL); 	// покажем 404
 	error_log("Incorrect tile info: $r/$z/$x/$y");		
 	goto END;
 }
+$x = intval($x);
+$y = intval($y);
+$z = intval($z);
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
 $sourceName = $sourcePath[0];
