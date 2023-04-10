@@ -144,6 +144,7 @@ if((time()-@$bannedSources[$mapSourcesName][0]-$noInternetTimeout)<0) goto END;;
 eval($functionGetURL); 	// создадим функцию getURL
 $tries = 1;
 $file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
+$msg='';
 do {
 	$newimg = FALSE; 	// умолчально - тайл получить не удалось, ничего не сохраняем, пропускаем
 	//echo "Параметры:<pre>"; print_r($getURLparams); echo "</pre>";
@@ -217,9 +218,9 @@ do {
 		}
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
-	elseif(strpos($http_response_header[0],'404') !== FALSE) { 	// файл не найден.
+	elseif((strpos($http_response_header[0],'404') !== FALSE) or (strpos($http_response_header[0],'416') !== FALSE)) { 	// файл не найден or Requested Range Not Satisfiable - это затейники из ЦГКИПД
 		$newimg = NULL; 	// картинки нет, потому что её нет, сохраняем пустой тайл.
-		$msg = 'tilefromsource.php getTile: Save enpty tile by 404 Not Found and go away';
+		$msg = 'tilefromsource.php getTile: Save enpty tile by 404 (or similar) Not Found and go away';
 		error_log($msg);
 		break; 	 // бессмысленно ждать, прекращаем получение тайла
 	}
