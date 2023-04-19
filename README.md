@@ -4,7 +4,7 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.6.2
+## v. 2.7.0
 
 ## Features:
 1. User-defined internet map sources, with versioning, if needed.
@@ -68,7 +68,7 @@ It doesn't matter to the GaladrielCache whether vector or raster tiles are in th
 You must have a web server with php support. Just copy.  
 Paths and other settings are described in `params.php`
 Custom sources are in `mapsources/*`
-Help about map sources are in `mapsources/mapsources.txt`
+Help about map sources are in mapsources/[mapsources.md]((https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.md))
 
 ## Prepare SD card to cache
 ```
