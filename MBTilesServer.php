@@ -141,7 +141,7 @@ do {
 		if(!$buf) continue;	// к следующему сокету
 		// Собственно, содержательная часть
 		echo "\nПРИНЯТО ОТ КЛИЕНТА ".mb_strlen($buf,'8bit')." байт\n";
-		echo"|$buf|\n";
+		//echo"|$buf|\n";
 		extract(unserialize($buf),EXTR_OVERWRITE);
 		// Переход от номеров XYZ к номерам mbtiles:
 		// zoom_level = z

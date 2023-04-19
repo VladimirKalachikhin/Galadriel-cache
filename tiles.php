@@ -32,9 +32,9 @@ if($pos=strpos($sourceName,'_COVER')) { 	// нужно показать покр
 }
 else require("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 //error_log("function_exists('getTile'):".function_exists('getTile'));
-if($functionGetTile){	// у карты есть собственная функция получения тайла
-	eval($functionGetTile);
-	extract(getTile($r,$z,$x,$y),EXTR_OVERWRITE);
+if($functionGetTileFile){	// у карты есть собственная функция получения тайла
+	eval($functionGetTileFile);
+	extract(getTileFile($r,$z,$x,$y),EXTR_OVERWRITE);
 }
 else {
 	// возьмём тайл
@@ -101,6 +101,7 @@ else {
 }
 
 // Так или иначе - тайл получен или не получен, и решение, что делать - выработано
+if($functionPrepareTileImg) eval($functionPrepareTileImg);	// определим функцию обработки картинки
 //error_log("tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;");
 //echo "tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;<br>\n";
 //$file_info = finfo_open(FILEINFO_MIME); 	// подготовимся к определению mime-type
@@ -137,7 +138,7 @@ END:
 ob_clean(); 	// очистим, если что попало в буфер
 return;
 
-function showTile($tile,$mime_type='',$content_encoding='',$ext='') {
+function showTile($img,$mime_type='',$content_encoding='',$ext='') {
 /*
 Отдаёт тайл. Считается, что только эта функция что-то показывает клиенту
 https://gist.github.com/bubba-h57/32593b2b970366d24be7
@@ -149,7 +150,12 @@ ignore_user_abort(true); 	// чтобы выполнение не прекрат
 ob_end_clean(); 			// очистим, если что попало в буфер
 ob_start();
 header("Connection: close"); 	// Tell the client to close connection
-if($tile) { 	// тайла могло не быть в кеше, и его не удалось получить
+if($img) { 	// тайла могло не быть в кеше, и его не удалось получить или его попортила функция prepareTile
+	if(function_exists('prepareTileImg')) {	// обработка картинки, если таковая указана в описании источника
+		$prepared = prepareTileImg($img);
+		if($prepared['img']) extract($prepared);
+		unset($prepared);
+	}
 	//$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
 	//header("Expired: " . $exp_gmt);
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
@@ -158,7 +164,7 @@ if($tile) { 	// тайла могло не быть в кеше, и его не 
 	if(($ext == 'pbf') or ($mime_type == 'application/x-protobuf')){
 		if(!$content_encoding){
 			$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-			$file_type = finfo_buffer($file_info,$tile);
+			$file_type = finfo_buffer($file_info,$img);
 			//header("X-Debug: $file_type");
 			if($file_type == 'application/x-gzip') $content_encoding = 'gzip';
 		}
@@ -168,7 +174,7 @@ if($tile) { 	// тайла могло не быть в кеше, и его не 
 	elseif($ext) header ("Content-Type: image/$ext");
 	else{
 		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
-		$mime_type = finfo_buffer($file_info,$tile);
+		$mime_type = finfo_buffer($file_info,$img);
 		if($mime_type) header ("Content-Type: $mime_type");
 	}
 	if($content_encoding) header ("Content-encoding: $content_encoding");
@@ -179,7 +185,7 @@ else {
 	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
 }
-echo $tile; 	// теперь в output buffer только тайл
+echo $img; 	// теперь в output buffer только тайл
 $content_lenght = ob_get_length(); 	// возьмём его размер
 header("Content-Length: $content_lenght"); 	// завершающий header
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию

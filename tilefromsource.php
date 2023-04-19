@@ -8,7 +8,7 @@ require('mapsourcesVariablesList.php');	// потому что в файле и�
 $params = array();
 if(@$argv) { 	// cli
 	//print_r($argv);
-	$options = getopt("z:x:y:r:",array('maxTry:','tryTimeout:','checkOnly'));
+	$options = getopt("z:x:y:r:",array('maxTry:','tryTimeout:','checkonly'));
 	//print_r($options);
 	if($options) {
 		$x = intval($options['x']);
@@ -18,7 +18,7 @@ if(@$argv) { 	// cli
 		$uri = "$r/$z/$x/$y";
 		if($options['maxTry']) $params['maxTry'] = intval($options['maxTry']);
 		if($options['tryTimeout']) $params['tryTimeout'] = intval($options['tryTimeout']);
-		if(array_key_exists('checkOnly',$options)) $params['checkOnly'] = true;
+		if(array_key_exists('checkonly',$options)) $params['checkonly'] = true;
 	}
 	else $uri = filter_var($argv[1],FILTER_SANITIZE_URL);
 }
@@ -369,8 +369,8 @@ do {
 } while (TRUE); 	// 
 
 END:
-if($checkOnly){	// надо только проверить, скачался ли правильный файл
-	echo "checkOnly mode: no save any files\n";
+if($params['checkonly']){	// надо только проверить, скачался ли правильный файл
+	echo "checkonly mode: no save any files\n";
 	if($trueTile){	// мы знаем, какой файл правильный
 		$hash = hash('crc32b',$newimg);
 		if($newimg and ($hash==$trueTile[3])){	// тайл получен, и он такой, какой нужно

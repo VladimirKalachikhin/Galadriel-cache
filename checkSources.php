@@ -24,10 +24,10 @@ foreach($mapsInfo as $mapName) {
 	if(!$trueTile) continue;
 	echo "Processing $mapName ... ";
 	list($z,$x,$y,$hash)=$trueTile;
-	$res = exec("$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkOnly");
+	$res = exec("$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly");
 	if($res) {
 		echo "no same tile.\n";
-		file_put_contents($logFileName,"$mapName\t\t$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkOnly\n",FILE_APPEND);
+		file_put_contents($logFileName,"$mapName\t\t$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly\n",FILE_APPEND);
 	}
 	else {
 		echo "ok.\n";

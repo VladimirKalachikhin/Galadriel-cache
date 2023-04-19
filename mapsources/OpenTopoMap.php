@@ -12,7 +12,29 @@ $trash = array(
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
 $trueTile=array(15,19796,10302,'ec555724');	// to source check; tile number and CRC32b hash
-
+/*
+$functionPrepareTileImg = <<<'EOFU1'
+function prepareTileImg($img){
+// Заменяет в картинке цвет на прозрачный, требует sudo apt install php-gd 
+// В OpenTopoMap цвет моря - 163,221,232 Если заменить его на прозрачный, можно наложить
+// эту карту на непрозрачные морские
+//
+$gd_img = imagecreatefromstring($img);
+$transparentColor = imagecolorexact($gd_img,163,221,232);	// imagecolorallocate() must be called to create each color that is to be used in the image represented by image. 
+//$transparentColor = imagecolorexact($gd_img,151,210,227);	// imagecolorallocate() must be called to create each color that is to be used in the image represented by image. 
+if($transparentColor !== false){
+	$color=imagecolortransparent($gd_img,$transparentColor);
+	ob_start();	// оно может быть вложенным
+	imagepng($gd_img);
+	imagedestroy($gd_img);
+	$img = ob_get_contents();
+	ob_end_clean();
+	//header("X-Debug: prepared tile");
+}
+return array('img'=>$img);
+} // end function prepareTileImg
+EOFU1;
+*/
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
 /* К сожалению, OpenTopoMap очень не приветствует массовое скачивание карты, следит за этим,

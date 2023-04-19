@@ -64,7 +64,7 @@ with or without extension.
 The file with map on mbtiles format must have `.mbtiles` extension and located in _$tileCacheDir_ directory. The map description file must have same name as map file, but with _.php_ extension of course, and and, similarly to other such files be locate in _mapsources/_ directory.  
 It doesn't matter to the GaladrielCache whether vector or raster tiles are in the map file. The corresponding configuration should be in the map description file.
 
-## Install&configure:
+## Install&configure
 You must have a web server with php support. Just copy.  
 Paths and other settings are described in `params.php`
 Custom sources are in `mapsources/*`

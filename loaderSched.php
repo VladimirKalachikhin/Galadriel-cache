@@ -14,10 +14,10 @@ if(!$pID) {
 	return;
 }
 file_put_contents("$jobsDir/$pID.slock", "$pID"); 	// положим флаг, что запустились
-echo "pID=$pID;__FILE__=".__FILE__.";\n";
+//echo "pID=$pID;__FILE__=".__FILE__.";\n";
 // Занесём себя в crontab grep -v - инвертировать результат, т.е., в crontab заносится всё, кроме __FILE__
 exec("crontab -l | grep -v '".__FILE__."'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
-exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.__FILE__.'") | crontab -'); 	// каждую минуту
+exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.__FILE__.'  > /dev/null") | crontab -'); 	// каждую минуту  > /dev/null - это если cron настроен так, что шлёт письмо юзеру, если задание что-то вернуло
 echo "Планировщик запустился с pID $pID\n";
 
 $bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
