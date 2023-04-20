@@ -61,7 +61,7 @@ _tiles/map_Name/Zoom/X_tile/Y_tile_
 с указанием в конце расширения файла изображения, или без указания, в зависимости от конфигурации карты.
 
 ### MBTiles
-Файл карты в формате mbtiles должен иметь расширение `.mbtiles` и находится в каталоге _$tileCacheDir_. Файл описания карты аналогичен другим файлам описания карты, но должен содержать функцию работы с mbtiles. Более подробно см. `mapsources/mapsources_RU.txt`
+Файл карты в формате mbtiles должен иметь расширение `.mbtiles` и находится в каталоге _$tileCacheDir_. Файл описания карты аналогичен другим файлам описания карты, но должен содержать функцию работы с mbtiles. Более подробно см. `mapsources/[mapsources.ru_RU.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.ru-RU.md)
 
 ## Установка и конфигурирование:
 Должен быть веб-сервер с поддержкой php. Просто скопируйте содержимое каталога GaladrielCache в нужное место.<br>

@@ -68,7 +68,7 @@ It doesn't matter to the GaladrielCache whether vector or raster tiles are in th
 You must have a web server with php support. Just copy.  
 Paths and other settings are described in `params.php`
 Custom sources are in `mapsources/*`
-Help about map sources are in mapsources/[mapsources.md]((https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.md))
+Help about map sources are in mapsources/[mapsources.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.md)
 
 ## Prepare SD card to cache
 ```
