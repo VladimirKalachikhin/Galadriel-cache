@@ -4,7 +4,7 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.7.0
+## v. 2.7.1
 
 ## Features:
 1. User-defined internet map sources, with versioning, if needed.
@@ -61,7 +61,7 @@ _tiles/map_Name/Zoom/X_tile/Y_tile_
 with or without extension.
 
 ### MBTiles
-The file with map on mbtiles format must have `.mbtiles` extension and located in _$tileCacheDir_ directory. The map description file must have same name as map file, but with _.php_ extension of course, and and, similarly to other such files be locate in _mapsources/_ directory.  
+The file with map on mbtiles format must have `.mbtiles` extension and located in _$tileCacheDir_ directory. The map description file must have same name as map file, but with _.php_ extension of course, and similarly to other such files be locate in _mapsources/_ directory.  
 It doesn't matter to the GaladrielCache whether vector or raster tiles are in the map file. The corresponding configuration should be in the map description file.
 
 ## Install&configure

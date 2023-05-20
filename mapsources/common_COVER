@@ -2,7 +2,7 @@
 /* Источник схем покрытия для всех карт
 Coverage source for the all maps
 */
-$ttl = 60*60*1; //cache timeout in seconds время, через которое тайл считается протухшим
+$ttl = 60*15*1; //cache timeout in seconds время, через которое тайл считается протухшим
 //$ttl = 15; //cache timeout in seconds время, через которое тайл считается протухшим
 $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/png'; 	// if content type differ then file extension

@@ -46,7 +46,7 @@ $jobsDir = 'loaderJobs'; 	// loader jobs directory, in filesystem. Check the use
 $jobsInWorkDir = "$jobsDir/inWork"; 	// current jobs directory.  Check the user rights to this directory. Need to read/write for loaderSched.php and loader.php
 // Параметры options
 // 	Количество одновременно запускаемых загрузчиков
-$maxLoaderRuns = 5; 	// simultaneously working loader tasks. Set at least 2 to avoid blocking download by bad source.
+$maxLoaderRuns = 10; 	// simultaneously working loader tasks. Set at least 2 to avoid blocking download by bad source.
 // 	Загрузчик скачивает тайлы до масштаба включительно
 $loaderMaxZoom = 16; 	// loader download tiles to this zoom only, not to map or default $maxZoom
 // 	Предварительная загрузка тайлов большего масштаба запускается при просмотре тайла указанного масштаба
