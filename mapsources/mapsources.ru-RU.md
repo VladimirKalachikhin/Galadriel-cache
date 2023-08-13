@@ -1,4 +1,4 @@
-[In English](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.md)  
+[In English](mapsources/mapsources.md)  
 # Источники карт для GaladrielCache
 Файлы в каталоге `mapsources/` являются источником сведений о карте и содержат параметры и функции, нужные для получения тайлов и обслуживания кеша соответствующей карты.
 

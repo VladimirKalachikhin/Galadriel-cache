@@ -1,4 +1,4 @@
-[Русское описание](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.ru-RU.md)  
+[Русское описание](mapsources/mapsources.ru-RU.md)  
 # GaladrielCache map sources
 In `mapsources/` directory are stored files fully describing map and map source, include uri, projection and hooks for get tile, tile handing and GaladrielMap interaction.
 
