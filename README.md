@@ -1,7 +1,7 @@
 [In English](README.en.md)  
 # GaladrielCache [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 Простой кеш/прокси сервер для тайловых карт с сохранением тайлов на диск. Предназначен в первую очередь для применения на очень слабых компьютерах типа RaspberryPi или различных NAS. Автор использует его на своей яхте Galadriel на [wi-fi маршрутизаторе под управлением OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware), который является сервером в бортовой сети. <br>
-GaladrielCache может быть источником тайлов для любой программы, умеющей показывать растровые или векторные карты из интернета. Например, это может быть [OruxMaps](http://www.oruxmaps.com/cs/en/) на телефоне или планшете, или [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) на том же сервере для ноутбука или вообще любого устройства с браузером. <br>
+GaladrielCache может быть источником тайлов для любой программы, умеющей показывать растровые или векторные карты из интернета. Например, это может быть [OruxMaps](http://www.oruxmaps.com/cs/en/) на телефоне или планшете, или [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) на том же сервере для ноутбука или вообще любого устройства с браузером. <br>
 Тайлы хранятся в принятой для OSM файловой структуре z/x/y Такая иерархия понимается очень многими (всеми?) программами показа карт, поэтому в случае проблем с сервером флешку с картами можно вставить в планшет и пользоваться растровыми картами напрямую.
 
 ## v. 2.7
@@ -46,7 +46,7 @@ _tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_
 GaladrielCache ничего не знает о проекциях. Он просто кеширует тайлы.
 
 ### Конфигурирование GaladrielMap
-Для использования [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) с GaladrielCache -- установите параметр `$tileCachePath` в конфигурационном файле GaladrielMap `params.php` как описанов этом файле. 
+Для использования [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) с GaladrielCache -- установите параметр `$tileCachePath` в конфигурационном файле GaladrielMap `params.php` как описанов этом файле. 
 
 ### Адреса тайлов OSM
 Некоторые приложения (AvNav?) могут обращаться к тайлом только по адресу в формате [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames). Для использования GaladrielCache с такими приложениями можно сконфигурировать Apache2 следующим образом:  
@@ -180,7 +180,7 @@ $ php loaderSched.php
 ```
 вызовет скачивание указанных шести тайлов карты _OpenSeaMap_ масштаба 9, а также всех тайлов большего масштаба, которые укладываются в эти тайлы, вплоть до масштаба 16, который указан в `params.php` как максимальный для загрузчика.
 
-Для управления загрузчиком и создания файлов заданий удобно использовать [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master), где есть нужные инструменты. При этом созданные [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) файлы заданий дополнительно сохраняются в `loaderjobs/oldjobs` для возможного повторного использования.
+Для управления загрузчиком и создания файлов заданий удобно использовать [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap), где есть нужные инструменты. При этом созданные [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) файлы заданий дополнительно сохраняются в `loaderjobs/oldjobs` для возможного повторного использования.
 
 Загрузка тайлов может осуществляться в несколько потоков, число которых указывается в `params.php`. Кроме того, загрузчик использует cron для надёжности, так что загрузка продолжится и после перезагрузки сервера. Для остановки процесса загрузки конкретной карты удалите соответствующий файл задания.
 
@@ -223,6 +223,8 @@ checkSources.php -- утилита командной строки, котора
 Дополнительно будут показаны границы имеющихся тайлов максимального для загрузчика масштаба.
 
 ## Поддержка
+[Сообщество ВКонтакте](https://vk.com/club212992298)
+
 [Индивидуальная платная консультация](https://kwork.ru/training-consulting/20093293/konsultatsii-po-ustanovke-i-ispolzovaniyu-galadrielmap).
 
 

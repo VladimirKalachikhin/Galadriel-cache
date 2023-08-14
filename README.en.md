@@ -1,7 +1,7 @@
 [Русское описание](README.md)  
 # GaladrielCache [![License: CC BY-SA 4.0](https://img.shields.io/badge/License-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
 This is a simple map tiles cache/proxy to use on weak computers such as RaspberryPi or NAS. The author uses it in the [wi-fi router/GSM modem under OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware) on his sailboat Galadriel.  
-GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
+GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) is a good choice too.   
 Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
 ## v. 2.7.1
@@ -46,7 +46,7 @@ ATTENTION! You MUST configure your MAP VIEWER for the use of specific projection
 The GaladrielCache knows nothing about projections, it's store tiles only.
 
 ### GaladrielMap configuration
-To use [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) with GaladrielCache -- set `$tileCachePath` in GaladrielMap's `params.php` file. 
+To use [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) with GaladrielCache -- set `$tileCachePath` in GaladrielMap's `params.php` file. 
 
 ### OSM "slippy map" tilenames
 Some applications (AvNav?) cannot use tiles other than in [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames) format. To use the GaladrielCache with these applications, you can configure the Apache2 as follows:  
@@ -161,7 +161,7 @@ mount -rw -t ext4 /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 5. Mark _01_mountExtSDcard_ as runed in boot
 
 ## Loader
-GaladrielCache includes a dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Start _loaderSched.php_ in cli. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) has a GUI for it.  
+GaladrielCache includes a dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Start _loaderSched.php_ in cli. [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) has a GUI for it.  
 For example:  
 _OpenSeaMap.9_
 ```
@@ -175,7 +175,7 @@ _OpenSeaMap.9_
 
 Will be downloaded OpenSeaMap within the specified tiles from zoom 9 to max zoom.  
 Tile loader may use any number of threads to load, and use cron for robust download.  
-You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader. Job files, created by [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master), saved in `loaderjobs/oldjobs` for backup.
+You may use a [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) for control Loader. Job files, created by [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap), saved in `loaderjobs/oldjobs` for backup.
 
 ### Use Loader to copy part of the cache
 Add to the first line of csv job file some copy command. In this case, Loader starts this command instead of loading tile. 
