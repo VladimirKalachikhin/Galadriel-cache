@@ -121,6 +121,7 @@ if($pos=strpos($mapSourcesName,'_COVER')) { 	// нужно показать по
 	$getURLparams['tileCacheServerPath'] = $tileCacheServerPath; // 
 }
 else require("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда.
+//echo "[getTile] ext=$ext;\n";
 
 if($ext) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.$ext"; 	// в конфиге источника указано расширение
 elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.".$path_parts['extension'];
@@ -130,7 +131,9 @@ $getURLparams['mapAddPath'] = $mapAddPath;
 $newimg = FALSE; 	// исходная ситуация -- тайл получить не удалось
 if (!$functionGetURL) { 	// нет функции для получения тайла	
 	$newimg = NULL; 	// типа, тайл получен
-	//error_log(" tilefromsource.php getTile: No functionGetURL for $mapSourcesName. Will not receive a tile");	
+	$msg = " tilefromsource.php getTile: No functionGetURL for $mapSourcesName. Will not receive a tile";
+	echo "$msg\n";
+	//error_log($msg);	
 	goto END;
 }
 // есть функция получения тайла

@@ -9,7 +9,8 @@ ob_start(); 	// попробуем перехватить любой вывод 
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
 $freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли
-require('./params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
+require('fcommon.php');
+require('params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
 
 $x = filter_var($_REQUEST['x'],FILTER_SANITIZE_NUMBER_INT);
 $y = filter_var($_REQUEST['y'],FILTER_SANITIZE_URL); 	// 123456.png
