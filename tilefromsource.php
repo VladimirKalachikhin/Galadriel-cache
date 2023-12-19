@@ -374,14 +374,18 @@ do {
 END:
 if($params['checkonly']){	// надо только проверить, скачался ли правильный файл
 	echo "checkonly mode: no save any files\n";
-	if($trueTile){	// мы знаем, какой файл правильный
-		$hash = hash('crc32b',$newimg);
-		if($newimg and ($hash==$trueTile[3])){	// тайл получен, и он такой, какой нужно
-			echo "The tile is true\n";
-		}
-		else{
-			echo "The tile is not true, must be {$trueTile[3]}, recieved $hash\n$msg\n";
-			$newimg = FALSE;
+	if($newimg === FALSE) echo "No tile recieved\n$msg\n\n";
+	elseif($newimg === NULL)  echo "Recieved a bad tile\n$msg\n\n";
+	else {
+		if($trueTile){	// мы знаем, какой файл правильный
+			$hash = hash('crc32b',$newimg);
+			if($newimg and ($hash==$trueTile[3])){	// тайл получен, и он такой, какой нужно
+				echo "\nThe tile is true\n\n";
+			}
+			else{
+				echo "\nThe tile is not true, must be {$trueTile[3]}, recieved $hash\n$msg\n\n";
+				$newimg = FALSE;
+			}
 		}
 	}
 }
