@@ -31,7 +31,14 @@ $sourceName = $sourcePath[0];
 if($pos=strpos($sourceName,'_COVER')) { 	// нужно показать покрытие, а не саму карту
 	require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
 }
-else require("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+else {
+	$res=include("$mapSourcesDir/$sourceName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+	if(!$res){
+		showTile(NULL); 	// покажем 404
+		error_log("Incorrect map name: $sourceName");		
+		goto END;
+	};
+}
 //error_log("function_exists('getTile'):".function_exists('getTile'));
 if($functionGetTileFile){	// у карты есть собственная функция получения тайла
 	eval($functionGetTileFile);

@@ -1,5 +1,5 @@
 <?php
-/* Version 2.7.3
+/* Version 2.7.4
 Пути и параметры
 Options and paths 
 */
@@ -36,7 +36,9 @@ $noInternetTimeout = 20; 	// no try the source this time if no internet connecti
 
 // crc32 of junk tiles '00000000' zero length file and '0940c426' empty png are not trash!
 $globalTrash = array(
-'f821973a'	// белый тайл. Борьба с русскими?
+'f821973a',	// белый тайл. Борьба с русскими?
+'a5da4659',	// белый тайл
+'af8e80fa'	// прозрачный тайл.
 );
  
 // Загрузчик Tile loader.

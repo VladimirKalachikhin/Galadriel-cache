@@ -13,7 +13,7 @@ $trash = array(
 '00000000' 	// zero length file
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(15,19095,9521,'40bc5017');	// to source check; tile number and CRC32b hash
+$trueTile=array(15,19095,9521,'7fc1e790');	// to source check; tile number and CRC32b hash
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {

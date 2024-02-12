@@ -8,7 +8,7 @@ Map title are directory name in $tileCacheDir or .mbtiles file name in this dire
 None of the parameters in map describe file are required. If necessary, default parameters will be used.
 
 ## Variables in map description file
-The list of variables used in the description of the source is in mapsourcesVariablesList.php
+The list of variables used in the description of the source is in `mapsourcesVariablesList.php`
 You CANNOT modify this file.  
 These variables are global.
 

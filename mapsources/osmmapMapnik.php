@@ -6,7 +6,7 @@ $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(15,19796,10302,'9bff4ccb');	// to source check; tile number and CRC32b hash
+$trueTile=array(15,19796,10302,'89605cc6');	// to source check; tile number and CRC32b hash
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
