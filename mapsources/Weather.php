@@ -137,20 +137,20 @@ if(typeof weatherTab == 'undefined') {
 				</table>	
 			</form>
 			<div style="text-align: right; position: absolute; bottom: 0; right: 0; z-index:1;">
-			<span style="background:rgb(160, 0, 200)">0-2 </span><br>
-			<span style="background:rgb(130, 0, 220)">2-3 </span><br>
-			<span style="background:rgb(30, 60, 255)">3-5 </span><br>
-			<span style="background:rgb(0, 160, 255)">5-7 </span><br>
-			<span style="background:rgb(0, 200, 200)">7-10 </span><br>
-			<span style="background:rgb(0, 210, 140)">10-12 </span><br>
-			<span style="background:rgb(0, 220, 0)">12-15 </span><br>
-			<span style="background:rgb(160, 230, 50)">15-18 </span><br>
-			<span style="background:rgb(230, 220, 50)">18-21 </span><br>
-			<span style="background:rgb(230, 175, 45)">21-25 </span><br>
-			<span style="background:rgb(240, 130, 40)">25-29 </span><br>
-			<span style="background:rgb(250, 60, 60)">29-35 </span><br>
-			<span style="background:rgb(240, 0, 130)">35&gt; </span><br>
-			${windLegendTXT}
+			<span style="background:rgb(160, 0, 200);">&nbsp; &nbsp; 0-2 &nbsp; &nbsp;</span><br>
+			<span style="background:rgb(130, 0, 220);">&nbsp; &nbsp; 2-3 &nbsp; &nbsp;</span><br>
+			<span style="background:rgb(30, 60, 255);">&nbsp; &nbsp; 3-5 &nbsp; &nbsp;</span><br>
+			<span style="background:rgb(0, 160, 255);">&nbsp; &nbsp; 5-7 &nbsp; &nbsp;</span><br>
+			<span style="background:rgb(0, 200, 200);">&nbsp;&nbsp; 7-10 &nbsp;&nbsp;</span><br>
+			<span style="background:rgb(0, 210, 140);">&nbsp; 10-12 &nbsp;</span><br>
+			<span style="background:rgb(0, 220, 0);">&nbsp; 12-15 &nbsp;</span><br>
+			<span style="background:rgb(160, 230, 50);">&nbsp; 15-18 &nbsp;</span><br>
+			<span style="background:rgb(230, 220, 50);">&nbsp; 18-21 &nbsp;</span><br>
+			<span style="background:rgb(230, 175, 45);">&nbsp; 21-25 &nbsp;</span><br>
+			<span style="background:rgb(240, 130, 40);">&nbsp; 25-29 &nbsp;</span><br>
+			<span style="background:rgb(250, 60, 60);">&nbsp; 29-35 &nbsp;</span><br>
+			<span style="background:rgb(240, 0, 130);">&nbsp;&nbsp; 35&gt; &nbsp; &nbsp;</span><br>
+			${windLegendTXT}&nbsp;
 			</div>
 			<div>
 		`,        // DOM elements can be passed, too
