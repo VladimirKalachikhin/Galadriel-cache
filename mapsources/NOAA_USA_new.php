@@ -18,7 +18,7 @@ $maxZoom = 22;
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(14,4822,6161,'dfb4c4ef');	// to source check; tile number and CRC32b hash
+$trueTile=array(14,4822,6161,'1172640f');	// to source check; tile number and CRC32b hash
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {

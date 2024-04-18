@@ -1,7 +1,7 @@
-[In English](README.en.md)  
+[In English](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/README.md)  
 # GaladrielCache [![License: CC BY-NC-SA 4.0](Cc-by-nc-sa_icon.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)
 Простой кеш/прокси сервер для тайловых карт с сохранением тайлов на диск. Предназначен в первую очередь для применения на очень слабых компьютерах типа RaspberryPi или различных NAS. Автор использует его на своей яхте Galadriel на [wi-fi маршрутизаторе под управлением OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware), который является сервером в бортовой сети. <br>
-GaladrielCache может быть источником тайлов для любой программы, умеющей показывать растровые или векторные карты из интернета. Например, это может быть [OruxMaps](http://www.oruxmaps.com/cs/en/) на телефоне или планшете, или [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) на том же сервере для ноутбука или вообще любого устройства с браузером. <br>
+GaladrielCache может быть источником тайлов для любой программы, умеющей показывать растровые или векторные карты из интернета. Например, это может быть [OruxMaps](http://www.oruxmaps.com/cs/en/) на телефоне или планшете, или [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) на том же сервере для ноутбука или вообще любого устройства с браузером. <br>
 Тайлы хранятся в принятой для OSM файловой структуре z/x/y Такая иерархия понимается очень многими (всеми?) программами показа карт, поэтому в случае проблем с сервером флешку с картами можно вставить в планшет и пользоваться растровыми картами напрямую.
 
 ## v. 2.7
@@ -46,7 +46,7 @@ _tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_
 GaladrielCache ничего не знает о проекциях. Он просто кеширует тайлы.
 
 ### Конфигурирование GaladrielMap
-Для использования [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) с GaladrielCache -- установите параметр `$tileCachePath` в конфигурационном файле GaladrielMap `params.php` как описанов этом файле. 
+Для использования [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) с GaladrielCache -- установите параметр `$tileCachePath` в конфигурационном файле GaladrielMap `params.php` как описанов этом файле. 
 
 ### Адреса тайлов OSM
 Некоторые приложения (AvNav?) могут обращаться к тайлом только по адресу в формате [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames). Для использования GaladrielCache с такими приложениями можно сконфигурировать Apache2 следующим образом:  
@@ -61,30 +61,29 @@ _tiles/map_Name/Zoom/X_tile/Y_tile_
 с указанием в конце расширения файла изображения, или без указания, в зависимости от конфигурации карты.
 
 ### MBTiles
-Файл карты в формате mbtiles должен иметь расширение `.mbtiles` и находится в каталоге _$tileCacheDir_. Файл описания карты аналогичен другим файлам описания карты, но должен содержать функцию работы с mbtiles. Более подробно см. mapsources/[mapsources.ru-RU.md](mapsources/mapsources.ru-RU.md)
+Файл карты в формате mbtiles должен иметь расширение `.mbtiles` и находится в каталоге _$tileCacheDir_. Файл описания карты аналогичен другим файлам описания карты, но должен содержать функцию работы с mbtiles. Более подробно см. `mapsources/[mapsources.ru_RU.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.ru-RU.md)
 
 ## Установка и конфигурирование:
 Должен быть веб-сервер с поддержкой php. Просто скопируйте содержимое каталога GaladrielCache в нужное место.<br>
 Кофигурация путей и другие параметры описаны в `params.php` Настройте.  
 Файлы конфигурации источников карт находятся в `mapsources/*`  
-Инструкция по созданию собственного источника карты находится в  mapsources/[mapsources.ru-RU.md](mapsources/mapsources.ru-RU.md)
+Инструкция по созданию собственного источника карты находится в  mapsources/[mapsources.ru_RU.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.ru-RU.md)
 
-## Подготовка накопителя SD card для хранения кеша:
+## Подготовка карты памяти SD card для хранения кеша:
 ```
 # mkfs.ext4 -O 64bit,metadata_csum -b 4096 -i 4096 /dev/sdb1
 ```
 Где  
 `-b 4096 -i 4096` установить размер блока данных в 4096 bytes и установить количество i-nodes в максимально возможное. <br>
 `-O 64bit,metadata_csum` необязательный параметр, который может понадобиться для совместимости с некоторыми устройствами под управлением Android <br>
-`/dev/sdb1` -- путь к накопителю SD card.  
-
-Однако, умолчальное форматирование в vfat, принятое на SD накопителях большой ёмкости, позволяет хранить на накопителе достаточный для практических целей объём тайлов.
+`/dev/sdb1` -- путь к карте памяти SD card.  
+Однако, умолчальное форматирование в vfat позволяет хранить на карте достаточный для практических целей объём тайлов.
 
 ## Прямой доступ к кешу
 Если ваш сервер умер, но есть рутованное устройство (планшет или телефон) под управлением Android, для доступа к растровым картам можно сделать следующее:
 ### Монтирование SD card в устройстве
 1. извлеките SD card с кешем из сервера
-2. вставьте SD card с кешем в устройство под управлением Android  
+2. вставьте SD card с кешкм в устройство под управлением Android  
 на этом устройстве понадобится терминал (отдельная программа, или в составе чего-нибудь)
 3. Откройте терминал. Выполните:
 ```
@@ -180,7 +179,7 @@ $ php loaderSched.php
 ```
 вызовет скачивание указанных шести тайлов карты _OpenSeaMap_ масштаба 9, а также всех тайлов большего масштаба, которые укладываются в эти тайлы, вплоть до масштаба 16, который указан в `params.php` как максимальный для загрузчика.
 
-Для управления загрузчиком и создания файлов заданий удобно использовать [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap), где есть нужные инструменты. При этом созданные [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) файлы заданий дополнительно сохраняются в `loaderjobs/oldjobs` для возможного повторного использования.
+Для управления загрузчиком и создания файлов заданий удобно использовать [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master), где есть нужные инструменты. При этом созданные [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) файлы заданий дополнительно сохраняются в `loaderjobs/oldjobs` для возможного повторного использования.
 
 Загрузка тайлов может осуществляться в несколько потоков, число которых указывается в `params.php`. Кроме того, загрузчик использует cron для надёжности, так что загрузка продолжится и после перезагрузки сервера. Для остановки процесса загрузки конкретной карты удалите соответствующий файл задания.
 
@@ -223,10 +222,8 @@ checkSources.php -- утилита командной строки, котора
 Дополнительно будут показаны границы имеющихся тайлов максимального для загрузчика масштаба.
 
 ## Поддержка
-[Сообщество ВКонтакте](https://vk.com/club212992298)
+[Форум](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
 
-[Индивидуальная платная консультация](https://kwork.ru/training-consulting/20093293/konsultatsii-po-ustanovke-i-ispolzovaniyu-galadrielmap).
+Форум будет живее, если вы сделаете пожертвование на [ЮМани](https://sobe.ru/na/galadrielmap).
 
-
-
-Вы можете сделать пожертвование на развитие проекта через [ЮМани](https://sobe.ru/na/galadrielmap).
+Вы можете получить [индивидуальную платную консультацию](https://kwork.ru/training-consulting/20093293/konsultatsii-po-ustanovke-i-ispolzovaniyu-galadrielmap) по вопросам установки и использования GaladrielCache.

@@ -11,7 +11,7 @@ $maxZoom = 18;
 $trash = array(
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(15,19796,10302,'56dc2c38');	// to source check; tile number and CRC32b hash
+$trueTile=array(15,19796,10302,'b88a7641');	// to source check; tile number and CRC32b hash
 /*
 $functionPrepareTileImg = <<<'EOFU1'
 function prepareTileImg($img){
