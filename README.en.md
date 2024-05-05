@@ -1,10 +1,33 @@
 [Русское описание](README.md)  
 # GaladrielCache [![License: CC BY-NC-SA 4.0](Cc-by-nc-sa_icon.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)
 This is a simple map tiles cache/proxy to use on weak computers such as RaspberryPi or NAS. The author uses it in the [wi-fi router/GSM modem under OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware) on his sailboat Galadriel.  
-GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) is a good choice too.   
+GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
 ## v. 2.7
+
+Contains:
+* [Features](#features)
+* [Compatibility](#compatibility)
+* [Usage](#usage)
+* * [OruxMaps configuration](#oruxmaps-configuration)
+* * [GaladrielMap configuration](#galadrielgap-configuration)
+* * [SignalK](#signalk)
+* * [OSM "slippy map" tilenames](#osm-slippy-map-tilenames)
+* * [MBTiles](#mbtiles)
+* [Install&configure](#install&configure)
+* [Prepare SD card to cache](#prepare-sd-card-to-cache)
+* [Direct access to the cache](#direct-access-to-the-cache)
+* * [Mount SD card](#mount-sd-card)
+* * [Configure OruxMaps](#configure-oruxmaps)
+* * [Automated mounting in Android with 3C toolbox](#automated-mounting-in-android-with-3c-toolbox)
+* [Loader](#loader)
+* * [Using Loader to copy part of the cache](#using-loader-to-copy-part-of-the-cache)
+* [Utilites](#utilites)
+* * [clearCache](#clearcache)
+* * [checkSources](#checksources)
+* * [Coverage](#coverage)
+* [Support](#support)
 
 ## Features:
 1. User-defined internet map sources, with versioning, if needed.
@@ -46,7 +69,11 @@ ATTENTION! You MUST configure your MAP VIEWER for the use of specific projection
 The GaladrielCache knows nothing about projections, it's store tiles only.
 
 ### GaladrielMap configuration
-To use [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) with GaladrielCache -- set `$tileCachePath` in GaladrielMap's `params.php` file. 
+To use [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) with GaladrielCache -- set `$tileCachePath` in GaladrielMap's `params.php` file. 
+
+### SignalK
+To use GaladrielCache in SignalK just configure [charts-plugin](https://www.npmjs.com/package/@signalk/charts-plugin) to use every map available in the GaladrielCache.  
+For examle, for OpenTopoMap specify URL to `http://you_server/tileproxy/tiles.php?z={z}&x={x}&y={y}&r=OpenTopoMap`
 
 ### OSM "slippy map" tilenames
 Some applications (AvNav?) cannot use tiles other than in [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames) format. To use the GaladrielCache with these applications, you can configure the Apache2 as follows:  
@@ -68,7 +95,7 @@ It doesn't matter to the GaladrielCache whether vector or raster tiles are in th
 You must have a web server with php support. Just copy.  
 Paths and other settings are described in `params.php`
 Custom sources are in `mapsources/*`
-Help about map sources are in mapsources/[mapsources.en.md](mapsources/mapsources.md)
+Help about map sources are in mapsources/[mapsources.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.md)
 
 ## Prepare SD card to cache
 ```
@@ -161,7 +188,9 @@ mount -rw -t ext4 /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 5. Mark _01_mountExtSDcard_ as runed in boot
 
 ## Loader
-GaladrielCache includes a dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Start _loaderSched.php_ in cli. [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) has a GUI for it.  
+GaladrielCache includes a dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Run _startLoaderDaemon_ (or _php loaderSched.php_ for foreground) in cli. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) has a GUI for it.  
+To stop Loader run _stopLoader_ or delete Loader job files bouth from `loaderjobs/` and `loaderjobs/inWork/` directories.
+
 For example:  
 _OpenSeaMap.9_
 ```
@@ -173,11 +202,12 @@ _OpenSeaMap.9_
 296,143
 ```
 
-Will be downloaded OpenSeaMap within the specified tiles from zoom 9 to max zoom.  
-Tile loader may use any number of threads to load, and use cron for robust download.  
-You may use a [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) for control Loader. Job files, created by [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap), saved in `loaderjobs/oldjobs` for backup.
+Will be downloaded OpenSeaMap within the specified tiles from zoom 9 to $loaderMaxZoom from _params.php_.  
 
-### Use Loader to copy part of the cache
+Tile loader may use any number of threads to load, and use cron for robust download.  
+You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader. Job files, created by [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master), saved in `loaderjobs/oldjobs` for backup.
+
+### Using Loader to copy part of the cache
 Add to the first line of csv job file some copy command. In this case, Loader starts this command instead of loading tile. 
 This first line must be started from #.  
 For example:  
@@ -197,22 +227,23 @@ This will copy the specified tiles of OpenSeaMap up to max zoom to destination.
 You can use variables from _params.php_, but not from _mapsources/*_.  
 Avoid creating job files that have a custom command and do not have one for one map.
 
-## clearCache
+## Utilites
+### clearCache
 Use in cli _clearCache.php mapname_ to *mapname* or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is maybe blank tiles or .tne files from SAS.Planet.  
 Use in cli _clearCache.php mapname fresh_ to *mapname* or _clearCache.php fresh_ to all maps to remove from cache expired tiles.
 
-## checkSources
+### checkSources
 The checkSources.php is cli utility for check map source viability. If maps definition file include special tile info - checkSources.php reads this tile from source and compare loaded with stored. The result is logged.
 Use cron to run it periodically.
 
-## Coverage
-GaladrielCache supports calculate coverage feature. To get the transparent tile with cover map add '_COVER' to map name. This return current_zoom+8 zoom level coverage. It is clear that every pixel of this tile indicate one tile +8 zoom level.  
-Additionally displayed coverage of loader's max zoom level.
+### Coverage
+Run _php checkCovers.php mapName.zoom max_zoom_ for calculate coverage of given region, described as Loader job file mapName.zoom. The `checkCoversData/notFound/` directory contains a Loader job files with tiles that are missing from the coverage.  
+For display in map GaladrielCache supports calculate coverage feature. To get the transparent tile with cover map add '_COVER' to map name. This return current_zoom+8 zoom level coverage. It is clear that every pixel of this tile indicate one tile +8 zoom level. Additionally displayed coverage of loader's max zoom level.  
+The [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) supports this feature.
 
 ## Support
+[Discussions](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
+
+The forum will be more lively if you make a donation at [ЮMoney](https://sobe.ru/na/galadrielmap)
+
 [Paid personal consulting](https://kwork.ru/it-support/20093939/galadrielmap-installation-configuration-and-usage-consulting)  
-
-
-
-You can make a donation via [ЮMoney](https://sobe.ru/na/galadrielmap)
-

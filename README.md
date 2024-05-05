@@ -1,4 +1,4 @@
-[In English](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/README.md)  
+[In English](README.en.md)  
 # GaladrielCache [![License: CC BY-NC-SA 4.0](Cc-by-nc-sa_icon.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)
 Простой кеш/прокси сервер для тайловых карт с сохранением тайлов на диск. Предназначен в первую очередь для применения на очень слабых компьютерах типа RaspberryPi или различных NAS. Автор использует его на своей яхте Galadriel на [wi-fi маршрутизаторе под управлением OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware), который является сервером в бортовой сети. <br>
 GaladrielCache может быть источником тайлов для любой программы, умеющей показывать растровые или векторные карты из интернета. Например, это может быть [OruxMaps](http://www.oruxmaps.com/cs/en/) на телефоне или планшете, или [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) на том же сервере для ноутбука или вообще любого устройства с браузером. <br>
