@@ -1,0 +1,5 @@
+#!/bin/sh
+# may be a /usr/bin/php-cli
+/usr/bin/php loaderSched.php > /dev/null 2>&1 &
+echo "Loader startet with PID $!, but it's not certain."
+

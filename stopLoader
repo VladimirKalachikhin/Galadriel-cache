@@ -1,0 +1,2 @@
+#!/bin/sh
+find loaderJobs/ -name '*\.*[0-9]' -delete
