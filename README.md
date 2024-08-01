@@ -1,56 +1,55 @@
-[In English](README.en.md)  
+[Русское описание](README.md)  
 # GaladrielCache [![License: CC BY-NC-SA 4.0](Cc-by-nc-sa_icon.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)
-Простой кеш/прокси сервер для тайловых карт с сохранением тайлов на диск. Предназначен в первую очередь для применения на очень слабых компьютерах типа RaspberryPi или различных NAS. Автор использует его на своей яхте Galadriel на [wi-fi маршрутизаторе под управлением OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware), который является сервером в бортовой сети. <br>
-GaladrielCache может быть источником тайлов для любой программы, умеющей показывать растровые или векторные карты из интернета. Например, это может быть [OruxMaps](http://www.oruxmaps.com/cs/en/) на телефоне или планшете, или [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) на том же сервере для ноутбука или вообще любого устройства с браузером. <br>
-Тайлы хранятся в принятой для OSM файловой структуре z/x/y Такая иерархия понимается очень многими (всеми?) программами показа карт, поэтому в случае проблем с сервером флешку с картами можно вставить в планшет и пользоваться растровыми картами напрямую.
+This is a simple map tiles cache/proxy to use on weak computers such as RaspberryPi or NAS. The author uses it in the [wi-fi router/GSM modem under OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware) on his sailboat Galadriel.  
+GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
+Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
 ## v. 2.7
 
-Содержание:
-* [Возможности](#возможности)
-* [Совместимось](#совместимось)
-* [Использование](#использование)
-* * [Конфигурирование OruxMaps](#конфигурирование-oruxmaps)
-* * [Конфигурирование GaladrielMap](#конфигурирование-galadrielmap)
+Contains:
+* [Features](#features)
+* [Compatibility](#compatibility)
+* [Usage](#usage)
+* * [OruxMaps configuration](#oruxmaps-configuration)
+* * [GaladrielMap configuration](#galadrielgap-configuration)
 * * [SignalK](#signalk)
-* * [Адреса тайлов OSM](#адреса-тайлов-osm)
+* * [OSM "slippy map" tilenames](#osm-slippy-map-tilenames)
 * * [MBTiles](#mbtiles)
-* [Установка и конфигурирование](#установка-и-конфигурирование)
-* [Подготовка карты памяти SD card для хранения кеша](#подготовка-карты-памяти-sd-card-для-хранения-кеша)
-* [Прямой доступ к кешу](#прямой-доступ-к-кешу)
-* * [Монтирование SD card в устройстве](#монтирование-cd-card-в-устройстве)
-* * [Конфигурирование OruxMaps на устройстве](#конфигурирование-oruxmaps-на-устройстве)
-* * [Автоматизация процесса монтирования SD card на устройстве с помощью 3C toolbox](#автоматизация-процесса-монтирования-cd-card-на-устройстве-с-помощью-3c-toolbox)
-* [Загрузчик](#загрузчик)
-* * [Использование загрузчика для создания копии части кеша](#использование-загрузчика-для-создания-копии-части-кеша)
-* [Вспомогательные приложения](#вспомогательные-приложения)
-* * [Очистка кеша с помощью clearCache](#очистка-кеша-с-помощью-clearcache)
-* * [Проверка жизнеспособности источника карты](#проверка-жизнеспособности-источника-карты)
-* * [Карта покрытия](#карта-покрытия)
-* [Поддержка](#поддержка)
+* [Install&configure](#install&configure)
+* [Prepare SD card to cache](#prepare-sd-card-to-cache)
+* [Direct access to the cache](#direct-access-to-the-cache)
+* * [Mount SD card](#mount-sd-card)
+* * [Configure OruxMaps](#configure-oruxmaps)
+* * [Automated mounting in Android with 3C toolbox](#automated-mounting-in-android-with-3c-toolbox)
+* [Loader](#loader)
+* * [Using Loader to copy part of the cache](#using-loader-to-copy-part-of-the-cache)
+* [Utilites](#utilites)
+* * [clearCache](#clearcache)
+* * [checkSources](#checksources)
+* * [Coverage](#coverage)
+* [Support](#support)
 
+## Features:
+1. User-defined internet map sources, with versioning, if needed.
+2. Flexible and robust tile loading with proxy support.
+3. Prior loading of large zoom levels.
+4. Asynchronous cache freshing.
+5. Separated robust loader.
+6. Serves [MBTiles](https://github.com/mapbox/mbtiles-spec/blob/master/1.3/spec.md) local maps.
 
-## Возможности:
-1. Конфигурируемые пользователем источники карт
-2. Надёжное скачивание тайла в условиях плохой связи с поддержкой proxy для борьбы с блокировками
-3. Опережающее скачивание тайлов крупных масштабов
-4. Фоновое обновление кеша
-5. Надёжный многопоточный загрузчик тайлов
-6. Поддерживаются локальные карты в формате [MBTiles](https://github.com/mapbox/mbtiles-spec/blob/master/1.3/spec.md)
+But no reprojection. Map projection is a client application problem.
 
-Но никакой трансформации карт нет. Проекции и прочее -- это проблема клиентского приложения.
+## Compatibility
+Linux, PHP < 8. The cretinous decisions made at PHP 8 do not allow the GaladrielCache to work at PHP 8, and I do not want to follow these decisions.
 
-## Совместимось
-Linux, PHP < 8. Кретинские решения, принятые в PHP 8 не позволяют GaladrielCache работать под PHP 8, а я не хочу следовать этим решениям.
+## Usage:
+_tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_
 
-## Использование:
-_tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_  
- 
-### Конфигурирование OruxMaps
-Для использования GaladrielCache с OruxMaps нужно добавить в конфигурационный файл OruxMaps  `onlinemapsources.xml` в соответствии с синтаксисом этого файла описания требуемых карт, например -- карты Yandex Sat:
+### OruxMaps configuration
+To use GaladrielCache with OruxMaps, add map definitions to OruxMaps `onlinemapsources.xml`, for example -- Yandex Sat map:
 ```
 <onlinemapsource uid="1055">
-<name>Yandex Sat через прокси (SAT)</name>
+<name>Yandex Sat via my proxy (SAT)</name>
 <url><![CDATA[http://192.168.1.1/tileproxy/tiles.php?z={$z}&x={$x}&y={$y}&r=yasat.EPSG3395]]></url>
 <minzoom>5</minzoom>
 <maxzoom>19</maxzoom>
@@ -59,61 +58,62 @@ _tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_
 <downloadable>0</downloadable>
 </onlinemapsource>
 ```
-Где:
-`192.168.1.1` -- сервер с GaladrielCache  
-`/tileproxy/tiles.php` -- собственно cache/proxy  
-`yasat.EPSG3395` -- имя карты  
-То же самое -- для остальных карт.
+Where:
+`192.168.1.1` - your server  
+`/tileproxy/tiles.php` - cache/proxy  
+and `yasat.EPSG3395` - your custom map source name.  
+Try it to other maps.
 
-ВНИМАНИЕ! Для использования конкретной проекции настраивать надо программу показа карт, а не GaladrielCache!  
-(В примере выше -- это строка `<projection>MERCATORELIPSOIDAL</projection>` )  
-GaladrielCache ничего не знает о проекциях. Он просто кеширует тайлы.
+ATTENTION! You MUST configure your MAP VIEWER for the use of specific projection!  
+(`<projection>MERCATORELIPSOIDAL</projection>` in the example above)  
+The GaladrielCache knows nothing about projections, it's store tiles only.
 
-### Конфигурирование GaladrielMap
-Для использования [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) с GaladrielCache -- установите параметр `$tileCachePath` в конфигурационном файле GaladrielMap `params.php` как описанов этом файле. 
+### GaladrielMap configuration
+To use [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) with GaladrielCache -- set `$tileCachePath` in GaladrielMap's `params.php` file. 
 
 ### SignalK
-Для применения GaladrielCache в SignlK настройте в плагине [charts-plugin](https://www.npmjs.com/package/@signalk/charts-plugin) использование требуемых карт, указав в качестве источника GaladrielCache.  
-Например, для использования OpenTopoMap укажите в настройках карты в плагине URL `http://you_server/tileproxy/tiles.php?z={z}&x={x}&y={y}&r=OpenTopoMap`
+To use GaladrielCache in SignalK just configure [charts-plugin](https://www.npmjs.com/package/@signalk/charts-plugin) to use every map available in the GaladrielCache.  
+For examle, for OpenTopoMap specify URL to `http://you_server/tileproxy/tiles.php?z={z}&x={x}&y={y}&r=OpenTopoMap`
 
-### Адреса тайлов OSM
-Некоторые приложения (AvNav?) могут обращаться к тайлом только по адресу в формате [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames). Для использования GaladrielCache с такими приложениями можно сконфигурировать Apache2 следующим образом:  
+### OSM "slippy map" tilenames
+Some applications (AvNav?) cannot use tiles other than in [OSM "slippy map" tilenames](https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames) format. To use the GaladrielCache with these applications, you can configure the Apache2 as follows:  
 ```
 <IfModule rewrite_module>
 	RewriteEngine On
 	RewriteRule ^tiles/(.+)/([0-9]+)/([0-9]+)/([0-9.a-z]+)$ tiles.php?r=$1&z=$2&x=$3&y=$4
 </IfModule>
 ```
-После этого к GaladrielCache можно будет обратиться:
-_tiles/map_Name/Zoom/X_tile/Y_tile_   
-с указанием в конце расширения файла изображения, или без указания, в зависимости от конфигурации карты.
+and refer to the cache:  
+_tiles/map_Name/Zoom/X_tile/Y_tile_  
+with or without extension.
 
 ### MBTiles
-Файл карты в формате mbtiles должен иметь расширение `.mbtiles` и находится в каталоге _$tileCacheDir_. Файл описания карты аналогичен другим файлам описания карты, но должен содержать функцию работы с mbtiles. Более подробно см. `mapsources/[mapsources.ru_RU.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.ru-RU.md)
+The file with map on mbtiles format must have `.mbtiles` extension and located in _$tileCacheDir_ directory. The map description file must have same name as map file, but with _.php_ extension of course, and similarly to other such files be locate in _mapsources/_ directory.  
+It doesn't matter to the GaladrielCache whether vector or raster tiles are in the map file. The corresponding configuration should be in the map description file.
 
-## Установка и конфигурирование:
-Должен быть веб-сервер с поддержкой php. Просто скопируйте содержимое каталога GaladrielCache в нужное место.<br>
-Кофигурация путей и другие параметры описаны в `params.php` Настройте.  
-Файлы конфигурации источников карт находятся в `mapsources/*`  
-Инструкция по созданию собственного источника карты находится в  mapsources/[mapsources.ru_RU.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.ru-RU.md)
+## Install&configure
+You must have a web server with php support. Just copy.  
+Paths and other settings are described in `params.php`
+Custom sources are in `mapsources/*`
+Help about map sources are in mapsources/[mapsources.md](https://github.com/VladimirKalachikhin/Galadriel-cache/blob/master/mapsources/mapsources.md)
 
-## Подготовка карты памяти SD card для хранения кеша
+## Prepare SD card to cache
 ```
 # mkfs.ext4 -O 64bit,metadata_csum -b 4096 -i 4096 /dev/sdb1
 ```
-Где  
-`-b 4096 -i 4096` установить размер блока данных в 4096 bytes и установить количество i-nodes в максимально возможное. <br>
-`-O 64bit,metadata_csum` необязательный параметр, который может понадобиться для совместимости с некоторыми устройствами под управлением Android <br>
-`/dev/sdb1` -- путь к карте памяти SD card.  
-Однако, умолчальное форматирование в vfat позволяет хранить на карте достаточный для практических целей объём тайлов.
+`-b 4096 -i 4096` set block to 4096 bytes and increase i-nodes to max.  
+`-O 64bit,metadata_csum` needs for compability with old Android devices.  
+`/dev/sdb1` - your SD card partition.  
+However, default formatting in vfat allows you to store a sufficient amount of tiles on the map for practical purposes.
 
-## Прямой доступ к кешу
-Если ваш сервер умер, но есть рутованное устройство (планшет или телефон) под управлением Android, для доступа к растровым картам можно сделать следующее:
-### Монтирование SD card в устройстве
-1. извлеките SD card с кешем из сервера
-2. вставьте SD card с кешкм в устройство под управлением Android  
-на этом устройстве понадобится терминал (отдельная программа, или в составе чего-нибудь)
-3. Откройте терминал. Выполните:
+## Direct access to the cache
+If you server dead, but you have a rooted Android phone or tablet, you may use raster tiles directly:
+
+### Mount SD card
+1. remove SD card with the cache from the server
+2. insert the SD card with cache to Android device
+on Android device with terminal:
+3. Open terminal. Try:
 ```
 # mount -o rw,remount /
 # mkdir /data/mySDcard 
@@ -122,27 +122,25 @@ _tiles/map_Name/Zoom/X_tile/Y_tile_
 # mount -o ro,remount /
 # mount -rw -t ext4 /dev/block/mmcblk1p1 /data/mySDcard
 ```
-Эти команды создают точку монтирования и монтируют туда SD card. Таким образом все карты оказываются на вашем Android-устройстве. <br>
-В этих командах:  
-`/dev/block/mmcblk1p1` -- раздел на SD card, где находится кеш. Обычно путь именно такой, но на всякий случай следует уточнить:  
+This creates mount point and mounts your SD card. There to, so you have all maps on your Android device.  
+There:  
+`/dev/block/mmcblk1p1` - partition wint cache on you SD card. To find it, try 
 ```
 $ ls /dev/block
 ```
-Последнее устройство mmcblk -- обычно вставленная SD card, а p1 -- обычно единственный раздел на ней.<br>
-`/data/mySDcard` - точка монтирования
+Last mmcblk - most probably your SD card.  
+`/data/mySDcard` - mount point
 
-В зависимости от способа рутования устройства (и организации конкретного варианта Android), команда `mount` может выглядеть иначе:  
+Depending on how you obtain root, the command `mount` may be written as
 ```
- # su --mount-master -c 'busybox mount -rw -t ext4 /dev/block/mmcblk1p1 /data/mySDcard'
+# su --mount-master -c 'busybox mount -rw -t ext4 /dev/block/mmcblk1p1 /data/mySDcard' 
 ``` 
-Попробуйте такой вариант, если монтирование не получается.
 
-### Конфигурирование OruxMaps на устройстве 
-Добавьте в конфигурационный файл OruxMaps  `onlinemapsources.xml` в соответствии с синтаксисом этого файла такие описания требуемых карт:
-
+### Configure OruxMaps: 
+Modify _oryxmaps/mapfiles/onlinemapsources.xml_ by add:
 ```
 <onlinemapsource uid="1052">
-<name>Navionics layer локально (NAV)</name>
+<name>Navionics layer from local dir (NAV)</name>
 <url><![CDATA[file://data/mySDcard/tiles/navionics_layer/{$z}/{$x}/{$y}.png]]></url> 
 <minzoom>12</minzoom>
 <maxzoom>18</maxzoom>
@@ -151,7 +149,7 @@ $ ls /dev/block
 <downloadable>0</downloadable>
 </onlinemapsource>
 <onlinemapsource uid="1054">
-<name>OpenTopoMap локально (TOPO)</name>
+<name>OpenTopoMap from local dir (TOPO)</name>
 <url><![CDATA[file://data/mySDcard/tiles/OpenTopoMap/{$z}/{$x}/{$y}.png]]></url> 
 <minzoom>5</minzoom>
 <maxzoom>18</maxzoom>
@@ -160,12 +158,13 @@ $ ls /dev/block
 <downloadable>0</downloadable>
 </onlinemapsource>
 ```
-И всё остальное, что нужно, таким же способом <br>
-Здесь `/data/mySDcard/tiles/` -- путь к кешу на примонтированной SD card от корня файловой системы. 
+and other maps by same way.  
+There `/tiles/` - path to cache from the SD card root. 
 
-### Автоматизация процесса монтирования SD card на устройстве с помощью 3C toolbox
-С помощью приложения **3C toolbox** можно автоматически монтировать SD card при старте устройства. Для этого: 
-1. Создайте файл с именем, например, _01_mountExtSDcard_, и содержанием:
+### Automated mounting in Android with 3C toolbox
+With **3C toolbox** you can automate the mounting when the device boots. 
+1. Create file:   
+_01_mountExtSDcard_
 ```
 #!/system/bin/sh
 
@@ -181,32 +180,19 @@ mount -o ro,remount /
 fi
 mount -rw -t ext4 /dev/block/mmcblk1p1 $EXT_SD_DIRECTORY
 ```
-2. Поместите этот файл в домашнюю директорию вашего устройства Android по следующему пути:  
-`Android/data/ccc71.at.free/scripts/` или  
+2. Place it in home directory by path <br>
+`Android/data/ccc71.at.free/scripts/` or <br>
 `Android/data/ccc71.at/scripts/` 
-3. Откройте **3C toolbox** 
-4. Перейдите Tools - Script editor 
-5. Отметьте ваш файл _01_mountExtSDcard_ как запускаемый при старте.
+3. Open **3C toolbox** 
+4. Go Tools - Script editor 
+5. Mark _01_mountExtSDcard_ as runed in boot
 
-## Загрузчик
-GaladrielCache имеет в своём составе простой загрузчик тайлов. Для его использования нужно создать специальный файл задания - текстовый файл в формате csv. Имя файла должно совпадать с именем файла источника карты, а расширение - быть начальным масштабом в смысле z в координатах тайла. Файл задания должен содержать строки x,y координат требуемых тайлов, через запятую. 
+## Loader
+GaladrielCache includes a dumb tile loader. Create a csv job file with map_source_name.zoom as a name and x,y strings as content and place it in `loaderjobs/` directory. Run _startLoaderDaemon_ (or _php loaderSched.php_ for foreground) in cli. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) has a GUI for it.  
+To stop Loader run _stopLoader_ or delete Loader job files bouth from `loaderjobs/` and `loaderjobs/inWork/` directories.
 
-Поместите файл задания в каталог `loaderjobs/` (настраивается в `params.php`) и запустите загрузчик как фоновый процесс:
-```
-tileproxy$ startLoaderDaemon
-```
-или как обычный процесс:
-```
-tileproxy$ php loaderSched.php
-```
-Указанные тайлы указанной карты начиная с указанного масштаба и вплоть до максимального масштаба, заданного в `params.php`, скачаются и будут сохранены в кеше.  
-Остановить загрузчик можно командой
-```
-tileproxy$ stopLoader
-```
-или удалив все файлы заданий в каталогах `loaderjobs/` и `loaderjobs/inWork/`  
-
-Например, файл задания с именем _OpenSeaMap.9_, содержащий строки:
+For example:  
+_OpenSeaMap.9_
 ```
 295,145
 296,145
@@ -215,19 +201,19 @@ tileproxy$ stopLoader
 295,143
 296,143
 ```
-вызовет скачивание указанных шести тайлов карты _OpenSeaMap_ масштаба 9, а также всех тайлов большего масштаба, которые укладываются в эти тайлы, вплоть до масштаба 16, который указан в `params.php` как максимальный для загрузчика.
 
-Для управления загрузчиком и создания файлов заданий удобно использовать [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap), где есть нужные инструменты. При этом созданные [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) файлы заданий дополнительно сохраняются в `loaderjobs/oldjobs` для возможного повторного использования.
+Will be downloaded OpenSeaMap within the specified tiles from zoom 9 to $loaderMaxZoom from _params.php_.  
 
-Загрузка тайлов может осуществляться в несколько потоков, число которых указывается в `params.php`. Кроме того, загрузчик использует cron для надёжности, так что загрузка продолжится и после перезагрузки сервера. Для остановки процесса загрузки конкретной карты удалите соответствующий файл задания.
+Tile loader may use any number of threads to load, and use cron for robust download.  
+You may use a [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) for control Loader. Job files, created by [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master), saved in `loaderjobs/oldjobs` for backup.
 
-### Использование загрузчика для создания копии части кеша
-Если в первой строке файла задания поместить какую-нибудь команду, то вместо загрузки тайлов загрузчик будет выполнять эту команду. Такая первая строка должна обязательно начинаться с символа #.  
-В команде можно использовать переменные из конфигурационного файла _params.php_, но, к сожалению, переменные из файлов конфигурации источников  _mapsources/*_ недоступны.
-
-Например, такой файл задания _OpenSeaMap.9_:  
+### Using Loader to copy part of the cache
+Add to the first line of csv job file some copy command. In this case, Loader starts this command instead of loading tile. 
+This first line must be started from #.  
+For example:  
+_OpenSeaMap.9_
 ```
-# mkdir -p /mnt/mySDcard/RegionTileCache/$r/$z/$x/ && cp -Hpu $tileCacheDir/$r/$z/$x/$y.png /mnt/mySDcard/RegionTileCache/$r/$z/$x/
+# mkdir -p /mnt/mySDcard/RegionTileCache/$r/$z/$x/ && cp -Hpu $tileCacheDir/$r/$z/$x/$y /mnt/mySDcard/RegionTileCache/$r/$z/$x/
 295,145
 296,145
 296,144
@@ -235,39 +221,29 @@ tileproxy$ stopLoader
 295,143
 296,143
 ```
-вызовет копирование указанных тайлов, и всех тайлов большего масштаба, которые укладываются в эти тайлы, из каталога, указанного в переменной $tileCacheDir из конфигурационного файла `params.php`, в каталог _/mnt/mySDcard/RegionTileCache_ с созданием всех подкаталогов.
 
-Нельзя для одной карты одновременно запускать файлы задания со специальной командой и без неё. В конце-концов один из файлов задания перепишет другой, и останется какой-нибудь один.
+This will copy the specified tiles of OpenSeaMap up to max zoom to destination.
 
-## Вспомогательные приложения
-### Очистка кеша с помощью clearCache
-Запустите
-```
-tileproxy$ php clearCache.php mapname
-```
-для карты *mapname*, или 
-```
-tileproxy$ php clearCache.php
-```
-для всех карт, чтобы удалить из кеша ненужные файлы.  
-Список ненужных файлов указывается в массиве $trash в описаноо каждой карты, и/или в массиве $globalTrash файла `params.php` для всех карт. Ненужными могут быть тайлы - заглушки, или, допустим, файлы .tne, если вы используете кеш от программы SAS.Planet.
+You can use variables from _params.php_, but not from _mapsources/*_.  
+Avoid creating job files that have a custom command and do not have one for one map.
 
-### Проверка жизнеспособности источника карты
-checkSources.php -- утилита командной строки, которая для каждого файла источника карты, в котором указан специальный тайл, пытается скачать этот тайл и сравнивает полученное с сохранённым. Результат записывается в лог.
-Рекомендуется запускать периодически cron'ом.
+## Utilites
+### clearCache
+Use in cli _clearCache.php mapname_ to *mapname* or _clearCache.php_ to all maps to remove from cache unwanted files, listed in $trash. This is maybe blank tiles or .tne files from SAS.Planet.  
+Use in cli _clearCache.php mapname fresh_ to *mapname* or _clearCache.php fresh_ to all maps to remove from cache expired tiles.
 
-### Карта покрытия
-Запустите
-```
-tileproxy$ php checkCovers.php mapName.zoom max_zoom
-```
-для подсчёта отсутствующих тайлов в покрытии карты, описанном в файле задания для загрузчика mapName.zoom. Отсутствующие тайлы будут указаны в виде файлов заданий для загрузчика в каталоге `checkCoversData/notFound/`
+### checkSources
+The checkSources.php is cli utility for check map source viability. If maps definition file include special tile info - checkSources.php reads this tile from source and compare loaded with stored. The result is logged.
+Use cron to run it periodically.
 
-Также можно получить карту покрытия, указав в запросе имя карты с добавлением '_COVER' в конце. Будет возвращён полупрозрачный тайл, каждый пиксел которого означает наличие тайла масштаба +8 от указанного. Дополнительно будут показаны границы имеющихся тайлов максимального для загрузчика масштаба. [GaladrielMap](https://hub.mos.ru/v.kalachihin/GaladrielMap) использует эту возможность для показа карты покрытия.
+### Coverage
+Run _php checkCovers.php mapName.zoom max_zoom_ for calculate coverage of given region, described as Loader job file mapName.zoom. The `checkCoversData/notFound/` directory contains a Loader job files with tiles that are missing from the coverage.  
+For display in map GaladrielCache supports calculate coverage feature. To get the transparent tile with cover map add '_COVER' to map name. This return current_zoom+8 zoom level coverage. It is clear that every pixel of this tile indicate one tile +8 zoom level. Additionally displayed coverage of loader's max zoom level.  
+The [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) supports this feature.
 
-## Поддержка
-[Форум](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
+## Support
+[Discussions](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
 
-Форум будет живее, если вы сделаете пожертвование на [ЮМани](https://sobe.ru/na/galadrielmap).
+The forum will be more lively if you make a donation at [ЮMoney](https://sobe.ru/na/galadrielmap)
 
-Вы можете получить [индивидуальную платную консультацию](https://kwork.ru/training-consulting/20093293/konsultatsii-po-ustanovke-i-ispolzovaniyu-galadrielmap) по вопросам установки и использования GaladrielCache.
+[Paid personal consulting](https://kwork.ru/it-support/20093939/galadrielmap-installation-configuration-and-usage-consulting)  
