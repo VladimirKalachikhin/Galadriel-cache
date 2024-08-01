@@ -14,8 +14,12 @@ $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
 /* 
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=ESRI_Sat
+ 
+http://88.99.52.155/cgi-bin/tapp/tilecache.py/1.0.0/topomapper_v2/12/2374/1161
+http://88.99.52.155/tmg/12/2374/1161
 */
-$url = 'http://88.99.52.155/cgi-bin/tapp/tilecache.py/1.0.0/topomapper_v2';
+//$url = 'http://88.99.52.155/cgi-bin/tapp/tilecache.py/1.0.0/topomapper_v2';
+$url = 'http://88.99.52.155/tmg';
 $url .= "/$z/$x/$y";
 return $url;
 }

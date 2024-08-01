@@ -11,8 +11,8 @@ $maxZoom = 18;
 $trash = array(
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(15,19796,10302,'b88a7641');	// to source check; tile number and CRC32b hash
-/*
+$trueTile=array(15,19796,10302,'2046a299');	// to source check; tile number and CRC32b hash
+/*/
 $functionPrepareTileImg = <<<'EOFU1'
 function prepareTileImg($img){
 // Заменяет в картинке цвет на прозрачный, требует sudo apt install php-gd 
@@ -34,7 +34,7 @@ if($transparentColor !== false){
 return array('img'=>$img);
 } // end function prepareTileImg
 EOFU1;
-*/
+/*/
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {
 /* К сожалению, OpenTopoMap очень не приветствует массовое скачивание карты, следит за этим,
@@ -51,6 +51,8 @@ function getURL($z,$x,$y) {
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
 //error_log("OpenTopoMap $z,$x,$y");
+//echo "OpenTopoMap $z,$x,$y |||||||||||||||||||||||||||||||||\n";
+//error_log("OpenTopoMap $z,$x,$y |||||||||||||||||||||||||||||||||\n");	
 
 $server = array('a','b','c');
 $url = 'https://'.$server[array_rand($server)] . '.tile.opentopomap.org';
@@ -97,9 +99,13 @@ if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять в�
 	}
 	$tilesCntFile = "$dirName/tilesCnt_$map";
 	$tilesCnt = @file_get_contents($tilesCntFile);
+	
+	//$context = stream_context_create($opts);
+	//error_log("скачано через ".file_get_contents('https://check.torproject.org/api/ip',false,$context)." : $tilesCnt\n");
 	if ($tilesCnt > $tilesPerNode) { 	// если уже пора
-		echo"getting new Tor exit node\n";
+		//echo"getting new Tor exit node\n";
 		exec($getTorNewNode);	// сменим выходную ноду Tor
+		//error_log("getting new Tor exit node. New node ".file_get_contents('https://check.torproject.org/api/ip',false,$context)."\n");
 		$tilesCnt = 1;
 	}
 	else $tilesCnt++;

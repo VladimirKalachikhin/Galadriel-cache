@@ -10,9 +10,9 @@
 В первой строке файла задания, может быть своя $execString. 
 Эта строка должна начнаться с #
 Специальная $execString может быть использована для копирования части кеша:
-# cp -Hpu --parents $tileCacheDir/$r/$z/$x/$y.png /home/stager/tileCacheCopy/
+# cp -Hpu --parents $tileCacheDir/$r/$z/$x/$y /home/stager/tileCacheCopy/
  - в этом случае создадутся отсутствующие каталоги, и весь исходный путь будет добавлен к целевому
-# mkdir -p /home/stager/tileCacheCopy/$r/$z/$x/ && cp -Hpu $tileCacheDir/$r/$z/$x/$y.png /home/stager/tileCacheCopy/$r/$z/$x/
+# mkdir -p /home/stager/tileCacheCopy/$r/$z/$x/ && cp -Hpu $tileCacheDir/$r/$z/$x/$y /home/stager/tileCacheCopy/$r/$z/$x/
  - в этом случае сперва создадутся каталоги, потом произойдёт копирование
 Могут быть использованы переменные из params.php
 ВНИМАНИЕ! Загрузчик может загружать только карты с одним вариантом, типа map/z/y/x !!!
@@ -139,11 +139,12 @@ do {
 
 	$doLoading = FALSE; 	
 	$imgFileTime = @filemtime($fileName); 	// файла может не быть
-	//echo "imgFileTime=$imgFileTime;\n";
+	//echo "imgFileTime=$imgFileTime; ttl=$ttl;\n";
 	if($imgFileTime) { 	// файл есть
 		if($customExec) $doLoading = TRUE; 	// копирование кеша
 		elseif(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 			$doLoading = TRUE; 	// 
+			//echo "тайл $fileName есть, но протух на ".round((time()-($imgFileTime+$ttl))/(60*60*24))." дней\n";
 		}
 		else { 	// файл свежий
 			$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
@@ -184,7 +185,7 @@ do {
 	}
 	$now=microtime(TRUE)-$now;
 	$timer[$jobName] += $now;
-	echo "Карта $map, загрузка состоялась?:".!$res."; затрачено ".$timer[$jobName]."сек. при среднем допустимом $ave сек.\n";
+	echo "Карта $map, загрузка состоялась?:".!$res."; затрачено ".round($timer[$jobName])."сек. при среднем допустимом ".round($ave)." сек.\n";
 	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
 	echo "	\n\n";
 	//exit;
