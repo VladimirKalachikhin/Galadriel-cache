@@ -102,11 +102,15 @@ else {
 			}
 		}
 	}
-	else { 	// файла нет
+	elseif($functionGetURL) { 	// файла нет, но в описании карты указано, где взять
 		//error_log("tiles.php: No $r/$z/$x/$y tile exist?");
 		$showTHENloading = 2; 	//сперва скачивать, потом показывать
 	}
-}
+	else{	// файла нет, и негде взять
+		showTile(NULL); 	// покажем 404
+		goto END;
+	};
+};
 
 // Так или иначе - тайл получен или не получен, и решение, что делать - выработано
 if($functionPrepareTileImg) eval($functionPrepareTileImg);	// определим функцию обработки картинки

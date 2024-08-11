@@ -135,7 +135,6 @@ $getURLparams['mapAddPath'] = $mapAddPath;
 //echo "fileName=$fileName; <br>\n";
 $newimg = FALSE; 	// исходная ситуация -- тайл получить не удалось
 if (!$functionGetURL) { 	// нет функции для получения тайла	
-	$newimg = NULL; 	// типа, тайл получен
 	$msg = "tilefromsource.php getTile: No functionGetURL for $mapSourcesName. Will not receive a tile";
 	echo "$msg\n";
 	error_log($msg);	
