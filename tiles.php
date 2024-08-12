@@ -200,6 +200,8 @@ else {
 echo $img; 	// теперь в output buffer только тайл
 $content_lenght = ob_get_length(); 	// возьмём его размер
 header("Content-Length: $content_lenght"); 	// завершающий header
+header("Access-Control-Allow-Origin: *"); 	// эта пурга их какой-то горбатой безопасности, смысл которой я так и не уловил
+//header("Access-Control-Expose-Headers: *"); 	// эта пурга должна позволить показывать заголовки запросов, но они и так показываются?
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
 @ob_flush();
 flush(); 		// Force php-output-cache to flush to browser.
