@@ -5,7 +5,7 @@ ob_start(); 	// попробуем перехватить любой вывод 
 Потом, если надо - скачивает
 Если полученный тайл ещё не показывали (он новый) - показываем.
 */
-//$now = microtime(TRUE);
+//$nowTime = microtime(TRUE);
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
 $freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли
@@ -155,6 +155,7 @@ function showTile($img,$mime_type='',$content_encoding='',$ext='') {
 Отдаёт тайл. Считается, что только эта функция что-то показывает клиенту
 https://gist.github.com/bubba-h57/32593b2b970366d24be7
 */
+//global $nowTime;
 //return;
 //apache_setenv('no-gzip', '1'); 	// отключить сжатие вывода
 set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
@@ -202,6 +203,7 @@ $content_lenght = ob_get_length(); 	// возьмём его размер
 header("Content-Length: $content_lenght"); 	// завершающий header
 header("Access-Control-Allow-Origin: *"); 	// эта пурга их какой-то горбатой безопасности, смысл которой я так и не уловил
 //header("Access-Control-Expose-Headers: *"); 	// эта пурга должна позволить показывать заголовки запросов, но они и так показываются?
+//header("X-CacheTiming: ".($nowTime-microtime(TRUE)));
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
 @ob_flush();
 flush(); 		// Force php-output-cache to flush to browser.

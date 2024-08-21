@@ -4,7 +4,7 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.7
+## v. 2.8
 
 Contains:
 * [Features](#features)
@@ -22,7 +22,12 @@ Contains:
 * * [Configure OruxMaps](#configure-oruxmaps)
 * * [Automated mounting in Android with 3C toolbox](#automated-mounting-in-android-with-3c-toolbox)
 * [Loader](#loader)
-* * [Using Loader to copy part of the cache](#using-loader-to-copy-part-of-the-cache)
+* * [Using Loader to copy part of the cache](#using-loader-to-copy-part-of-the-cache) 
+* [Cache control (API)](#cache-control)
+* * [Get maps list](#get-maps-list)
+* * [Get map info](#get-map-info)
+* * [Create loader job](#create-loader-job)
+* * [Get loader status](#get-loader-status)
 * [Utilites](#utilites)
 * * [clearCache](#clearcache)
 * * [checkSources](#checksources)
@@ -226,6 +231,65 @@ This will copy the specified tiles of OpenSeaMap up to max zoom to destination.
 
 You can use variables from _params.php_, but not from _mapsources/*_.  
 Avoid creating job files that have a custom command and do not have one for one map.
+
+## Cache control
+The `cacheControl.php` web service implements an interface (API) for check cache status and loader control.  
+The service returns JSON, inclide _null_ on error.
+
+Usage:
+### Get maps list
+`http://you_address/cacheControl.php?getMapList`  
+
+This returns:  
+```
+{
+	"map_source_file_name": {
+		"en": "Human-readable english map name or map_source_file_name",
+		["ru": ...]
+	}
+}
+```
+### Get map info
+`http://you_address/cacheControl.php?getMapInfo=map_source_file_name`  
+
+This returns:  
+```
+{
+    "ext": "...",
+    "ContentType": "...",
+    "epsg": "...",
+    "minZoom": ?,
+    "maxZoom": ?,
+    "data": "...",
+    "mapboxStyle": "..."
+}
+```
+from _mapsources/map_source_file_name.php_
+
+### Create loader job
+`http://you_address/cacheControl.php?loaderJob=map_source_file_name.zoom&xys=csv_of_XY`  
+
+This create & run tile loading job. Returns:  
+```
+{
+	"status": 0,
+	"jobName": map_source_file_name.zoom
+}
+```
+
+### Get loader status
+`http://you_address/cacheControl.php?loaderStatus[&restartLoader]  
+
+This optionally (re)start loader. Returns:  
+```
+{
+	"loaderRun": scheduler_PID,
+	"jobsInfo": {
+		"map_source_file_name.zoom": %_of_complite
+		[...]
+	}
+}
+```
 
 ## Utilites
 ### clearCache
