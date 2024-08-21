@@ -280,7 +280,7 @@ This create & run tile loading job. Returns:
 ### Get loader status
 `http://you_address/cacheControl.php?loaderStatus[&restartLoader]  
 
-This optionally (re)start loader. Returns:  
+This optionaly (re)start loader. Returns:  
 ```
 {
 	"loaderRun": scheduler_PID,
