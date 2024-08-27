@@ -32,10 +32,12 @@ if($uri) $img=getTile($uri,$params); 	// собственно, получени�
 
 session_write_close();
 //ob_flush();
-if(@$argv) { 	// тайла не было и он не был получен
-	if($img===FALSE) {
-		fwrite(STDOUT, '1');
+if(@$argv) {
+	if($img===FALSE) { 	// тайла не было и он не был получен
+		fwrite(STDOUT, '1');	// сообщим об этом, там разберутся
 		return(1);
+		//fwrite(STDOUT, '0');	// всё равно вернём ok, потому что иначе загрузка реально отсутствующих тайлов будет продолжаться вечно
+		//return(0);
 	}
 	else {
 		fwrite(STDOUT, '0');
@@ -425,6 +427,7 @@ if(($newimg !== FALSE) and @$bannedSources[$mapSourcesName]) { 	// снимем 
 	error_log("tilefromsource.php getTile $tries's try: $mapSourcesName unbanned!");
 }
 
+if (!$functionGetURL) return true;	// иначе loader будет вечно запрашивать отсутствующий тайл
 return($newimg);
 } // end function getTile
 

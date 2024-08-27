@@ -1,5 +1,5 @@
 <?php
-/* Version 2.8.0
+/* Version 2.8.1
 Пути и параметры
 Options and paths 
 */

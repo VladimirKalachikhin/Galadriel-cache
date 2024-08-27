@@ -20,6 +20,9 @@ exec("crontab -l | grep -v '".__FILE__."'  | crontab -"); 	// удалим се�
 exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.__FILE__.'  > /dev/null") | crontab -'); 	// каждую минуту  > /dev/null - это если cron настроен так, что шлёт письмо юзеру, если задание что-то вернуло
 echo "Планировщик запустился с pID $pID\n";
 
+$infinitely = '';
+if(@$argv[1]=='--infinitely') $infinitely = '--infinitely';
+
 $bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
 //@unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников - он мог сохраниться из-за краха
 do {
@@ -137,7 +140,7 @@ do {
 			@unlink("$jobsDir/$loaderRunPID.lock"); 	// процесса с таким PID нет, удалим файл с PID. Но и файла к этому моменту может уже не быть
 			if($runs<$maxLoaderRuns) {
 				echo "Запускаем загрузчик\n";
-				exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
+				exec("$phpCLIexec loader.php $infinitely > /dev/null 2>&1 &");
 				//exec("$phpCLIexec loader.php > /dev/null &");
 				//exec("$phpCLIexec loader.php &");
 				$runs++;
@@ -146,7 +149,7 @@ do {
 		}
 		for($runs; $runs<$maxLoaderRuns; $runs++) { 	// если уже запущено меньше разрешённого количества загрузчиков - запустим ещё
 			echo "Запускаем ещё загрузчик\n";
-			exec("$phpCLIexec loader.php > /dev/null 2>&1 &");
+			exec("$phpCLIexec loader.php $infinitely > /dev/null 2>&1 &");
 			//exec("$phpCLIexec loader.php > /dev/null &");
 			//exec("$phpCLIexec loader.php &");
 		}

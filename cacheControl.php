@@ -28,7 +28,7 @@ return:
 }
 
 	Поставить задание на скачивание
-cacheControl.php?loaderJob=map_source_file_name.zoom&xys=csv_of_XY create & run tile loading job
+cacheControl.php?loaderJob=map_source_file_name.zoom&xys=csv_of_XY[&infinitely] create & run tile loading job, 
 return:
 {
 	"status": 0,
@@ -36,7 +36,7 @@ return:
 }
 
 	Получить состояние заданий на скачивание
-cacheControl.php?loaderStatus[&restartLoader] 	get loader status
+cacheControl.php?loaderStatusP[&stopLoader]|[&restartLoader][&infinitely]] 	get loader status
 return:
 {
 	"loaderRun": scheduler_PID,
@@ -118,10 +118,12 @@ elseif($jobName=filter_var($_REQUEST['loaderJob'],FILTER_SANITIZE_URL)){
 	// Если эта штука вызывается для нескольких карт подряд, то просто при запуске планировщика
 	// каждый его экземпляр видит, что запущены другие, и завершается. В результате не запускается ни один.
 	// Поэтому будем запускать планировщик не чаще чем раз в секунд.
+	$infinitely = '';
+	if(array_key_exists('infinitely',$_REQUEST)) $infinitely = '--infinitely';
 	$status = 0;
 	//echo (time()-$_SESSION['loaderJobStartLoader'])." ";
 	if((time()-$_SESSION['loaderJobStartLoader'])>3) {
-		exec("$phpCLIexec loaderSched.php > /dev/null 2>&1 &",$ret,$status); 	// если запускать сам файл, ему нужны права
+		exec("$phpCLIexec loaderSched.php $infinitely > /dev/null 2>&1 &",$ret,$status); 	// если запускать сам файл, ему нужны права
 		//exec("$phpCLIexec loaderSched.php > log_$jobName.txt 2>&1 &",$ret,$status); 	// если запускать сам файл, ему нужны права
 		if($status==0)$_SESSION['loaderJobStartLoader'] = time();	// при успешном запуске
 	};
@@ -131,10 +133,15 @@ elseif($jobName=filter_var($_REQUEST['loaderJob'],FILTER_SANITIZE_URL)){
 elseif(array_key_exists('loaderStatus',$_REQUEST)){	
 // Получить состояние заданий на скачивание
 	if(array_key_exists('restartLoader',$_REQUEST)) {
-		exec("$phpCLIexec loaderSched.php > /dev/null 2>&1 &",$ret,$status);
+		$infinitely = '';
+		if(array_key_exists('infinitely',$_REQUEST)) $infinitely = '--infinitely';
+		exec("$phpCLIexec loaderSched.php $infinitely > /dev/null 2>&1 &",$ret,$status);
 		//echo "exec ret="; print_r($ret); echo "status=$status;\n";
 		sleep(1);
-	};
+	}
+	
+	$stopLoader = false;
+	if(array_key_exists('stopLoader',$_REQUEST)) $stopLoader = true;
 
 	$jobsInfo = array();
 	foreach(preg_grep('~.[0-9]$~', scandir($jobsDir)) as $jobName) {	 	// возьмём только файлы с цифровым расшрением
@@ -144,7 +151,12 @@ elseif(array_key_exists('loaderStatus',$_REQUEST)){
 		//echo "jobSize=$jobSize; jobComleteSize=$jobComleteSize; <br>\n";
 		if($jobComleteSize==0) $jobComleteSize = $jobSize;
 		$jobsInfo[$jobName] = round((1-$jobComleteSize/$jobSize)*100); 	// выполнено
-	}
+		
+		if($stopLoader) {	// просто удалим выполняющиеся файлы заданий
+			unlink($jobName);
+			unlink("$jobsDir/$jobName");
+		};
+	};
 	//echo "jobsInfo:<pre>"; print_r($jobsInfo); echo "</pre>";
 	// Определим, запущен ли загрузчик
 	$schedInfo = glob("$jobsDir/*.slock"); 	// имеющиеся PIDs запущенных планировщиков. Должен быть только один, но мало ли...
@@ -169,7 +181,8 @@ ob_clean(); 	// очистим, если что попало в буфер
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header('Content-Type: application/json;charset=utf-8;');
 
-echo json_encode($result,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+//echo json_encode($result,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+echo json_encode($result,JSON_UNESCAPED_UNICODE);	// однострочный JSON передастся быстрее
 
 $content_lenght = ob_get_length();
 header("Content-Length: $content_lenght");

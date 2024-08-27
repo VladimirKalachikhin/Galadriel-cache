@@ -17,8 +17,8 @@ $content_encoding = '';
 $minZoom = 1; 	// map min zoom
 // Максимальный масштаб карты
 $maxZoom = 19; 	// map max zoom
-// Проекция карты, Web Mercator
-$EPSG=3857; 	// map projection, for map viewer (such as web client) or get tile algorithm. Not used for cache/proxy.
+// Проекция карты, Web Mercator. Может быть также 3395. Ничего другого быть не может, потому что ничего больше Leaflet не умеет.
+$EPSG=3857; 	// map projection, for map viewer (such as web client) or get tile algorithm. Not used for cache/proxy. Must be 3857 (default) or 3395 due to the Leaflet limitations. 
 // что делать, если Forbidden: skip, wait. По умолчанию - wait, источник будет забанен на время $noInternetTimeout (params.php). 'skip' - эквивалентно отсутствию файла, будет сохранён и показан пустой тайл, скачивание продолжится.
 $on403 = 'wait'; 	// Forbidden action: skip, wait. By default - wait, source will be banned on $noInternetTimeout (params.php) time. 'Skip' eq 'File not found'.
 //  /НЕТ РЕАЛИЗОВАНО!!! $on404 = 'skip'; 	// что делать, если Not Found: skip, wait, done. По умолчанию - 'skip' - эквивалентно отсутствию файла, будет сохранён и показан пустой тайл, скачивание продолжится. 'wait', источник будет забанен на время $noInternetTimeout (params.php). 'done' - неудачное скачивание, будет показано 404, ничего не сохранено, тайл снова поставлен в очередь на скачивание.

@@ -20,6 +20,9 @@
 */
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
+$infinitely = false;
+if(@$argv[1]=='--infinitely') $infinitely = true;
+
 require('params.php'); 	// пути и параметры
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 $maxTry = 5 * $maxTry; 	// увеличим количество попыток получить файл
@@ -44,6 +47,7 @@ do {
 	// Выбор файла задания
 	foreach($jobNames as $jobName) { 	// возьмём первый файл, которым можно заниматься
 		//echo "jobsInWorkDir=$jobsInWorkDir; jobName=$jobName;\n";
+		//$jobName = 'C-MAP.3';	// FOR TEST FOR TEST
 		$path_parts = pathinfo($jobName);
 		$zoom = $path_parts['extension']; 	//
 		$map = $path_parts['filename'];
@@ -59,11 +63,10 @@ do {
 				break;
 			}
 		}
-		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
 		//echo "jobName=$jobName; is_file($jobsInWorkDir/$jobName)=".is_file("$jobsInWorkDir/$jobName")." filesize($jobsInWorkDir/$jobName)=".filesize("$jobsInWorkDir/$jobName")." \n";
 		if( $jobName AND is_file("$jobsInWorkDir/$jobName") AND (filesize("$jobsInWorkDir/$jobName") > 4) AND (filesize("$jobsInWorkDir/$jobName")<>4096)) break; 	// выбрали файл для обслуживания
 		else $jobName = FALSE;	
-	}
+	};
 	if(! $jobName) break; 	// просмотрели все файлы, не нашли, с чем работать - выход
 	// Выбрали файл задания - всё ли с ним хорошо?
 	echo "Берём файл $jobName\n";
@@ -76,11 +79,16 @@ do {
 			echo "бросаем - на него затрачено много времени\n\n";
 			//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
 			continue;
-		}
-	}
+		};
+	};
 	// Есть ли ещё файл?
-	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл
+	clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл /////////////////////////////
 	if(!$job) break; 	// файла не оказалось
+
+	//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+	//echo "Сокращение файла задания filesize before=".filesize("$jobsInWorkDir/$jobName").";\n";
+
 	flock($job,LOCK_EX) or exit("loader.php Unable locking job file Error");
 	$s=fgets($job);
 	//echo "s=$s;\n";
@@ -92,11 +100,11 @@ do {
 		if(!$execString) {
 			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// грохнем файл задания, с которым непонятно что делать
 			flock($job, LOCK_UN); 	//снимем блокировку
-			fclose($job); 	// освободим файл
-			continue;
+			fclose($job); 	// освободим файл //////////////////////////////
+			continue;	// отправимся брать другой файл
 		}
 		$s=fgets($job);
-	}
+	};
 	$strSize = strlen($s); 	// размер первой строки в байтах
 	//echo "s=$s; strSize=$strSize;\n";
 	if(!$strSize) {
@@ -107,22 +115,27 @@ do {
 		if($s===FALSE) { 	// но упс - файл кончился
 			ftruncate($job,0) or exit("loader.php Unable truncated file $jobName"); 	// 
 			flock($job, LOCK_UN); 	//снимем блокировку
-			fclose($job); 	// освободим файл
-			break;
-		}
-	}
+			fclose($job); 	// освободим файл ////////////////
+			break;	// уходим, не будем брать новый файл, хотя этот мог быть не последним
+		};
+	};
 	$strSize = strlen($s); 	// размер первой строки в байтах
 	// Возьмём последний тайл
 	$seek = fseek($job,-2*$strSize,SEEK_END); 	// сдвинем указатель на 2 строки к началу
 	if($seek == -1)  $xy = $s;	// сдвинуть не удалось - первая строка?
-	else while(($s=fgets($job)) !== FALSE) $xy = $s;
+	else while(($s=fgets($job)) !== FALSE) $xy = $s;	// считываем строки до конца, в $xy остаётся последняя
 	//echo "s=$s; strSize=$strSize; xy=$xy;\n";
-	$pos = ftell($job);
+	$pos = ftell($job);	//  Returns the current position of the file read/write pointer
 	ftruncate($job,$pos-strlen($xy)) or exit("loader.php Unable truncated file $jobName"); 	// укоротим файл на строку
 	flock($job, LOCK_UN); 	//снимем блокировку
-	fclose($job); 	// освободим файл
+	fclose($job); 	// освободим файл ///////////////////////////////////////////////////////////
+
+	//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+	//echo "Сокращение файла задания filesize after=".filesize("$jobsInWorkDir/$jobName").";\n";
+
 	$xy = str_getcsv(trim($xy));
 	//echo "xy :<pre> "; print_r($xy); echo "</pre>\n";
+
 	$now = microtime(TRUE);
 	// Запустим скачивание
 	if(!is_numeric($xy[0]) or !is_numeric($xy[1])) continue;
@@ -135,7 +148,7 @@ do {
 	if($ext) $y .= ".$ext"; 	// в конфиге источника указано расширение
 	else $y .= ".png";
 	$fileName = "$tileCacheDir/$map/$zoom/$x/$y"; 	// из кэша, однако наличие версионности игнорируется
-	//echo "file=$fileName; <br>\n";
+	echo "file=$fileName; <br>\n";
 
 	$doLoading = FALSE; 	
 	$imgFileTime = @filemtime($fileName); 	// файла может не быть
@@ -172,17 +185,29 @@ do {
 		}
 	}
 	//echo "res=$res; \n";
+
 	$str = "";
-	if($res==1) { 	// загрузка тайла плохо кончилась
+	//
+	if($res===1 and $infinitely) { 	// загрузка тайла плохо кончилась, если указано - вернём его в задание. В результате отсутствующий тайл будет скачиваться вечно
+
+		//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+		//echo "Удлинение файла задания filesize before=".filesize("$jobsInWorkDir/$jobName").";\n";
+
+		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");	/////////////////////////////////////////
 		$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
 		flock($job,LOCK_EX) or exit("loader.php 2 Unable locking job file Error");
 		fseek($job,0,SEEK_END); 	// сдвинем указатель в конец
 		fwrite($job, $xy[0].",".$xy[1]."\n");
 		fflush($job);
 		flock($job, LOCK_UN); 	//снимем блокировку		
-		fclose($job); 	// освободим файл
+		fclose($job); 	// освободим файл ///////////////////////////////////////////////////////
 		$str = ", но тайл ".$xy[0].",".$xy[1]." будет запрошен повторно";
-	}
+
+		//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+		//echo "Удлинение файла задания filesize after=".filesize("$jobsInWorkDir/$jobName").";\n";
+
+	};
+	//
 	$now=microtime(TRUE)-$now;
 	$timer[$jobName] += $now;
 	echo "Карта $map, загрузка состоялась?:".!$res."; затрачено ".round($timer[$jobName])."сек. при среднем допустимом ".round($ave)." сек.\n";
