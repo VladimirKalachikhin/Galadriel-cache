@@ -16,6 +16,8 @@ nextZoom - Возвращает четыре номера тайлов след�
 quickFilePutContents - запись файла в tmp, а затем переименование
 
 setColorsTransparent - Делает прозрачными указанные цвета в данном тайле.
+
+checkInBounds - находится ли указанный тайл в пределах указанных границ
 */
 function pixResolution($lat_deg,$zoom,$tile_size=256,$equator=40075016.686){
 /* Размер пикселя указанного масштаба на указанной широте в метрах
@@ -205,4 +207,28 @@ if(count($colorsPresent)){	// нужные цвета есть в исходно
 };
 return $img;
 }; // end function setColorsTransparent
+
+function checkInBounds($z,$x,$y,$bounds){
+/*
+$bounds - массив массивов координат углов, как это указано для Leaflet: L.latLngBounds(<LatLng> corner1, <LatLng> corner2)
+т.е.: [[широта,долгота],[широта,долгота]]
+*/
+if(!$bounds) return true;
+//echo "[checkInBounds] bounds:"; print_r($bounds); echo "\n";
+$lefttopLat = max($bounds[0][0],$bounds[1][0]);
+$lefttopLng = min($bounds[0][1],$bounds[1][1]);
+$rightbottomLat = min($bounds[0][0],$bounds[1][0]);
+$rightbottomLng = max($bounds[0][1],$bounds[1][1]);
+//echo "[checkInBounds] bounds: lefttopLat=$lefttopLat; lefttopLng=$lefttopLng; rightbottomLat=$rightbottomLat; rightbottomLng=$rightbottomLng;\n";
+
+$lefttop = tileNum2degree($z,$x,$y);	// array('lon'=>lon_deg,'lat'=>lat_deg)
+//echo "[checkInBounds] $z,$x,$y lefttop:"; print_r($lefttop); echo "\n";
+// нижняя граница выше верха тайла или правая граница левее лева тайла
+if(($rightbottomLat > $lefttop['lat']) or ($rightbottomLng < $lefttop['lon'])) return false;	// выше или левее
+$rightbottom = tileNum2degree($z,$x+1,$y+1);	// array('lon'=>lon_deg,'lat'=>lat_deg)
+//echo "[checkInBounds] $z,$x,$y rightbottom:"; print_r($rightbottom); echo "\n";
+// верхняя граница ниже низа тайла или левая граница правее права тайла
+if(($lefttopLat < $rightbottom['lat']) or ($lefttopLng > $rightbottom['lon'])) return false;	// правее или ниже
+return true;
+}; // end function checkInBounds
 ?>

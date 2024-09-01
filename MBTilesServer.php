@@ -5,6 +5,7 @@ require('./params.php'); 	// пути и параметры (без указан
 $SocketTimeout = 10;	// демон умрёт через сек.
 
 $r = filter_var($argv[1],FILTER_SANITIZE_FULL_SPECIAL_CHARS);	// один параметр -- имя карты без расширения
+echo "$r, $tileCacheDir\n";
 if(!$r) return;
 if(!file_exists("$tileCacheDir/$r.mbtiles")) return;	// Придурок, который писал класс SQLite3, не знал, что файла может не быть.
 

@@ -25,6 +25,10 @@ if(($x===false) OR ($y===false) OR ($z===false) OR ($r===false)) {
 $x = intval($x);
 $y = intval($y);
 $z = intval($z);
+// 		FOR TEST
+//$x=19;$y=11;$z=5;$r="world-coastline";
+//$x=19;$y=11;$z=5;$r="osmmapMapnik";
+//// 	FOR TEST
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
 $sourceName = $sourcePath[0];
@@ -41,8 +45,8 @@ else {
 }
 //error_log("function_exists('getTile'):".function_exists('getTile'));
 if($functionGetTileFile){	// у карты есть собственная функция получения тайла
-	eval($functionGetTileFile);
-	extract(getTileFile($r,$z,$x,$y),EXTR_OVERWRITE);
+	eval($functionGetTileFile);	// создаём функцию получения данных
+	extract(getTileFile($r,$z,$x,$y),EXTR_OVERWRITE);	// выполняем функцию получения даных. Обычно она возвращает массив ['img',value], и extract присваивает $img=value
 }
 else {
 	// возьмём тайл
@@ -104,7 +108,13 @@ else {
 	}
 	elseif($functionGetURL) { 	// файла нет, но в описании карты указано, где взять
 		//error_log("tiles.php: No $r/$z/$x/$y tile exist?");
-		$showTHENloading = 2; 	//сперва скачивать, потом показывать
+		if(checkInBounds($z,$x,$y,$bounds)){	// тайл вообще должен быть?
+			$showTHENloading = 2; 	//сперва скачивать, потом показывать
+		}
+		else{	// тайла и не должно быть
+			showTile(NULL); 	// покажем 404
+			goto END;
+		};
 	}
 	else{	// файла нет, и негде взять
 		showTile(NULL); 	// покажем 404

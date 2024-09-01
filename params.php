@@ -1,5 +1,8 @@
 <?php
-/* Version 2.8.1
+/* Version 2.9.0
+История History:
+2.9.0 - map's $bounds support
+
 Пути и параметры
 Options and paths 
 */

@@ -18,7 +18,7 @@ if(!$res) return array('img'=>null);
 
 $msg = serialize(array('z'=>$z,'x'=>$x,'y'=>$y))."\n";
 $msgLen = mb_strlen($msg,'8bit');
-echo "Посылаем серверу $msgLen байт:|$msg|\n";
+//echo "[serveMBTiles] Посылаем серверу $msgLen байт:|$msg|\n";
 $res = socket_write($socket, $msg, $msgLen);	// Посылаем запрос
 if(!$res) return array('img'=>null);
 $buf = socket_read($socket, 102400,   PHP_BINARY_READ);	// Считаем, что обмениваемся только одним сообщением

@@ -84,6 +84,7 @@ elseif($mapName=filter_var($_REQUEST['getMapInfo'],FILTER_SANITIZE_URL)){
 		'maxZoom'=>$maxZoom,
 		'data'=>$data
 	);
+	if($bounds) $mapInfo['bounds'] = $bounds;
 	if(($ext=='pbf' or $ContentType=='application/x-protobuf')and(file_exists("$mapSourcesDir/$mapName.json"))) $mapInfo['mapboxStyle'] = "$tileCacheServerPath/$mapSourcesDir/$mapName.json"; 	// путь в смысле web
 	$result = $mapInfo;
 }
