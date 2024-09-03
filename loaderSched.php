@@ -67,7 +67,13 @@ do {
 			unlink("$jobsDir/$job");	// убъём задание
 			unset($jobs[$i]);
 			continue;
-		}
+		};
+		if(!$functionGetURL) {
+			echo "У этого задания нет функции functionGetURL, нечем скачивать. Убъём задание\n";
+			unlink("$jobsDir/$job");	// убъём задание
+			unset($jobs[$i]);
+			continue;
+		};
 		if(!file_exists("$jobsInWorkDir/$job")) { 	// задание не выполняется
 			echo "Новое задание $job\n";
 			if(!$functionGetURL) { 	// карту нельзя скачать
@@ -86,8 +92,8 @@ do {
 				echo "ERROR: Поставить задание на скачивание не удалось.\nКаталог $jobsInWorkDir/$job отсутствует? На него нет прав?\n";
 				//error_log("LoaderShed: ERROR run job file.\nIs $jobsInWorkDir/$job exists?\n");
 				break;
-			}
-		}
+			};
+		};
 		clearstatcache(TRUE,"$jobsInWorkDir/$job");
 		$fs = filesize("$jobsInWorkDir/$job"); 	// выполняющееся скачивание
 		echo "Размер $jobsInWorkDir/$job - $fs байт.\n";
@@ -99,7 +105,7 @@ do {
 				unlink("$jobsDir/$job");	// всё скачали, убъём задание
 				unset($jobs[$i]);
 				continue;
-			}
+			};
 			$nextJob = createNextZoomLevel("$jobsDir/$job",$minZoom); 	// создать файл с номерами тайлов следующего уровня, а текущий убъём ,$minZoom - из парамеров карты. При этом, если закончившееся задание было дополнено во время скачивания, то дополнения в этом задании пропадут. Но в следующий масштаб они попадут.
 			echo "Создали новое задание $nextJob; \n";
 			if($nextJob) { 	// его может не быть, если он уже есть
@@ -111,11 +117,11 @@ do {
 					copy("$nextJob","$jobsInWorkDir/" . basename($nextJob)); 	// поставим на скачивание следующий уровень
 					chmod("$jobsInWorkDir/" . basename($nextJob),0666); 	// чтобы запуск от другого юзера
 					umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-				}
-			}
-		}
+				};
+			};
+		};
 		//echo "Очередь заданий к концу обработки:"; print_r($jobs); echo "\n";
-	}
+	};
 	// Если есть задания для загрузчиков -- созданные выше, или добавленные со стороны
 	$loaderJobNames = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
 	foreach($loaderJobNames as $i => $jobName) { 	// 
@@ -125,8 +131,8 @@ do {
 			echo "Удаляем выполнившийся файл задания $jobsInWorkDir/$jobName\n";
 			unlink("$jobsInWorkDir/$jobName");	
 			unset($loaderJobNames[$i]);
-		}
-	}
+		};
+	};
 	if($loaderJobNames) { 	// 
 		echo "Есть задания для загрузчиков -- нужны загрузчики\n";
 		// Запустим указанное в конфиге количество загрузчиков

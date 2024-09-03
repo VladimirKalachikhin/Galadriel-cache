@@ -28,6 +28,7 @@ $z = intval($z);
 // 		FOR TEST
 //$x=19;$y=11;$z=5;$r="world-coastline";
 //$x=19;$y=11;$z=5;$r="osmmapMapnik";
+//$x=4822;$y=6161;$z=14;$r="NOAA_USA_ENC";
 //// 	FOR TEST
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
@@ -59,10 +60,10 @@ else {
 	//echo "file=$fileName; <br>\n"; 
 	/*
 	Нужно понять -- тайл сначала показывать, потом скачивать, или сначала скачивать, а потом показывать
-	если тайла нет -- сперва скачивать, потом показывать
+	если тайла нет -- если есть, чем скачивать - сперва скачивать, потом показывать, иначе 404
 	если тайл есть, он не нулевой длины, и не протух -- просто показать
-	если тайл есть, он не нулевой длины, и протух, и указано протухшие не показывать -- скачать, потом показать
-	если тайл есть, он не нулевой длины, и протух, и не указано протухшие не показывать -- показать, потом скачать
+	если тайл есть, он не нулевой длины, и протух, и указано протухшие не показывать -- скачать, если есть, чем скачивать, потом показать, иначе 404
+	если тайл есть, он не нулевой длины, и протух, и не указано протухшие не показывать -- показать, потом скачать, если есть чем, иначе - просто показать
 	если файл есть, но нулевой длины -- использовать специальное время протухания 
 	*/
 	/* $showTHENloading
@@ -70,41 +71,42 @@ else {
 	1; 	// сперва показывать, потом скачивать 
 	2; 	//сперва скачивать, потом показывать
 	*/
-	$showTHENloading = 0; 	
+	$showTHENloading = 0;	// только показывать 
 
 	//clearstatcache();
 	$imgFileTime = @filemtime($fileName); 	// файла может не быть
-	//echo "tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
+	//echo "tiles.php: $r/$z/$x/$y tile exist:$imgFileTime, and expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
 	if($imgFileTime) { 	// файл есть
 		if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 			//error_log("tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. freshOnly=$freshOnly; maxZoom=$maxZoom;");
 			if($freshOnly) { 	// протухшие не показывать
-				$showTHENloading = 2; 	//сперва скачивать, потом показывать
+				if($functionGetURL)	$showTHENloading = 2; 	//сперва скачивать, потом показывать
+				else {
+					showTile(NULL); 	// покажем 404
+					goto END;
+				};
 			}
 			else { 	// протухшие показывать
 				$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
 				//error_log("tiles.php: Get rotten tile $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
-				$showTHENloading = 1; 	// сперва показывать, потом скачивать
+				if($functionGetURL) $showTHENloading = 1; 	// сперва показывать, потом скачивать
 			}
 		}
 		else { 	// файл свежий
 			$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
 			//error_log("tiles.php: Get fresh tile $r/$z/$x/$y.$ext : ".strlen($img)." bytes from cache");		
-			if($img) { 	// файл не нулевой длины
-				$showTHENloading = 0; 	// только показывать
-			}
-			else { 	// файл нулевой длины
+			if(!$img) { 	// файл нулевой длины
 			 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
 				if(($imgFileTime+$ttl) < time()) { 	// файл протух
 					if($freshOnly) { 	// протухшие не показывать
-						$showTHENloading = 2; 	//сперва скачивать, потом показывать
+						if($functionGetURL) $showTHENloading = 2; 	//сперва скачивать, потом показывать
 					}
 					else {
-						$showTHENloading = 1; 	// сперва показывать, потом скачивать
-					}
-				}
-			}
-		}
+						if($functionGetURL) $showTHENloading = 1; 	// сперва показывать, потом скачивать
+					};
+				};
+			};
+		};
 	}
 	elseif($functionGetURL) { 	// файла нет, но в описании карты указано, где взять
 		//error_log("tiles.php: No $r/$z/$x/$y tile exist?");

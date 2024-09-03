@@ -1,5 +1,5 @@
 <?php
-/* Version 2.9.0
+/* Version 2.9.1
 История History:
 2.9.0 - map's $bounds support
 

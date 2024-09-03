@@ -22,8 +22,8 @@ $EPSG=3857; 	// map projection, for map viewer (such as web client) or get tile 
 // что делать, если Forbidden: skip, wait. По умолчанию - wait, источник будет забанен на время $noInternetTimeout (params.php). 'skip' - эквивалентно отсутствию файла, будет сохранён и показан пустой тайл, скачивание продолжится.
 $on403 = 'wait'; 	// Forbidden action: skip, wait. By default - wait, source will be banned on $noInternetTimeout (params.php) time. 'Skip' eq 'File not found'.
 //  /НЕТ РЕАЛИЗОВАНО!!! $on404 = 'skip'; 	// что делать, если Not Found: skip, wait, done. По умолчанию - 'skip' - эквивалентно отсутствию файла, будет сохранён и показан пустой тайл, скачивание продолжится. 'wait', источник будет забанен на время $noInternetTimeout (params.php). 'done' - неудачное скачивание, будет показано 404, ничего не сохранено, тайл снова поставлен в очередь на скачивание.
-// Границы карты, если не весь мир. В формате Leaflet: L.latLngBounds(<LatLng> corner1, <LatLng> corner2)
-$bounds = null;	// Map bounds, if if not the whole world. In Leaflet: L.latLngBounds(<LatLng> corner1, <LatLng> corner2) format.
+// Границы карты, если не весь мир. В формате {"leftTop":{"lat":lat,"lng":lng},"rightBottom":{"lat":lat,"lng":lng}}
+$bounds = null;	// Map bounds, if if not the whole world. In format: {"leftTop":{"lat":lat,"lng":lng},"rightBottom":{"lat":lat,"lng":lng}}
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
 $trash = array(); 	// array of crc32 of bad, junk or other unwanted tiles or other files. This tiles not be stored to cache.
 // Для контроля источника: номер правильного тайла и его CRC32b хеш, например [15,20337,10160,'d205b575']

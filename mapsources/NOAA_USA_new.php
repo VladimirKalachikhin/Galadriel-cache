@@ -15,10 +15,11 @@ $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/png'; 	// if content type differ then file extension
 $minZoom = 3;
 $maxZoom = 22;
+$bounds = array('leftTop'=>array('lat'=>61.3329,'lng'=>134.4),'rightBottom'=>array('lat'=>7.3,'lng'=>-65));
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(14,4822,6161,'f4909dc8');	// to source check; tile number and CRC32b hash
+$trueTile=array(14,4822,6161,'22a1b325');	// to source check; tile number and CRC32b hash
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {

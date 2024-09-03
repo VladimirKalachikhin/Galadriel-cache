@@ -26,7 +26,7 @@ https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Resolution_and_Scale
 */
 $z0rez = $equator / $tile_size; 	// разрешение тайла масштаба 0 на экваторе
 return $z0rez * cos(deg2rad($lat_deg)) / pow(2, $zoom);
-} // end function pixResolution
+}; // end function pixResolution
 
 function tileNum2degree($zoom,$xtile,$ytile) {
 /* Tile numbers to lon./lat. left top corner
@@ -36,7 +36,7 @@ $n = pow(2, $zoom);
 $lon_deg = $xtile / $n * 360.0 - 180.0;
 $lat_deg = rad2deg(atan(sinh(pi() * (1 - 2 * $ytile / $n))));
 return array('lon'=>$lon_deg,'lat'=>$lat_deg);
-}
+};
 
 function tileNum2mercOrd($zoom,$xtile,$ytile,$r_major=6378137.000,$r_minor=6356752.3142) {
 /* Меркатор на эллипсоиде
@@ -47,7 +47,7 @@ $lon_deg = $deg['lon'];
 $lat_deg = $deg['lat'];
 //return array('x'=>round(merc_x($lon_deg),10),'y'=>round(merc_y($lat_deg),10));
 return array('x'=>merc_x($lon_deg,$r_major),'y'=>merc_y($lat_deg,$r_major,$r_minor));
-}
+};
 
 function tileNum2ord($zoom,$xtile,$ytile) {
 /* Меркатор на сфере
@@ -57,7 +57,7 @@ $deg = tileNum2degree($zoom,$xtile,$ytile);
 $lon_deg = $deg['lon'];
 $lat_deg = $deg['lat'];
 return array('x'=>lon2x($lon_deg),'y'=>lat2y($lat_deg));
-}
+};
 
 function merc_x($lon,$r_major=6378137.000) {
 /* Меркатор на эллипсоиде
@@ -210,25 +210,23 @@ return $img;
 
 function checkInBounds($z,$x,$y,$bounds){
 /*
-$bounds - массив массивов координат углов, как это указано для Leaflet: L.latLngBounds(<LatLng> corner1, <LatLng> corner2)
-т.е.: [[широта,долгота],[широта,долгота]]
+$bounds - массив массивов координат углов, 
+{"leftTop":{"lat":lat,"lng":lng},"rightBottom":{"lat":lat,"lng":lng}}
 */
 if(!$bounds) return true;
-//echo "[checkInBounds] bounds:"; print_r($bounds); echo "\n";
-$lefttopLat = max($bounds[0][0],$bounds[1][0]);
-$lefttopLng = min($bounds[0][1],$bounds[1][1]);
-$rightbottomLat = min($bounds[0][0],$bounds[1][0]);
-$rightbottomLng = max($bounds[0][1],$bounds[1][1]);
-//echo "[checkInBounds] bounds: lefttopLat=$lefttopLat; lefttopLng=$lefttopLng; rightbottomLat=$rightbottomLat; rightbottomLng=$rightbottomLng;\n";
-
-$lefttop = tileNum2degree($z,$x,$y);	// array('lon'=>lon_deg,'lat'=>lat_deg)
-//echo "[checkInBounds] $z,$x,$y lefttop:"; print_r($lefttop); echo "\n";
+$anti = false;
+if($bounds['leftTop']['lng']>0 and $bounds['rightBottom']['lng']<0) {	// граница переходит антимередиан
+	$bounds['rightBottom']['lng'] += 360;
+	$anti = true;
+};
+$lefttopTile = tileNum2degree($z,$x,$y);	// array('lon'=>lon_deg,'lat'=>lat_deg)
+if($anti and $lefttopTile['lon']<0) $lefttopTile['lon'] += 360;
 // нижняя граница выше верха тайла или правая граница левее лева тайла
-if(($rightbottomLat > $lefttop['lat']) or ($rightbottomLng < $lefttop['lon'])) return false;	// выше или левее
-$rightbottom = tileNum2degree($z,$x+1,$y+1);	// array('lon'=>lon_deg,'lat'=>lat_deg)
-//echo "[checkInBounds] $z,$x,$y rightbottom:"; print_r($rightbottom); echo "\n";
+if(($bounds['rightBottom']['lat'] > $lefttopTile['lat']) or ($bounds['rightBottom']['lng'] < $lefttopTile['lon'])) return false;	// выше или левее
+$rightbottomTile = tileNum2degree($z,$x+1,$y+1);	// array('lon'=>lon_deg,'lat'=>lat_deg)
+if($anti and $rightbottomTile['lon']<0) $rightbottomTile['lon'] += 360;
 // верхняя граница ниже низа тайла или левая граница правее права тайла
-if(($lefttopLat < $rightbottom['lat']) or ($lefttopLng > $rightbottom['lon'])) return false;	// правее или ниже
+if(($bounds['leftTop']['lat'] < $rightbottomTile['lat']) or ($bounds['leftTop']['lng'] > $rightbottomTile['lon'])) return false;	// правее или ниже
 return true;
 }; // end function checkInBounds
 ?>
