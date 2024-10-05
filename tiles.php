@@ -29,6 +29,7 @@ $z = intval($z);
 //$x=19;$y=11;$z=5;$r="world-coastline";
 //$x=19;$y=11;$z=5;$r="osmmapMapnik";
 //$x=4822;$y=6161;$z=14;$r="NOAA_USA_ENC";
+//$x=5167;$y=2872;$z=13;$r="RosreestrTopo";
 //// 	FOR TEST
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
@@ -125,6 +126,7 @@ else {
 };
 
 // Так или иначе - тайл получен или не получен, и решение, что делать - выработано
+//echo "|$functionPrepareTileImg|\n";
 if($functionPrepareTileImg) eval($functionPrepareTileImg);	// определим функцию обработки картинки
 //error_log("tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;");
 //echo "tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;<br>\n";
@@ -168,7 +170,6 @@ function showTile($img,$mime_type='',$content_encoding='',$ext='') {
 https://gist.github.com/bubba-h57/32593b2b970366d24be7
 */
 //global $nowTime;
-//return;
 //apache_setenv('no-gzip', '1'); 	// отключить сжатие вывода
 set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.
 ignore_user_abort(true); 	// чтобы выполнение не прекратилось после разрыва соединения
@@ -178,9 +179,14 @@ header("Connection: close"); 	// Tell the client to close connection
 if($img) { 	// тайла могло не быть в кеше, и его не удалось получить или его попортила функция prepareTile
 	if(function_exists('prepareTileImg')) {	// обработка картинки, если таковая указана в описании источника
 		$prepared = prepareTileImg($img);
+		//echo "tiles.php [showTile] prepared:"; print_r($prepared); echo "\n";
 		if($prepared['img']) extract($prepared);
 		unset($prepared);
 	}
+// 		FOR TEST
+	//file_put_contents('test.png',$img);
+	//return;
+//// 	FOR TEST
 	//$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
 	//header("Expired: " . $exp_gmt);
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?

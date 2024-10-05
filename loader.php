@@ -32,7 +32,7 @@ $timer = array(); 	// массив для подсчёта затраченно�
 $lag = 300; 	// сек, на которое может отличатся время, затраченное на карту, от среднего, чтобы карта не подвергалась регулировке затраченного времени. Чем больше - тем ближе скорость скачивания к скорости отдачи для примерно одинаковых по производительности источников, но больше тормозит всё самый медленный.
 $customExec = FALSE;
 file_put_contents("$jobsDir/$pID.lock", "$pID"); 	// положим флаг, что запустились
-echo "Стартовал загрузчик $pID\n";
+echo "The loader $pID has started\n";
 do {
 	$execString = '$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$r --maxTry $maxTry'; 	// default exec - то, что будет запущено непосредственно для скачивания тайла. Обязательно в одинарных кавычках - во избежании подстановки прямо здесь
 	
@@ -45,38 +45,42 @@ do {
 	//echo ":<pre> bannedSources "; print_r($bannedSources); echo "</pre>\n";
 	//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
 	// Выбор файла задания
+	echo "Has ".count($jobNames)." job files.\n";
 	foreach($jobNames as $jobName) { 	// возьмём первый файл, которым можно заниматься
 		//echo "jobsInWorkDir=$jobsInWorkDir; jobName=$jobName;\n";
 		//$jobName = 'C-MAP.3';	// FOR TEST FOR TEST
 		$path_parts = pathinfo($jobName);
 		$zoom = $path_parts['extension']; 	//
 		$map = $path_parts['filename'];
-		if($bannedSources[$map]) { 	// источник с проблемами
+		if(@$bannedSources[$map]) { 	// источник с проблемами
 			if((time()-$bannedSources[$map][0]-($noInternetTimeout*1))<0) {	// если многократный таймаут из конфига не истёк
 				unset($timer[$jobName]); 	// удалим из планировки загрузки
-				echo "Бросаем файл $jobName - источник с проблемами {$bannedSources[$map][1]}\n\n";
+				echo "Drop the file $jobName - troubled source {$bannedSources[$map][1]}\n\n";
 				$jobName = FALSE; 	// других может и не быть
 				continue;	// проигнорируем задание для проблемного источника
 			}
 			else { 				// 	иначе - таки запустим скачивание
-				echo "Пытаемся $jobName - источник с проблемами {$bannedSources[$map][1]}\n";
+				echo "Trying $jobName - troubled source {$bannedSources[$map][1]}\n";
 				break;
 			}
 		}
-		//echo "jobName=$jobName; is_file($jobsInWorkDir/$jobName)=".is_file("$jobsInWorkDir/$jobName")." filesize($jobsInWorkDir/$jobName)=".filesize("$jobsInWorkDir/$jobName")." \n";
+		echo "jobName=$jobName; is_file($jobsInWorkDir/$jobName)=".is_file("$jobsInWorkDir/$jobName")." filesize($jobsInWorkDir/$jobName)=".filesize("$jobsInWorkDir/$jobName")." \n";
 		if( $jobName AND is_file("$jobsInWorkDir/$jobName") AND (filesize("$jobsInWorkDir/$jobName") > 4) AND (filesize("$jobsInWorkDir/$jobName")<>4096)) break; 	// выбрали файл для обслуживания
 		else $jobName = FALSE;	
 	};
-	if(! $jobName) break; 	// просмотрели все файлы, не нашли, с чем работать - выход
+	if(! $jobName) { 	// просмотрели все файлы, не нашли, с чем работать - выход
+		echo "No files to executing - break.\n";
+		break;
+	};
 	// Выбрали файл задания - всё ли с ним хорошо?
-	echo "Берём файл $jobName\n";
+	echo "Take the file $jobName\n";
 	//echo filesize("$jobsInWorkDir/$jobName") . " \n";
 	// Планировщик времени
 	if($jobCNT > 1) { 	# не надо планировать, если только одно задание
 		if($jobCNT<count($timer)) $timer=array(); 	// статистика какого-то завершившегося задания присутствует в $timer, и среднее будет неправильно 
 		$ave = ((@max($timer)+@min($timer))/2)+$lag; 	// среднее плюс допустимое
 		if($timer[$jobName]>$ave) { 	// пропустим эту карту, если на неё уже затрачено много времени
-			echo "бросаем - на него затрачено много времени\n\n";
+			echo "drop it - it's time consuming\n\n";
 			//echo ":<pre> timer "; print_r($timer); echo "</pre>\n";
 			continue;
 		};
@@ -180,7 +184,7 @@ do {
 		eval('$execStringParsed="'.$execString.'";'); 	// распарсим строку,как если бы она была в двойных кавычках.  но переприсвоить почему-то не получается...
 		if(thisRun($execStringParsed)) $res=0; 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Не сильно тормозит?
 		else{ 
-			echo "Выполняется $execStringParsed\n"; 	//
+			echo "Executed $execStringParsed\n"; 	//
 			$res = exec($execStringParsed); 	// 
 		}
 	}
@@ -201,7 +205,7 @@ do {
 		fflush($job);
 		flock($job, LOCK_UN); 	//снимем блокировку		
 		fclose($job); 	// освободим файл ///////////////////////////////////////////////////////
-		$str = ", но тайл ".$xy[0].",".$xy[1]." будет запрошен повторно";
+		$str = ", but tile ".$xy[0].",".$xy[1]." will be requested again";
 
 		//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
 		//echo "Удлинение файла задания filesize after=".filesize("$jobsInWorkDir/$jobName").";\n";
@@ -210,15 +214,15 @@ do {
 	//
 	$now=microtime(TRUE)-$now;
 	$timer[$jobName] += $now;
-	echo "Карта $map, загрузка состоялась?:".!$res."; затрачено ".round($timer[$jobName])."сек. при среднем допустимом ".round($ave)." сек.\n";
-	echo "Получен тайл x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
+	echo "Map $map, did the download happen?:".!$res."; consumed ".round($timer[$jobName])."sec. at an average allowable ".round($ave)." sec.\n";
+	echo "Tile received x=".$xy[0].", y=".$xy[1].", z=$zoom за $now сек. $str";
 	echo "	\n\n";
 	//exit;
 } while($jobName);
 @flock($job, LOCK_UN); 	// на всякий случай - снимем блокировку		
 @fclose($job); 	// освободим файл
 unlink("$jobsDir/$pID.lock");	// 
-echo "Загрузчик $pID завершился\n";
+echo "The loader $pID has finished\n";
 
 function thisRun($exec) {
 /**/

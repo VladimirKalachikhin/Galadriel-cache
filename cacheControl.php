@@ -145,6 +145,7 @@ elseif(array_key_exists('loaderStatus',$_REQUEST)){
 	if(array_key_exists('stopLoader',$_REQUEST)) $stopLoader = true;
 
 	$jobsInfo = array();
+	clearstatcache();
 	foreach(preg_grep('~.[0-9]$~', scandir($jobsDir)) as $jobName) {	 	// возьмём только файлы с цифровым расшрением
 		$jobSize = filesize("$jobsDir/$jobName");
 		if(!$jobSize) continue;	// внезапно может оказаться файл нулевой длины
