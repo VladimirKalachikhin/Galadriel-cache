@@ -2,6 +2,13 @@
 /* web - интерфейс для получения информации об имеющихся картах, управления загрузчикаом
 и ещё для чего-нибудь.
 Типа, API. Возвращает json.
+
+curl -v http://stagerserver.local/tileproxy/cacheControl.php?getMapList
+curl -v http://stagerserver.local/tileproxy/cacheControl.php?getMapInfo=C-MAP
+
+curl -v http://stagerserver.local/tileproxy/cacheControl.php?loaderStatus
+curl -v http://stagerserver.local/tileproxy/cacheControl.php?loaderStatus\&restartLoader
+
 */
 $usage='Usage:
 	Получить список карт
@@ -73,9 +80,12 @@ if(array_key_exists('getMapList',$_REQUEST)){
 elseif($mapName=filter_var($_REQUEST['getMapInfo'],FILTER_SANITIZE_URL)){	
 // Вернуть сведения о конкретной карте
 	if(strpos($mapName,'_COVER')) { 	// нужно показать покрытие, а не саму карту
-		include("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
+		require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
 	}
-	else include("$mapSourcesDir/$mapName.php");
+	else {
+		require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
+		@require("$mapSourcesDir/$mapName.php");	// при отсутствии оно обломится, и ничего возвращено не будет
+	};
 	$mapInfo = array(
 		'ext'=>$ext,
 		'ContentType'=>$ContentType,
@@ -106,14 +116,14 @@ elseif($jobName=filter_var($_REQUEST['loaderJob'],FILTER_SANITIZE_URL)){
 		if(file_exists("$jobsInWorkDir/$jobName")){
 			file_put_contents("$jobsInWorkDir/$jobName", "$x,$y\n",FILE_APPEND); 	// создадим/добавим файл задания для загрузчика
 			@chmod("$jobsInWorkDir/$jobName",0666); 	// чтобы запуск от другого юзера
-		}
+		};
 		file_put_contents("$jobsDir/$jobName",$XYs,FILE_APPEND); 	// возможно, такое задание уже есть. Тогда, скорее всего, тайлы указанного масштаба не будут загружены, а будут загружены эти тайлы следующего масштаба. Не страшно.
 		// Сохраним задание на всякий случай
 		file_put_contents("$jobsDir/oldJobs/$jobName".'_'.gmdate("Y-m-d_Gis", time()),$XYs);
 		//file_put_contents("$jobName",$XYs);
 		@chmod("$jobsDir/$jobName",0666); 	// чтобы запуск от другого юзера
 		umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-	}
+	};
 
 	// Запустим планировщик
 	// Если эта штука вызывается для нескольких карт подряд, то просто при запуске планировщика
@@ -139,7 +149,7 @@ elseif(array_key_exists('loaderStatus',$_REQUEST)){
 		exec("$phpCLIexec loaderSched.php $infinitely > /dev/null 2>&1 &",$ret,$status);
 		//echo "exec ret="; print_r($ret); echo "status=$status;\n";
 		sleep(1);
-	}
+	};
 	
 	$stopLoader = false;
 	if(array_key_exists('stopLoader',$_REQUEST)) $stopLoader = true;
@@ -170,19 +180,19 @@ elseif(array_key_exists('loaderStatus',$_REQUEST)){
 		else {
 			unlink("$jobsDir/$schedPID.slock"); 	// файл-флаг остался от чего-то, но процесс с таким PID не работает - удалим
 			$schedPID = FALSE;
-		}
-	}
+		};
+	};
 	//echo "schedPID=$schedPID; <br>\n";
 	$result = array("loaderRun"=>$schedPID,"jobsInfo"=>$jobsInfo);
 }
 else {
 	$result = array("usage"=>$usage);
 };
-
+//
 ob_clean(); 	// очистим, если что попало в буфер
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header('Content-Type: application/json;charset=utf-8;');
-
+//
 //echo json_encode($result,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 echo json_encode($result,JSON_UNESCAPED_UNICODE);	// однострочный JSON передастся быстрее
 

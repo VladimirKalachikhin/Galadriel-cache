@@ -53,14 +53,21 @@ do {
 			//echo "$i -е задание $job не является заданием\n";
 			unset($jobs[$i]);
 			continue; 	// 
-		}
+		};
 		//echo "$jobsDir/$job \n$jobsInWorkDir/$job \n";
 		echo "Имеется задание $job\n";
 		$path_parts = pathinfo($job);
 		$mapName = $path_parts['filename'];
 		$Zoom = $path_parts['extension'];
 		//echo "mapName=$mapName; Zoom=$Zoom;\n";
-		include_once("$mapSourcesDir/$mapName.php"); 	// загрузим параметры карты
+		require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
+		$res=include("$mapSourcesDir/$mapName.php"); 	// загрузим параметры карты
+		if(!$res){	// нет параметров для этой карты
+			echo "Не существует карты, указанной в этом задании. Убъём задание\n";
+			unlink("$jobsDir/$job");	// убъём задание
+			unset($jobs[$i]);
+			continue;
+		};
 		if($loaderMaxZoom > $maxZoom) $loaderMaxZoom = $maxZoom; 	// $maxZoom - из параметров карты
 		if($Zoom > $loaderMaxZoom) {
 			echo "Это задание имеет масштаб больше разрешённого, убъём задание\n";

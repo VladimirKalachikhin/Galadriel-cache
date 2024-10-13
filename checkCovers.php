@@ -33,6 +33,7 @@ $path_parts = pathinfo($loaderJobName);
 //print_r($path_parts);
 $mapName = $path_parts['filename'];	// вообще-то, карта может быть версионной, тогда $mapName должно включать и путь к версии
 $zoom =  $path_parts['extension'];
+require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 require("$mapSourcesDir/$mapName.php");	// параметры карты
 if($argv[2] and is_numeric($argv[2])) $maxZoom = (int)$argv[2];
 exec("rm -rf $checkCoversDataDirName");	// удаляем каталог с результатами предыдущего
@@ -75,7 +76,7 @@ do{
 				file_put_contents("$checkCoversDataDirName/emptyTiles/coordinates.$mapName.$zoom",$coord['lat'].' '.$coord['lon']."\n",FILE_APPEND) or exit("checkCovers.php create emptyTiles coordinates list error\n");
 				file_put_contents("$checkCoversDataDirName/emptyTiles/$mapName.$zoom",$tile[0].','.$tile[1]."\n",FILE_APPEND) or exit("checkCovers.php create emptyTiles loader job file error\n");
 				$emptyTiles++;
-			}
+			};
 			if($argv[3]){	// указано копировать тайлы или делать архив.
 				if($argv[4]){	// указано делать архив
 					if($zip->locateName("$mapName/$zoom/{$tile[0]}/{$tile[1]}.$ext") === false){

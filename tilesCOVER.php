@@ -22,6 +22,7 @@ $mapAddPath = strstr($r,'/'); 	// путь к подкартам
 $r = substr($r,0,strlen($r)-strlen($mapAddPath)); 	// имя карты
 
 //echo "x=$x; y=$y; z=$z; r=$r;<br>\n";
+require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 if(! include("$mapSourcesDir/$r.php")) goto END; 	// параметры карты
 //if($z+8>$maxZoom) goto END; 	// нет смысла считать покрытие тайлов, которых заведомо нет. Зато есть смысл посмотреть номера тайлов масштаба $loaderMaxZoom
 $path_parts = pathinfo($y); // 

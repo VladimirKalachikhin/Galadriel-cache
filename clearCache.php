@@ -21,17 +21,17 @@ if($argv) { 	// cli
 	else {
 		$mapName = @$argv[1]; 	// второй элемент - первый аргумент
 		if(@$argv[2] == 'fresh') $fresh = TRUE;
-	}
+	};
 }
 else {	// http
 	$mapName = $_REQUEST['r'];
 	$fresh = $_REQUEST['fresh'];
-}
+};
 //echo "mapName=$mapName; fresh=$fresh;\n";
 if($mapName) {
 	clearMap($mapName,$fresh);
 	return;
-}
+};
 // Получаем список имён карт
 $mapsInfo = glob("$mapSourcesDir/*.php");
 array_walk($mapsInfo,function (&$name,$ind) {
@@ -41,22 +41,23 @@ array_walk($mapsInfo,function (&$name,$ind) {
 foreach($mapsInfo as $mapName) {
 	echo "Processing $mapName\n";
 	clearMap($mapName,$fresh);
-}
+};
 
 function clearMap($mapName,$fresh=FALSE) {
 /* Для указанной карты при наличии списка мусорных файлов ($trash)
 каждый файл проверяется по этому списку и удаляется, если есть в.
 */
 global $mapSourcesDir, $tileCacheDir, $globalTrash;
+require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 @include("$mapSourcesDir/$mapName.php"); 	// а может, такой карты нет?
 if($globalTrash) { 	// имеется глобальный список ненужных тайлов
 	if($trash) $trash = array_merge($trash,$globalTrash);
 	else $trash = $globalTrash;
-}
+};
 //echo "trash:<pre>"; print_r($trash); echo "</pre>\n";
 //echo "$tileCacheDir/$mapName\n";
 clearMapLayer("$tileCacheDir/$mapName",$trash,$fresh,$ttl,$noTileReTry,$ext,$bounds); 	// рекурсивно обойдём дерево, потому что кеш может быть версионным
-} // end function clearMap
+}; // end function clearMap
 
 function clearMapLayer($indir,$trash=array(),$fresh=FALSE,$ttl=0,$noTileReTry=0,$ext='png',$bounds=null) {
 /*

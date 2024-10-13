@@ -8,8 +8,6 @@ require('params.php'); 	// пути и параметры
 
 $logFileName = 'checkSources.log';
 file_put_contents($logFileName, date('d.m.Y H:i')." Следующий источники вернули тайл, отличающийся от правильного:\nThe following sources returned a tile different from the correct one:\n\n");
-// Инициализируем переменные, которые могут быть в файле источника карты
-require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 
 // Получаем список имён карт
 $mapsInfo = glob("$mapSourcesDir/*.php");
@@ -20,6 +18,8 @@ array_walk($mapsInfo,function (&$name,$ind) {
 
 foreach($mapsInfo as $mapName) {
 	$trueTile = FALSE;
+	// Инициализируем переменные, которые могут быть в файле источника карты
+	require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 	require("$mapSourcesDir/$mapName.php");
 	if(!$trueTile) continue;
 	echo "Processing $mapName ... ";
@@ -31,7 +31,7 @@ foreach($mapsInfo as $mapName) {
 	}
 	else {
 		echo "ok.\n";
-	}
-}
+	};
+};
 
 ?>

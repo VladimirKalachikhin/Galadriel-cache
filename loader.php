@@ -62,8 +62,8 @@ do {
 			else { 				// 	иначе - таки запустим скачивание
 				echo "Trying $jobName - troubled source {$bannedSources[$map][1]}\n";
 				break;
-			}
-		}
+			};
+		};
 		echo "jobName=$jobName; is_file($jobsInWorkDir/$jobName)=".is_file("$jobsInWorkDir/$jobName")." filesize($jobsInWorkDir/$jobName)=".filesize("$jobsInWorkDir/$jobName")." \n";
 		if( $jobName AND is_file("$jobsInWorkDir/$jobName") AND (filesize("$jobsInWorkDir/$jobName") > 4) AND (filesize("$jobsInWorkDir/$jobName")<>4096)) break; 	// выбрали файл для обслуживания
 		else $jobName = FALSE;	
@@ -106,7 +106,7 @@ do {
 			flock($job, LOCK_UN); 	//снимем блокировку
 			fclose($job); 	// освободим файл //////////////////////////////
 			continue;	// отправимся брать другой файл
-		}
+		};
 		$s=fgets($job);
 	};
 	$strSize = strlen($s); 	// размер первой строки в байтах
@@ -146,7 +146,10 @@ do {
 	if($pos=strpos($map,'_COVER')) { 	// нужно показать покрытие, а не саму карту
 		require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
 	}
-	else require("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+	else {
+		require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
+		require("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
+	};
 	// возьмём тайл
 	$x=$xy[0];$y=$xy[1];$z=$zoom;$r=$map;
 	if($ext) $y .= ".$ext"; 	// в конфиге источника указано расширение
@@ -169,14 +172,14 @@ do {
 			 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
 				if(($imgFileTime+$ttl) < time()) { 	// файл протух
 					$doLoading = TRUE; 	// 
-				}
-			}
-		}
+				};
+			};
+		};
 	}
 	else { 	// файла нет
 		if($customExec) $doLoading = FALSE; 	// копирование кеша
 		else $doLoading = TRUE; 	// 
-	}
+	};
 	//echo "doLoading=$doLoading;\n";
 	// Решение принято, выполняем
 	$res = FALSE;
@@ -186,8 +189,8 @@ do {
 		else{ 
 			echo "Executed $execStringParsed\n"; 	//
 			$res = exec($execStringParsed); 	// 
-		}
-	}
+		};
+	};
 	//echo "res=$res; \n";
 
 	$str = "";
@@ -237,9 +240,9 @@ foreach($psList as $str) {
 	if(strpos($str,$exec)!==FALSE){
 		$run=TRUE;
 		break;
-	}
-}
+	};
+};
 return $run;
-}
+}; // end function thisRun
 
 ?>
