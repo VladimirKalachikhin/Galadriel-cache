@@ -50,7 +50,12 @@ else {
 		error_log("Incorrect map name: $sourceName");		
 		goto END;
 	};
-}
+};
+if(($z<$minZoom)or($z>$maxZoom)){
+	showTile(NULL); 	// покажем 404
+	//error_log("Out of zoom: 404");		
+	goto END;
+};
 //error_log("function_exists('getTile'):".function_exists('getTile'));
 if($functionGetTileFile){	// у карты есть собственная функция получения тайла
 	eval($functionGetTileFile);	// создаём функцию получения данных
@@ -84,6 +89,7 @@ else {
 	$imgFileTime = @filemtime($fileName); 	// файла может не быть
 	//echo "tiles.php: $r/$z/$x/$y tile exist:$imgFileTime, and expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
 	if($imgFileTime) { 	// файл есть
+		//error_log("tiles.php: $r/$z/$x/$y Tile exists.");
 		if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 			//error_log("tiles.php: $r/$z/$x/$y tile expired to ".(time()-(filemtime($fileName)+$ttl))."sec. freshOnly=$freshOnly; maxZoom=$maxZoom;");
 			if($freshOnly) { 	// протухшие не показывать
@@ -116,7 +122,7 @@ else {
 		};
 	}
 	elseif($functionGetURL) { 	// файла нет, но в описании карты указано, где взять
-		//error_log("tiles.php: No $r/$z/$x/$y tile exist?");
+		//error_log("tiles.php: $r/$z/$x/$y Tile not exists.");
 		if(checkInBounds($z,$x,$y,$bounds)){	// тайл вообще должен быть?
 			$showTHENloading = 2; 	//сперва скачивать, потом показывать
 		}

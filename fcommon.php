@@ -17,6 +17,7 @@ quickFilePutContents - запись файла в tmp, а затем переи�
 
 setColorsTransparent - Делает прозрачными указанные цвета в данном тайле.
 addTransparent($img,$opacity=67) - делает полупрозрачными все цвета
+splitToTiles($originalImg,$z,$x,$y,$ext='png') - режет картину (размерами, кратными тайлу) на тайлы
 
 checkInBounds - находится ли указанный тайл в пределах указанных границ
 */
@@ -249,6 +250,82 @@ $img = ob_get_contents();
 ob_end_clean();
 return $img;
 }; // end function addTransparent
+
+
+function splitToTiles($originalImg,$z,$x,$y,$ext='png'){
+/* Режет картинку на тайлы по 256 пикселов.
+Возвращает массив картинок и путей вида [[tile,"$z/$x/$y.$ext"]].
+Предполагается, что $z,$x,$y - это верхний левый (первый) тайл.
+Если формат входного файла экзотический, то будет возвращён png.
+0 3 6
+1 4 7
+2 5 8
+*/
+$imgs = array();
+$imgSize = getimagesizefromstring($originalImg);
+//print_r($imgSize);
+$cols = intdiv($imgSize[0],256);	// ширина
+$rows = intdiv($imgSize[1],256);	// высота
+//echo "По горизонтали:$cols, по вертикали:$rows;\n";
+
+$gd_img = imagecreatefromstring($originalImg);	// создаём полноцветную картинку 
+for($c=0; $c<$cols; $c++){
+	// imagecrop и imagecopy не сохраняют прозрачность,
+	// поэтому порезка картинки делается с помощью imagecopy в картинку,
+	// предварительно покрашеную в прозрачность.
+	// Видимо, прозрачные пиксели вообще не переносятся, т.е. в целевой картинке красятся первым цветом.
+	// А первый цвет мы сделали прозрачным.
+	$imgC   = imagecreatetruecolor(256, $imgSize[1]);
+	$transparentColor = imagecolorallocatealpha($imgC, 0, 0, 0, 127);
+	imagefill($imgC, 0, 0, $transparentColor);
+	imagesavealpha($imgC,true);
+	imagecopy($imgC,$gd_img, 0, 0, $c*256, 0, 256, $imgSize[1]);	// копируем нашу картинку в созданную.
+	//imagepng($imgC,"./$/img/imgC$c.png");
+	for($r=0; $r<$rows; $r++){
+		$img   = imagecreatetruecolor(256, 256);
+		$transparentColor = imagecolorallocatealpha($img, 0, 0, 0, 127);
+		imagefill($img, 0, 0, $transparentColor);
+		imagesavealpha($img,true);
+		imagecopy($img, $imgC, 0, 0, 0, $r*256, 256, 256);	// копируем нашу картинку в созданную.
+		//imagepng($img,"./$/img/img$r.png");
+
+		// А тепрь из gd image сделаем обратно нормальную картику
+		ob_start();	// оно может быть вложенным
+		ob_clean();
+		switch($imgSize[2]){	// IMAGETYPE_XXX constant
+		case IMG_BMP:
+			imagebmp($img);
+			break;
+		case IMG_GIF:
+			imagegif($img);
+			break;
+		case IMG_JPG:
+			imagejpeg($img);
+			break;
+		case IMG_PNG:
+			imagepng($img);
+			break;
+		case IMG_WBMP:
+			image2wbmp($img);
+			break;
+		case IMG_WEBP:
+			imagewebp($img);
+			break;
+		default:
+			imagepng($img);
+			$ext = 'png';
+		};
+		imagedestroy($img);
+		$img = ob_get_contents();
+		ob_end_clean();
+		$imgs[] = array($img,"$z/".($x+$c)."/".($y+$r).".$ext");
+	};
+	imagedestroy($imgC);
+};
+imagedestroy($gd_img);
+return $imgs;
+}; // end function splitToTiles
+
 
 function checkInBounds($z,$x,$y,$bounds){
 /*

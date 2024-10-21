@@ -131,10 +131,11 @@ else {
 	require("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда.
 };
 //echo "[getTile] ext=$ext;\n";
-
-if($ext) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.$ext"; 	// в конфиге источника указано расширение
-elseif($path_parts['extension']) $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.".$path_parts['extension'];
-else $fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.png";
+if(!$ext){
+	if($path_parts['extension']) $ext = $path_parts['extension'];
+	else $ext = 'png';
+};
+$fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/$z/$x/$y.$ext";
 $getURLparams['mapAddPath'] = $mapAddPath;
 //echo "fileName=$fileName; <br>\n";
 $newimg = FALSE; 	// исходная ситуация -- тайл получить не удалось
@@ -380,44 +381,55 @@ do {
 } while (TRUE); 	// 
 
 END:
+
+if($newimg !== FALSE) {	// тайл получен
+	//echo "functionPrepareTileFile: |$functionPrepareTileFile|\n";
+	if($functionPrepareTileFile) {
+		eval($functionPrepareTileFile);	// определим функцию обработки файла. Если оно обломится - так и надо.
+		//echo "Порежем файл $z,$x,$y,$ext на тайлы \n";
+		$newimg = prepareTileFile($newimg,$z,$x,$y,$ext);
+	};
+};
+
 if($params['checkonly']){	// надо только проверить, скачался ли правильный файл
 	echo "checkonly mode: no save any files\n";
 	if($newimg === FALSE) echo "No tile recieved\n$msg\n\n";
 	elseif($newimg === NULL)  echo "Recieved a bad tile\n$msg\n\n";
-	else {
-		if($trueTile){	// мы знаем, какой файл правильный
-			$hash = hash('crc32b',$newimg);
-			if($newimg and ($hash==$trueTile[3])){	// тайл получен, и он такой, какой нужно
-				echo "\nThe tile is true\n\n";
-			}
-			else{
-				echo "\nThe tile is not true, must be {$trueTile[3]}, recieved $hash\n$msg\n\n";
-				$newimg = FALSE;
-			}
+	elseif($trueTile){	// мы знаем, какой файл правильный
+		if(is_array($newimg)) $img=$newimg[0][0];	// первый из нарезки
+		else $img=$newimg;
+		$hash = hash('crc32b',$img);
+		if($hash==$trueTile[3]){	// тайл такой, какой нужно
+			echo "\nThe tile is true\n\n";
 		}
-	}
+		else{
+			echo "\nThe tile is not true, must be {$trueTile[3]}, recieved $hash\n$msg\n\n";
+			$newimg = FALSE;
+		};
+	};
 }
 else {
 	// сохраним тайл
 	//if($newimg !== FALSE) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла
 	if(($newimg !== FALSE) and (($newimg !== NULL) or (($newimg === NULL) and (!file_exists($fileName))))) {	// теперь тайл получен, возможно, пустой в случае 404 или мусорного тайла, если он пустой - запишем только в том случае, если файла нет
-		
-		//echo "сохраняем тайл $fileName с mime-type $mime_type\n";
-		$umask = umask(0); 	// сменим на 0777 и запомним текущую
-		//@mkdir(dirname($fileName), 0755, true);
-		@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
-		//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
-		if( $fp = @fopen($fileName, "w")) {
-			fwrite($fp, $newimg);
-			fclose($fp);
-			@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
-			
-			error_log("tilefromsource.php getTile $tries's try: Saved ".strlen($newimg)." bytes to $fileName from $uri");	
-		}
-		umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
-			
-	}
-}
+		if(!is_array($newimg)) $newimg = array(array($newimg,"$z/$x/$y.$ext"));
+		foreach($newimg as $imgInfo){
+			$fileName = "$tileCacheDir/$mapSourcesName$mapAddPath/".$imgInfo[1];
+			//echo "сохраняем тайл $fileName с mime-type $mime_type\n";
+			$umask = umask(0); 	// сменим на 0777 и запомним текущую
+			//@mkdir(dirname($fileName), 0755, true);
+			@mkdir(dirname($fileName), 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
+			//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
+			if( $fp = @fopen($fileName, "w")) {
+				fwrite($fp, $imgInfo[0]);
+				fclose($fp);
+				@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
+				error_log("tilefromsource.php getTile $tries's try: Saved ".strlen($imgInfo[0])." bytes to $fileName");	
+			};
+			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+		};
+	};
+};
 
 // Обслужим источник
 if(($newimg !== FALSE) and @$bannedSources[$mapSourcesName]) { 	// снимем проблемы с источником, получили мы тайл или нет

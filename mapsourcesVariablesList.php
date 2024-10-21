@@ -30,6 +30,7 @@ $trash = array(); 	// array of crc32 of bad, junk or other unwanted tiles or oth
 $trueTile=array();	// to source check; tile number and CRC32b hash
 // Массив для передачи произвольных параметров в функцию getURL()
 $getURLparams=array();	// getURL() custom parameters array
+
 // Хуки Hooks
 // строка с функцией формирования запроса на получение тайлов из источника.
 $functionGetURL = ''; 	// string to wrap getURL() function. It's gets url of tile in internet. This is necessery to avoid function redefinitions error.
@@ -37,6 +38,10 @@ $functionGetURL = ''; 	// string to wrap getURL() function. It's gets url of til
 $functionGetTileFile = ''; 	// string to wrap getTile() function. It's gets tile from storage. This is necessery to avoid function redefinitions error.
 // строка с функцией обработки изображения тайла перед отправкой клиенту.
 $functionPrepareTileImg = ''; 	// string to wrap prepareTile() function. It's transform image before sending. This is necessery to avoid function redefinitions error.
+// строка с функцией обработки файла тайла после его получения.
+// function prepareTileFile($img,$z,$x,$y,$ext='png'){};
+// может возвращать массив [[tile,path]] тайлов с их именами от каталога карты, первый тайл - собственно запрошенный.
+$functionPrepareTileFile = ''; 	// string to wrap prepareTile() function. It's transform file before saving. The function can return array of tiles [[tile,path]], where 1st is a requested tile.
 // Для взаимодействия с GaladrielMap
 $data = array();	// to influence from map source file to GaladrielMap
 ?>
