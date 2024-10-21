@@ -4,11 +4,11 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
-## v. 2.9
+## v. 2.10
 
 Contains:
 * [Features](#features)
-* [Compatibility](#compatibility)
+* [Requirements](#requirements)
 * [Usage](#usage)
 * * [OruxMaps configuration](#oruxmaps-configuration)
 * * [GaladrielMap configuration](#galadrielgap-configuration)
@@ -44,8 +44,30 @@ Contains:
 
 But no reprojection. Map projection is a client application problem.
 
-## Compatibility
+## Requirements
 Linux, PHP < 8. The cretinous decisions made at PHP 8 do not allow the GaladrielCache to work at PHP 8, and I do not want to follow these decisions.
+You must have the PHP modules installed:  
+
+* cli
+* php-fpm - if you don't use Apache2
+* curl
+* exif
+* fileinfo
+* gd
+* iconv
+* json
+* mbstring
+* openssl
+* pcntl
+* session
+* shmop
+* simplexml
+* sockets
+* sqlite3
+* tokenizer
+* zip
+
+These modules are included in the PHP by default in "full" linux, but not in OpenWRT nor Raspberry Pi oses.
 
 ## Usage:
 _tiles.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name_
