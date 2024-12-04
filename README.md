@@ -126,11 +126,11 @@ Help about map sources are in mapsources/[mapsources.md](https://github.com/Vlad
 
 ## Prepare SD card to cache
 ```
-# mkfs.ext4 -O 64bit,metadata_csum -b 4096 -i 4096 /dev/sdb1
+# mkfs.ext4 -O 64bit,metadata_csum -b 4096 -i 4096 /dev/sdXX
 ```
 `-b 4096 -i 4096` set block to 4096 bytes and increase i-nodes to max.  
 `-O 64bit,metadata_csum` needs for compability with old Android devices.  
-`/dev/sdb1` - your SD card partition.  
+`/dev/sdXX` - your SD card partition.  
 However, default formatting in vfat allows you to store a sufficient amount of tiles on the map for practical purposes.
 
 ## Direct access to the cache

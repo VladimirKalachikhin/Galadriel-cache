@@ -187,9 +187,9 @@ do {
 	}
 	if(!@$opts['ssl']) { 	// откажемся от проверок ssl сертификатов, потому что сертификатов у нас нет
 		$opts['ssl']=array(
-		"verify_peer"=>FALSE,
-		"verify_peer_name"=>FALSE
-	   );
+			"verify_peer"=>FALSE,
+			"verify_peer_name"=>FALSE
+		);
 	}
 	if(!@$opts['http']['proxy'] AND @$globalProxy) { 	// глобальный прокси
 		$opts['http']['proxy']=$globalProxy;
