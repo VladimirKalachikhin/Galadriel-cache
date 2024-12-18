@@ -130,7 +130,7 @@ else {
 	require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 	require("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда.
 };
-//echo "[getTile] ext=$ext;\n";
+echo "[getTile] ext=$ext;\n";
 if(!$ext){
 	if($path_parts['extension']) $ext = $path_parts['extension'];
 	else $ext = 'png';

@@ -12,6 +12,7 @@ Version 2.10.1
 
 */
 //$nowTime = microtime(TRUE);
+ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
 $freshOnly = FALSE; 	 // показывать тайлы, даже если они протухли

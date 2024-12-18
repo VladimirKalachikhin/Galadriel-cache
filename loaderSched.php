@@ -18,7 +18,7 @@ file_put_contents("$jobsDir/$pID.slock", "$pID"); 	// положим флаг, �
 // Занесём себя в crontab grep -v - инвертировать результат, т.е., в crontab заносится всё, кроме __FILE__
 exec("crontab -l | grep -v '".__FILE__."'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
 exec('(crontab -l ; echo "* * * * * '.$phpCLIexec.' '.__FILE__.'  > /dev/null") | crontab -'); 	// каждую минуту  > /dev/null - это если cron настроен так, что шлёт письмо юзеру, если задание что-то вернуло
-echo "Планировщик запустился с pID $pID\n";
+echo "The scheduler started with pID $pID\n";
 
 $infinitely = '';
 if(@$argv[1]=='--infinitely') $infinitely = '--infinitely';
@@ -55,7 +55,7 @@ do {
 			continue; 	// 
 		};
 		//echo "$jobsDir/$job \n$jobsInWorkDir/$job \n";
-		echo "Имеется задание $job\n";
+		echo "There is a job $job\n";
 		$path_parts = pathinfo($job);
 		$mapName = $path_parts['filename'];
 		$Zoom = $path_parts['extension'];
@@ -63,63 +63,63 @@ do {
 		require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 		$res=include("$mapSourcesDir/$mapName.php"); 	// загрузим параметры карты
 		if(!$res){	// нет параметров для этой карты
-			echo "Не существует карты, указанной в этом задании. Убъём задание\n";
+			echo "There is no map specified in this job. Let's kill the job.\n";
 			unlink("$jobsDir/$job");	// убъём задание
 			unset($jobs[$i]);
 			continue;
 		};
 		if($loaderMaxZoom > $maxZoom) $loaderMaxZoom = $maxZoom; 	// $maxZoom - из параметров карты
 		if($Zoom > $loaderMaxZoom) {
-			echo "Это задание имеет масштаб больше разрешённого, убъём задание\n";
+			echo "This job has a larger zoom than allowed, we will kill the job.\n";
 			unlink("$jobsDir/$job");	// убъём задание
 			unset($jobs[$i]);
 			continue;
 		};
 		if(!$functionGetURL) {
-			echo "У этого задания нет функции functionGetURL, нечем скачивать. Убъём задание\n";
+			echo "This job does not have a functionGetURL function, there is nothing to download. Let's kill the job.\n";
 			unlink("$jobsDir/$job");	// убъём задание
 			unset($jobs[$i]);
 			continue;
 		};
 		if(!file_exists("$jobsInWorkDir/$job")) { 	// задание не выполняется
-			echo "Новое задание $job\n";
+			echo "A new job $job\n";
 			if(!$functionGetURL) { 	// карту нельзя скачать
-				echo "Карту нельзя скачать - нет функции для этого\n";
+				echo "The map cannot be downloaded - there is no function for this.\n";
 				unlink("$jobsDir/$job");	// убъём задание для планировщика
 				unset($jobs[$i]);
 				continue;
 			}
-			echo "Поставим его на скачивание\n";
+			echo "Let's put it on download.\n";
 			$umask = umask(0); 	// сменим на 0777 и запомним текущую
 			$res = copy("$jobsDir/$job","$jobsInWorkDir/$job"); 	// поставим на скачивание
 			chmod("$jobsInWorkDir/$job",0666); 	// чтобы запуск от другого юзера
 			umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 			if($res) continue;
 			else {
-				echo "ERROR: Поставить задание на скачивание не удалось.\nКаталог $jobsInWorkDir/$job отсутствует? На него нет прав?\n";
+				echo "ERROR: The download task could not be placed.\nThe directory $jobsInWorkDir/$job is missing? No permitions to it?\n";
 				//error_log("LoaderShed: ERROR run job file.\nIs $jobsInWorkDir/$job exists?\n");
 				break;
 			};
 		};
 		clearstatcache(TRUE,"$jobsInWorkDir/$job");
 		$fs = filesize("$jobsInWorkDir/$job"); 	// выполняющееся скачивание
-		echo "Размер $jobsInWorkDir/$job - $fs байт.\n";
+		echo "The size is $jobsInWorkDir/$job - $fs bytes.\n";
 		if($fs<=4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
-			echo "Задание $job завершилось\n";
+			echo "The job $job completed.\n";
 			unlink("$jobsInWorkDir/$job");	// 
 			if($Zoom >= $loaderMaxZoom) { 	//
-				echo "Всё скачали, убъём задание\n";
+				echo "We've downloaded everything, we'll kill the job.\n";
 				unlink("$jobsDir/$job");	// всё скачали, убъём задание
 				unset($jobs[$i]);
 				continue;
 			};
 			$nextJob = createNextZoomLevel("$jobsDir/$job",$minZoom); 	// создать файл с номерами тайлов следующего уровня, а текущий убъём ,$minZoom - из парамеров карты. При этом, если закончившееся задание было дополнено во время скачивания, то дополнения в этом задании пропадут. Но в следующий масштаб они попадут.
-			echo "Создали новое задание $nextJob; \n";
+			echo "We have created a new job $nextJob; \n";
 			if($nextJob) { 	// его может не быть, если он уже есть
 				$newZoom = substr($nextJob, strrpos($nextJob,'.')+1); 	// 
 				if($newZoom > $maxZoom) unlink("$nextJob");	// что-то не так с масштабами?
 				else {
-					echo "Поставим на скачивание масштаб $newZoom\n";
+					echo "Let's set the zoom for downloading $newZoom\n";
 					$umask = umask(0); 	// сменим на 0777 и запомним текущую
 					copy("$nextJob","$jobsInWorkDir/" . basename($nextJob)); 	// поставим на скачивание следующий уровень
 					chmod("$jobsInWorkDir/" . basename($nextJob),0666); 	// чтобы запуск от другого юзера
@@ -135,24 +135,24 @@ do {
 		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
 		$fs = filesize("$jobsInWorkDir/$jobName"); 	// выполняющееся скачивание
 		if($fs<=4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
-			echo "Удаляем выполнившийся файл задания $jobsInWorkDir/$jobName\n";
+			echo "Deleting the completed job file $jobsInWorkDir/$jobName.\n";
 			unlink("$jobsInWorkDir/$jobName");	
 			unset($loaderJobNames[$i]);
 		};
 	};
 	if($loaderJobNames) { 	// 
-		echo "Есть задания для загрузчиков -- нужны загрузчики\n";
+		echo "There are jobs for loaders -- loaders are needed.\n";
 		// Запустим указанное в конфиге количество загрузчиков
 		$runs=0;
 		foreach($loaderPIDs as $loaderRunPID) { 	// в $loaderPIDs выше могли быть добавлены левые pid с целью запустить загрузчики
 			if(file_exists( "/proc/$loaderRunPID")){ 	// процесс с таким PID работает
-				echo "Работает загрузчик $loaderRunPID\n";
+				echo "Is working the loader $loaderRunPID.\n";
 				$runs++;
 				continue;
 			}
 			@unlink("$jobsDir/$loaderRunPID.lock"); 	// процесса с таким PID нет, удалим файл с PID. Но и файла к этому моменту может уже не быть
 			if($runs<$maxLoaderRuns) {
-				echo "Запускаем загрузчик\n";
+				echo "Launching the loader.\n";
 				exec("$phpCLIexec loader.php $infinitely > /dev/null 2>&1 &");
 				//exec("$phpCLIexec loader.php > /dev/null &");
 				//exec("$phpCLIexec loader.php &");
@@ -161,7 +161,7 @@ do {
 			else break;
 		}
 		for($runs; $runs<$maxLoaderRuns; $runs++) { 	// если уже запущено меньше разрешённого количества загрузчиков - запустим ещё
-			echo "Запускаем ещё загрузчик\n";
+			echo "Launching another loader.\n";
 			exec("$phpCLIexec loader.php $infinitely > /dev/null 2>&1 &");
 			//exec("$phpCLIexec loader.php > /dev/null &");
 			//exec("$phpCLIexec loader.php &");
@@ -179,7 +179,7 @@ exec("crontab -l | grep -v '".__FILE__."'  | crontab -");
 @unlink($bannedSourcesFileName);	
 
 unlink("$jobsDir/$pID.slock");	// 
-echo "Планировщик $pID завершился\n";
+echo "The $pID scheduler has ended.\n";
 //error_log("Планировщик: Планировщик $pID завершился");
 
 return;

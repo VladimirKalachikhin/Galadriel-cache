@@ -55,6 +55,7 @@ return:
 
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 session_start();
+ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 
 chdir(__DIR__); // задаем директорию выполнение скрипта
 require('params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
