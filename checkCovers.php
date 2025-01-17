@@ -21,6 +21,7 @@ php checkCovers.php $/OpenTopoMap.9 16 $ zip # В каталоге $ созда�
 chdir(__DIR__); // задаем директорию выполнение скрипта
 require('fcommon.php');
 require('params.php'); 	// пути и параметры
+ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 $checkCoversDataDirName = 'checkCoversData';
 
 $loaderJobName = @$argv[1];

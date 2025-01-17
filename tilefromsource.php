@@ -2,6 +2,7 @@
 //ob_start(); 	// попробуем перехватить любой вывод скрипта
 session_start(); 	// оно не нужно, но в источниках может использоваться, например, в navionics
 chdir(__DIR__); // задаем директорию выполнение скрипта
+ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 
 $params = array();
 if(@$argv) { 	// cli
@@ -130,7 +131,7 @@ else {
 	require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 	require("$mapSourcesDir/$mapSourcesName.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда.
 };
-echo "[getTile] ext=$ext;\n";
+//echo "[getTile] ext=$ext;\n";
 if(!$ext){
 	if($path_parts['extension']) $ext = $path_parts['extension'];
 	else $ext = 'png';
@@ -395,7 +396,7 @@ if($params['checkonly']){	// надо только проверить, скач�
 	echo "checkonly mode: no save any files\n";
 	if($newimg === FALSE) echo "No tile recieved\n$msg\n\n";
 	elseif($newimg === NULL)  echo "Recieved a bad tile\n$msg\n\n";
-	elseif($trueTile){	// мы знаем, какой файл правильный
+	elseif($trueTile and $z==$trueTile[0] and $x==$trueTile[1] and $y=$trueTile[2]){	// мы знаем, какой файл правильный
 		if(is_array($newimg)) $img=$newimg[0][0];	// первый из нарезки
 		else $img=$newimg;
 		$hash = hash('crc32b',$img);
