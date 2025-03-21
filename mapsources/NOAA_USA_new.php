@@ -19,7 +19,7 @@ $bounds = array('leftTop'=>array('lat'=>61.3329,'lng'=>134.4),'rightBottom'=>arr
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(14,4822,6161,'9fb76aff');	// to source check; tile number and CRC32b hash
+$trueTile=array(14,4822,6161,'25721d2b');	// to source check; tile number and CRC32b hash
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {

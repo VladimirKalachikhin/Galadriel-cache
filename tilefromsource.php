@@ -151,7 +151,7 @@ if (!$functionGetURL) { 	// нет функции для получения та
 $bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
 if(!$bannedSources) $bannedSources = array();
 //echo "bannedSources:<pre>"; print_r($bannedSources); echo "</pre>";
-if((time()-@$bannedSources[$mapSourcesName][0]-$noInternetTimeout)<0) goto END;;	// если таймаут из конфига не истёк
+if(!($params['checkonly']) and (time()-@$bannedSources[$mapSourcesName][0]-$noInternetTimeout)<0) goto END;;	// если таймаут из конфига не истёк
 
 // Проблем связи и источника нет - будем получать тайл
 eval($functionGetURL); 	// создадим функцию getURL
