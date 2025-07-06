@@ -147,6 +147,7 @@ if($functionPrepareTileImg) eval($functionPrepareTileImg);	// определим
 //$file_info = finfo_open(FILEINFO_MIME); 	// подготовимся к определению mime-type
 //$file_type = finfo_buffer($file_info,$img);
 //echo "$file_type\n";
+//header("X-Debug: Expired?:".(($imgFileTime+$ttl) < time())."; showTHENloading=$showTHENloading");
 
 switch($showTHENloading){
 case 1: 	// сперва показывать, потом скачивать 

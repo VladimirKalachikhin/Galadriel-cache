@@ -27,28 +27,36 @@ EOFU;
 // При открытии
 $javascript = <<<'EOJO'
 let title, mapTXT, forecastTXT, windTXT, pressureTXT, temperatureTXT, precipitationTXT, waveTXT, windLegendTXT;
-if(window.navigator.language.indexOf('ru')==-1) { 	// клиент нерусский
-	title = 'Weather';
-	mapTXT = 'Layer';
-	forecastTXT = 'Fore<wbr>cast, hours';
-	windTXT = 'Wind, m/sec';
-	pressureTXT = 'Pressure, hPa'; 
-	temperatureTXT = 'Temperature, °C';
-	precipitationTXT = 'Precipitation, mm';
-	waveTXT = 'Swell, m';
-	windLegendTXT = 'Wind legend, m/sec';
-}
-else {
-	title = 'Погода';
-	mapTXT = 'Карта';
-	forecastTXT = 'Прог<wbr>ноз, час.';
-	windTXT = 'Ветер,м/сек';
-	pressureTXT = 'Давление,гПа'; 
-	temperatureTXT = 'Температура,°C';
-	precipitationTXT = 'Осадки,мм';
-	waveTXT = 'Волнение моря,м';
-	windLegendTXT = 'Шкала ветра, м/сек';
-}
+let i18nFileNames = navigator.language.split(',').map((l)=>l.split(';')[0]);
+// Здесь игнорируются двойные локали (en-US), поэтому американскую локализацию сделать нельзя. Удмуртскую тоже.
+i18nFileNames = Array.from(new Set(i18nFileNames.map((l)=>l.split('-')[0].toLowerCase())));	// unique через set
+i18Loop: for(let i18nFileName of i18nFileNames){
+	//i18nFileName = '';
+	switch(i18nFileName){
+	case 'ru':
+		title = 'Погода';
+		mapTXT = 'Карта';
+		forecastTXT = 'Прог<wbr>ноз, час.';
+		windTXT = 'Ветер,м/сек';
+		pressureTXT = 'Давление,гПа'; 
+		temperatureTXT = 'Температура,°C';
+		precipitationTXT = 'Осадки,мм';
+		waveTXT = 'Волнение моря,м';
+		windLegendTXT = 'Шкала ветра, м/сек';
+		break i18Loop;
+	default:
+		title = 'Weather';
+		mapTXT = 'Layer';
+		forecastTXT = 'Fore<wbr>cast, hours';
+		windTXT = 'Wind, m/sec';
+		pressureTXT = 'Pressure, hPa'; 
+		temperatureTXT = 'Temperature, °C';
+		precipitationTXT = 'Precipitation, mm';
+		waveTXT = 'Swell, m';
+		windLegendTXT = 'Wind legend, m/sec';
+	};
+};
+
 if(typeof weatherTab == 'undefined') {
 	additionalTileCachePath = ["/wind_stream/0h"]; 	// default map
 	// create Weather tab
@@ -60,7 +68,7 @@ if(typeof weatherTab == 'undefined') {
 			<div style="height:100%;">
 			by <a href="http://weather.openportguide.de/index.php/en/" target="_blank">Thomas Krüger Weather Service</a><br>
 			<form id="weatherLayers" style="position:relative; z-index:10; width:95%;">
-				<table  style="font-size:120%;float:right;word-break: break-all;width:75%;">
+				<table  style="font-size:120%;float:right;word-break: break-all;width:70%;">
 					<caption><h3>${mapTXT}</h3></caption>
 					<tr style="height:3rem;"><td style="text-align:right;">${windTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="wind_stream" checked ></td></tr>
 					<tr style="height:3rem;"><td style="text-align:right;">${pressureTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="surface_pressure"></td></tr>

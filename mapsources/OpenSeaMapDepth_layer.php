@@ -15,8 +15,8 @@ $maxZoom = 18;
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
 );
 $data = array();
-$data['javascriptOpen'] = "info.addAttribution('<img src=\"img/OpenSeaMapDepthScale.png\">')"; 	// the javascript string, eval'ed before create map
-$data['javascriptClose'] = "info.removeAttribution('<img src=\"img/OpenSeaMapDepthScale.png\">')"; 	// the javascript string, eval'ed after close map
+$data['javascriptOpen'] = "attributionControl.addAttribution('<img src=\"img/OpenSeaMapDepthScale.png\">')"; 	// the javascript string, eval'ed before create map
+$data['javascriptClose'] = "attributionControl.removeAttribution('<img src=\"img/OpenSeaMapDepthScale.png\">')"; 	// the javascript string, eval'ed after close map
 
 $functionGetURL = <<<'EOFU'
 function getURL($z,$x,$y) {

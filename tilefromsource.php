@@ -48,7 +48,7 @@ if(@$argv) {
 
 getTile($path) - получить файл из источника и положить в кеш
 doBann($r,$bannedSourcesFileName) - забанить источник
-function getResponceFiled($http_response_header,$respType) Возвращает массив полей http ответа, начинающихся с $respType
+getResponceFiled($http_response_header,$respType) Возвращает массив полей http ответа, начинающихся с $respType
 
 */
 
@@ -192,7 +192,7 @@ do {
 			"verify_peer_name"=>FALSE
 		);
 	}
-	if(!@$opts['http']['proxy'] AND @$globalProxy) { 	// глобальный прокси
+	if(!@$opts['http']['proxy'] AND @$globalProxy) { 	// глобальный прокси, строка из params.php
 		$opts['http']['proxy']=$globalProxy;
 		$opts['http']['request_fulluri']=TRUE;
 	}
@@ -204,7 +204,7 @@ do {
 	$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 
 	// Запрос - собственно, получаем файл
-	$newimg = file_get_contents($uri, FALSE, $context); 	// 
+	$newimg = @file_get_contents($uri, FALSE, $context); 	// 
 	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
 
 	// Обработка проблем ответа
@@ -267,10 +267,10 @@ do {
 					$msg = "tilefromsource.php getTile $tries's try: 503 Service Unavailable responce - do bann and go away";
 					error_log($msg);
 					goto END; 	 // бессмысленно ждать, уходим совсем
-				}
-			}
-		}
-	}
+				};
+			};
+		};
+	};
 	// Обработка проблем полученного
 	if($http_response_header){
 		$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений
@@ -327,7 +327,7 @@ do {
 						$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 					}
 					else {
-						$msg = "tilefromsource.php getTile $tries's try: No tile and unknown responce";
+						$msg = "tilefromsource.php getTile $tries's try: No tile and unknown responce: {$http_response_header[0]}";
 						error_log($msg);
 						$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 					}
@@ -361,7 +361,7 @@ do {
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
 				else {
-					$msg = "tilefromsource.php getTile $tries's try: No tile and unknown responce";
+					$msg = "tilefromsource.php getTile $tries's try: No tile and unknown responce: {$http_response_header[0]}";
 					error_log($msg);
 					$newimg = FALSE; 	// тайл получить не удалось, ничего не сохраняем, пропускаем
 				}
