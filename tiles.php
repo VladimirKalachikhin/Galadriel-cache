@@ -5,7 +5,7 @@ ob_start(); 	// попробуем перехватить любой вывод 
 Потом, если надо - скачивает
 Если полученный тайл ещё не показывали (он новый) - показываем.
 
-Version 2.10.3
+Version 2.10.4
 История History:
 2.10.0 - map's function PrepareTileFile for tilefromsource.php with support for uploading more them one tile
 2.9.0 - map's $bounds support
@@ -37,6 +37,8 @@ $z = intval($z);
 //$x=19;$y=11;$z=5;$r="osmmapMapnik";
 //$x=4822;$y=6161;$z=14;$r="NOAA_USA_ENC";
 //$x=5167;$y=2872;$z=13;$r="RosreestrTopo";
+//$x=23942;$y=10390;$z=15;$r="OVH";
+//$x=47886;$y=20782;$z=16;$r="OVH";
 //// 	FOR TEST
 // определимся с источником карты
 $sourcePath = explode('/',$r); 	// $r может быть с путём до конкретного кеша, однако - никогда абсолютным
@@ -62,6 +64,8 @@ if(($z<$minZoom)or($z>$maxZoom)){
 if($functionGetTileFile){	// у карты есть собственная функция получения тайла
 	eval($functionGetTileFile);	// создаём функцию получения данных
 	extract(getTileFile($r,$z,$x,$y),EXTR_OVERWRITE);	// выполняем функцию получения даных. Обычно она возвращает массив ['img',value], и extract присваивает $img=value
+	//echo "tiles.php [getTileFile] getTileFile($r,$z,$x,$y):"; print_r(getTileFile($r,$z,$x,$y)); echo "\n";
+	//error_log("tiles.php [getTileFile] getTileFile($r,$z,$x,$y) result:".(mb_strlen($img,'8bit'))." bytes, ext=$ext;");
 }
 else {
 	// возьмём тайл
@@ -142,7 +146,7 @@ else {
 // Так или иначе - тайл получен или не получен, и решение, что делать - выработано
 //echo "|$functionPrepareTileImg|\n";
 if($functionPrepareTileImg) eval($functionPrepareTileImg);	// определим функцию обработки картинки
-//error_log("tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;");
+//error_log("tiles.php [getTileFile]: $r/$z/$x/$y.$ext showTHENloading=$showTHENloading;");
 //echo "tiles.php: $r/$z/$x/$y showTHENloading=$showTHENloading;<br>\n";
 //$file_info = finfo_open(FILEINFO_MIME); 	// подготовимся к определению mime-type
 //$file_type = finfo_buffer($file_info,$img);
@@ -184,6 +188,7 @@ function showTile($img,$mime_type='',$content_encoding='',$ext='') {
 Отдаёт тайл. Считается, что только эта функция что-то показывает клиенту
 https://gist.github.com/bubba-h57/32593b2b970366d24be7
 */
+//echo "[showTile] proceed\n"; return;// 		FOR TEST
 //global $nowTime;
 //apache_setenv('no-gzip', '1'); 	// отключить сжатие вывода
 set_time_limit(0); 			// Cause we are clever and don't want the rest of the script to be bound by a timeout. Set to zero so no time limit is imposed from here on out.

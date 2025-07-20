@@ -1,13 +1,26 @@
 <?php
+/**/
+ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 chdir(__DIR__); // задаем директорию выполнение скрипта
 require('./params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
 
-$SocketTimeout = 10;	// демон умрёт через сек.
+$SocketTimeout = 30;	// демон умрёт через сек.
+//$SocketTimeout = null;	// демон не умрёт никогда
 
 $r = filter_var($argv[1],FILTER_SANITIZE_FULL_SPECIAL_CHARS);	// один параметр -- имя карты без расширения
-echo "$r, $tileCacheDir\n";
-if(!$r) return;
-if(!file_exists("$tileCacheDir/$r.mbtiles")) return;	// Придурок, который писал класс SQLite3, не знал, что файла может не быть.
+if(!$r) {
+	echo "Map name required.\n";
+	return;
+};
+if(IRun($r)) { 	// Я ли?
+	echo "I'm already running, exiting.\n"; 
+	return;
+};
+if(!file_exists("$tileCacheDir/$r.mbtiles")) {
+	echo "Data file $tileCacheDir/$r.mbtiles not found.\n";
+	return;	// Придурок, который писал класс SQLite3, не знал, что файла может не быть.
+};
+echo "Server started for '$r' map in '$tileCacheDir' directory\n";
 
 $db = new SQLite3("$tileCacheDir/$r.mbtiles",SQLITE3_OPEN_READONLY);
 $res = $db->query("
@@ -19,9 +32,14 @@ $metadata = $res->fetchArray(SQLITE3_ASSOC);
 if($metadata) $ext = $metadata['value'];
 //if($ext=='pbf') return;	// векторные тайлы не умеем
 
-$sockName = "/tmp/tileproxy_$r";
+$umask = umask(0); 	// сменим на 0777 и запомним текущую
+@mkdir(__DIR__."/tmp", 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
+$sockName = __DIR__."/tmp/tileproxy_$r";	// Просто в /tmp/ класть нельзя, ибо оно индивидуально для каждого процесса из-за systemd PrivateTmp
 $masterSock = socket_create(AF_UNIX, SOCK_STREAM, 0);
-$res = @socket_bind($masterSock, $sockName);
+exec("rm -f $sockName");	// на всякий случай
+$res = socket_bind($masterSock, $sockName);
+chmod($sockName,0666); 	// чтобы при запуске от другого юзера была возможность 
+umask($umask); 	// 	Вернём.
 if($err = socket_last_error($masterSock)) { 	// с сокетом проблемы
 	switch($err){
 	case 98:	// Address already in use
@@ -48,7 +66,7 @@ socket_listen($masterSock,100);
 $sockets = array(); 	// список функционирующих сокетов
 $messages = array();	// сообщения для отправки, массив массивов сообщений, число элементов массива равно числу элементов в $sockets, и соответствующий элемент -- это то, что нужно отправить в соответствующий сокет
 $socksRead = array(); $socksWrite = array(); $socksError = array(); 	// массивы для изменивших состояние сокетов (с учётом, что они в socket_select() по ссылке, и NULL прямо указать нельзя)
-echo "$sockName ready to connection\n";
+echo "Unix socket $sockName ready to connection\n";
 do {
 	$socksRead = $sockets; 	// мы собираемся читать все сокеты
 	$socksRead[] = $masterSock; 	// 
@@ -76,7 +94,7 @@ do {
 		break;
 	}
 
-	echo "\n Пишем в сокеты ".count($socksWrite)."\n"; //////////////////
+	//echo "\n Пишем в сокеты ".count($socksWrite)."\n"; //////////////////
 	// Здесь пишется в сокеты то, что попало в $messages на предыдущем обороте.
 	// Тогда соответствующие сокеты проверены на готовность, и готовые попали в $socksWrite. 
 	foreach($socksWrite as $socket){
@@ -84,23 +102,31 @@ do {
 		$msg = $messages[$n]."\n\n";
 		//echo "\nto $n:\n|$msg|\n";
 		$msgLen = mb_strlen($msg,'8bit');
-		echo "Посылаем клиенту $msgLen байт\n";
-		$res = socket_write($socket, $msg, $msgLen);
-		if($res === FALSE) { 	// клиент умер
-			echo "\nFailed to write data to socket $n by: " . socket_strerror(@socket_last_error($sock)) . "\n";	// $sock уже может не быть сокетом
-			chkSocks($socket);
-			continue;	// к следующему сокету
-		}
-		elseif($res <> $msgLen){	// клиент не принял всё. У него проблемы?
-			echo "\nNot all data was writed to socket $n by: " . socket_strerror(socket_last_error($sock)) . "\n";
-			chkSocks($socket);
-			continue;	// к следующему сокету
-		}
+		//echo "Посылаем клиенту №$n $msgLen байт           \n";
+		do{
+			$res = socket_write($socket, $msg, $msgLen);
+			if($res === FALSE) { 	// клиент умер
+				echo "\nFailed to write data to socket $n by: " . socket_strerror(@socket_last_error($sock)) . "\n";	// $sock уже может не быть сокетом
+				closeSock($n);
+				continue 2;	// к следующему сокету
+			}
+			elseif($res < $msgLen){	// клиент не принял всё. У него проблемы?
+				echo "\nNot all data was writed to socket $n by: " . socket_strerror(socket_last_error($sock)) . "\n";
+				$msgLen-=$res;
+				continue;	//
+			};
+			// По причине нехватки буферов или неудачного положения светил может быть Note https://www.php.net/manual/en/function.socket-write.php
+			// т.е., данные надо отправлять в цикле.
+			// Но данные у нас двоичные, и нет сигнала об окончании данных.
+			// Поэтому сигналом об окончании данных будет закрытие сокета.
+			closeSock($n);	// закрываем сокет, которому всё отправили. Это сигнал для клиента, что отправили всё.
+			break;
+		}while(true);
 		$messages[$n] = '';
 		unset($msg);
 	}
 
-	echo "\n Читаем из сокетов ".count($socksRead)."\n"; ///////////////////////
+	//echo "\n Читаем из сокетов ".count($socksRead)."\n"; ///////////////////////
 	foreach($socksRead as $socket){
 		socket_clear_error($socket);
 		if($socket == $masterSock) { 	// новое подключение
@@ -115,7 +141,7 @@ do {
 				continue;	// к следующему сокету
 			}
 			$sockets[] = $sock; 	// добавим новое входное подключение к имеющимся соединениям
-			echo "New client connected                                                      \n";
+			//echo "New client connected                                                      \n";
 		    continue; 	//  к следующему сокету
 		}
 		// Читаем клиентские сокеты
@@ -132,8 +158,7 @@ do {
 				break;
 			case 104:	// Connection reset by peer		если клиент сразу закроет сокет, в который он что-то записал, то ещё не переданная часть записанного будет отброшена. Поэтому клиент не закрывает сокет вообще, и он закрывается системой с этим сообщением. Но на этой стороне к моменту получения ошибки уже всё считано?
 			default:
-				echo "Failed to read data from client socket by: " . socket_strerror(socket_last_error($socket)) . "                                 \n"; 	// в общем-то -- обычное дело. Клиент закрывает соединение, мы об этом узнаём при попытке чтения.
-				echo "Close client socket type ".gettype($socket)." by error or by life                    \n";
+				//echo "Failed to read data from client socket by: " . socket_strerror(socket_last_error($socket)) . "                                 \n"; 	// в общем-то -- обычное дело. Клиент закрывает соединение, мы об этом узнаём при попытке чтения.
 				chkSocks($socket);
 			}
 		    continue;	// к следующему сокету
@@ -141,9 +166,11 @@ do {
 		$buf = trim($buf);	// у нас не будет текстов
 		if(!$buf) continue;	// к следующему сокету
 		// Собственно, содержательная часть
-		echo "\nПРИНЯТО ОТ КЛИЕНТА ".mb_strlen($buf,'8bit')." байт\n";
+		//echo "\nПРИНЯТО ОТ КЛИЕНТА ".mb_strlen($buf,'8bit')." байт\n";
 		//echo"|$buf|\n";
 		extract(unserialize($buf),EXTR_OVERWRITE);
+		//echo "\nПРИНЯТО ОТ КЛИЕНТА и декодировано: z=$z; x=$x; y=$y;\n";
+		//error_log("Reciewed and decoded: z=$z; x=$x; y=$y;");
 		// Переход от номеров XYZ к номерам mbtiles:
 		// zoom_level = z
 		// tile_column = x
@@ -157,7 +184,9 @@ WHERE zoom_level=$z
 	AND tile_row=$y
 ");
 		$img = $res->fetchArray(SQLITE3_ASSOC);
+		//echo "Запрос: z=$z; x=$x; y=$y; \n";//Ответ:"; print_r($img); echo "\n";
 		if($img) $img = $img['tile_data'];
+		//error_log("Query: z=$z; x=$x; y=$y; Result have ".(mb_strlen($img,'8bit'))." bytes");
 		// array('img'=>$img,'ContentType'=>$ContentType,'content_encoding'=>$content_encoding,'ext'=>$ext);
 		$n = array_search($socket,$sockets);	// 
 		$messages[$n] = serialize(array('img'=>$img,'ext'=>$ext));
@@ -166,7 +195,7 @@ WHERE zoom_level=$z
 } while (true);
 foreach($sockets as $socket) {
 	socket_close($socket);
-}
+};
 socket_close($masterSock);
 unlink($sockName);
 
@@ -174,7 +203,7 @@ function chkSocks($socket) {
 /**/
 global $sockets, $socksRead, $socksWrite, $socksError, $messages;
 $n = array_search($socket,$sockets);	// 
-//echo "Close client socket #$n $socket type ".gettype($socket)." by error or by life                    \n";
+echo "Check client socket #$n $socket type ".gettype($socket)." by error or by life                    \n";
 if($n !== FALSE){
 	unset($sockets[$n]);
 	unset($messages[$n]);
@@ -189,7 +218,60 @@ if($n !== FALSE) unset($socksError[$n]);
 //echo "\nchkSocks sockets: "; print_r($sockets);
 } // end function chkSocks
 
+function closeSock($n) {
+/**/
+global $sockets, $socksRead, $socksWrite, $socksError, $messages;
+//echo "Close client socket #$n                    \n";
+@socket_close($sockets[$n]); 	// он может быть уже закрыт
+unset($sockets[$n]);
+unset($messages[$n]);
+$n = array_search($socket,$socksRead);	// 
+if($n !== FALSE) unset($socksRead[$n]);
+$n = array_search($socket,$socksWrite);	// 
+if($n !== FALSE) unset($socksWrite[$n]);
+$n = array_search($socket,$socksError);	// 
+if($n !== FALSE) unset($socksError[$n]);
+} // end function closeSock
 
+
+function IRun($tail='') {
+/**/
+global $phpCLIexec;
+$pid = getmypid();
+//echo "ps -A w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME),"'\n";
+$toFind = pathinfo(__FILE__,PATHINFO_BASENAME)." $tail";
+@exec("ps -A w | grep '$toFind'",$psList);	// конечно, проще через pgrep -f , но не везде есть
+if(!$psList) { 	// for OpenWRT. For others -- let's hope so all run from one user
+	exec("ps w | grep '$toFind'",$psList);
+	echo "IRun: BusyBox based system found\n";
+}
+//echo "__FILE__=".__FILE__."; pid=$pid; phpCLIexec=$phpCLIexec; toFind=$toFind;\n"; print_r($psList); //
+//file_put_contents('IRun.txt', "__FILE__=".__FILE__."; pid=$pid; phpCLIexec=$phpCLIexec; toFind=$toFind;\n".print_r($psList,true)); //
+$run = FALSE; $isPHP = FALSE; $isTail = FALSE;
+foreach($psList as $str) {
+	if(strpos($str,(string)$pid)!==FALSE) continue;
+	//echo "|$str|\n";
+	if((strpos($str,'sh ')!==FALSE) or (strpos($str,'bash ')!==FALSE) or (strpos($str,'ps ')!==FALSE) or (strpos($str,'grep ')!==FALSE)) continue;
+	//echo "str=$str;\n";
+	//if((strpos($str,"$phpCLIexec ")!==FALSE) and (strpos($str,$toFind)!==FALSE)){	
+	// В docker image  thecodingmachine/docker-images-php $phpCLIexec===php, но реально запускается /usr/bin/real_php
+	// поэтому ищем имя скрипта, а в том, чем его запустили -- php
+	if(strpos($str,$toFind)!==FALSE){	
+		$str = explode(' ',$str);
+		//print_r($str);
+		foreach($str as $st){
+			if(strpos($st,"php")!==FALSE) $isPHP = true;
+			if($st == $tail) $isTail = true;
+			if($isPHP and $isTail){
+				$run=TRUE;
+				break 2;
+			};
+		};
+	};
+}
+//echo "run=$run;\n";
+return $run;
+};
 
 
 ?>
