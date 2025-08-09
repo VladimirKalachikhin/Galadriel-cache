@@ -5,7 +5,7 @@ ob_start(); 	// попробуем перехватить любой вывод 
 Потом, если надо - скачивает
 Если полученный тайл ещё не показывали (он новый) - показываем.
 
-Version 2.10.4
+Version 2.10.5
 История History:
 2.10.0 - map's function PrepareTileFile for tilefromsource.php with support for uploading more them one tile
 2.9.0 - map's $bounds support
@@ -162,7 +162,7 @@ case 1: 	// сперва показывать, потом скачивать
 	else createJob($sourceName,$z,$x,$y,TRUE);	// скачать только этот тайл
 	break;
 case 2: 	//echo "сперва скачивать, потом показывать<br>\n";
-	$execStr = "$phpCLIexec tilefromsource.php $fileName";
+	$execStr = "$phpCLIexec tilefromsource.php  -z$z -x$x -y$y -r$r";
 	if(thisRun($execStr)) sleep(1); 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Не сильно тормозит?
 	else exec($execStr); 	// exec будет ждать завершения
 	// покажем тайл

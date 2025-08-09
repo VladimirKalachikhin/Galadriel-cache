@@ -43,7 +43,7 @@ return:
 }
 
 	Получить состояние заданий на скачивание
-cacheControl.php?loaderStatusP[&stopLoader]|[&restartLoader][&infinitely]] 	get loader status
+cacheControl.php?loaderStatus[&stopLoader]|[&restartLoader][&infinitely]] 	get loader status
 return:
 {
 	"loaderRun": scheduler_PID,
