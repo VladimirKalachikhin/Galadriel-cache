@@ -375,8 +375,8 @@ do {
 		doBann($mapSourcesName,$bannedSourcesFileName,'Many tries'); 	// забаним источник
 		$msg = "tilefromsource.php getTile $tries's try: no tile by max try - do bann and go away";
 		error_log($msg);
-		//break;
-		goto END; 	 // бессмысленно ждать, уходим совсем
+		break;
+		//goto END; 	 // бессмысленно ждать, уходим совсем
 	}
 	sleep($tryTimeout);
 } while (TRUE); 	// 

@@ -5,7 +5,7 @@ ob_start(); 	// попробуем перехватить любой вывод 
 Потом, если надо - скачивает
 Если полученный тайл ещё не показывали (он новый) - показываем.
 
-Version 2.10.5
+Version 2.10.6
 История History:
 2.10.0 - map's function PrepareTileFile for tilefromsource.php with support for uploading more them one tile
 2.9.0 - map's $bounds support

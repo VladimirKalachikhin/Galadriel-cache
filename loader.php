@@ -155,22 +155,22 @@ do {
 	if($ext) $y .= ".$ext"; 	// в конфиге источника указано расширение
 	else $y .= ".png";
 	$fileName = "$tileCacheDir/$map/$zoom/$x/$y"; 	// из кэша, однако наличие версионности игнорируется
-	echo "file=$fileName; <br>\n";
+	echo "file=$fileName;\n";
 
 	$doLoading = FALSE; 	
 	$imgFileTime = @filemtime($fileName); 	// файла может не быть
 	//echo "imgFileTime=$imgFileTime; ttl=$ttl;\n";
 	if($imgFileTime) { 	// файл есть
 		if($customExec) $doLoading = TRUE; 	// копирование кеша
-		elseif(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
+		elseif($ttl and (($imgFileTime+$ttl) < time())) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 			$doLoading = TRUE; 	// 
 			//echo "тайл $fileName есть, но протух на ".round((time()-($imgFileTime+$ttl))/(60*60*24))." дней\n";
 		}
 		else { 	// файл свежий
-			$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за приделами разрешённых масштабов
+			$img = file_get_contents($fileName); 	// берём тайл из кеша, возможно, за пределами разрешённых масштабов
 			if(!$img) { 	// файл нулевой длины
 			 	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
-				if(($imgFileTime+$ttl) < time()) { 	// файл протух
+				if($imgFileTime and (($imgFileTime+$ttl) < time())) { 	// файл протух
 					$doLoading = TRUE; 	// 
 				};
 			};
@@ -180,7 +180,7 @@ do {
 		if($customExec) $doLoading = FALSE; 	// копирование кеша
 		else $doLoading = TRUE; 	// 
 	};
-	//echo "doLoading=$doLoading;\n";
+	echo "Will be download:$doLoading;\n";
 	// Решение принято, выполняем
 	$res = FALSE;
 	if($doLoading){
