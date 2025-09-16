@@ -199,13 +199,13 @@ do {
 	if(!@$opts['http']['timeout']) { 
 		$opts['http']['timeout'] = (float)$getTimeout;	// таймаут ожидания получения тайла, сек
 	}
-	//echo "opts :<pre>"; print_r($opts); echo "</pre>";
 	echo "\nGet tile from: $uri\n";
+	//echo "with options :"; print_r($opts); echo "\n";
 	$context = stream_context_create($opts); 	// таким образом, $opts всегда есть
 
 	// Запрос - собственно, получаем файл
 	$newimg = @file_get_contents($uri, FALSE, $context); 	// 
-	//echo "http_response_header:<pre>"; print_r($http_response_header); echo "</pre>\n";
+	//echo "http_response_header:"; print_r($http_response_header); echo "s\n";
 
 	// Обработка проблем ответа
 	if(!$newimg and !@$http_response_header) { 	 //echo "связи нет или Connection refused  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
