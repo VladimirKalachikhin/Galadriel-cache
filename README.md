@@ -4,6 +4,9 @@ This is a simple map tiles cache/proxy to use on weak computers such as Raspberr
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is a good choice too.   
 Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster maps without a server -- directly on your smartphone in the event of a disaster.
 
+This code is written without using AI, "best practices," OOP, and an IDE.
+
+
 ## v. 2.10
 
 Contains:
@@ -32,6 +35,7 @@ Contains:
 * * [clearCache](#clearcache)
 * * [checkSources](#checksources)
 * * [Coverage](#coverage)
+* [Demo](#demo)
 * [Support](#support)
 
 ## Features:
@@ -326,6 +330,11 @@ Use cron to run it periodically.
 Run _php checkCovers.php mapName.zoom max_zoom_ for calculate coverage of given region, described as Loader job file mapName.zoom. The `checkCoversData/notFound/` directory contains a Loader job files with tiles that are missing from the coverage.  
 For display in map GaladrielCache supports calculate coverage feature. To get the transparent tile with cover map add '_COVER' to map name. This return current_zoom+8 zoom level coverage. It is clear that every pixel of this tile indicate one tile +8 zoom level. Additionally displayed coverage of loader's max zoom level.  
 The [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) supports this feature.
+
+
+## Demo
+There are several [ready-to-use images available](https://github.com/VladimirKalachikhin/GaladrielMap-Demo-image/) that include the GaladrielCache.
+
 
 ## Support
 [Discussions](https://github.com/VladimirKalachikhin/Galadriel-map/discussions)
