@@ -15,6 +15,8 @@ $mapsInfo = glob("$mapSourcesDir/*.php");
 array_walk($mapsInfo,function (&$name,$ind) {
 		$name=basename($name,'.php'); 	//
 	}); 	// 
+natcasesort($mapsInfo);
+$mapsInfo = array_values($mapsInfo);
 //echo ":<pre>"; print_r($mapsInfo); echo "</pre>";
 
 foreach($mapsInfo as $mapName) {
@@ -25,13 +27,21 @@ foreach($mapsInfo as $mapName) {
 	if(!$trueTile) continue;
 	echo "Processing $mapName ... ";
 	list($z,$x,$y,$hash)=$trueTile;
-	$res = exec("$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly");
-	if($res) {
-		echo "no same tile.\n";
-		file_put_contents($logFileName,"$mapName\t\t$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly\n",FILE_APPEND);
+	$res = exec("$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly",$output,$exitcode);
+	$res = trim($res);
+	//echo "res=$res; exitcode=$exitcode;\n";
+	if($exitcode) {
+		file_put_contents($logFileName,"$mapName $res\n$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly\n\n",FILE_APPEND);
+		echo "no same tile or no tile";
+		if($res) echo " $res";
+		echo "\n";
 	}
 	else {
-		echo "ok.\n";
+		echo "ok.";
+		if($res){
+			if(stripos($res,'is not true')!==false) echo ", but $res";
+		};
+		echo "\n";
 	};
 };
 

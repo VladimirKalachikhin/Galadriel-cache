@@ -5,6 +5,8 @@ Options and paths
 */
 // Общие параметры Common
 // Пути paths
+// Путь к GaladrielCache в смысле html
+$tileCacheServerPath = '/tileproxy'; 	// web path to GaladrielCache
 //	Хранилище тайлов, каталог в файловой системе. Обычно -- ссылка на специальный раздел.
 $tileCacheDir = 'tiles'; 	// tile storage directory, in filesystem. Link is good idea.
 //	Каталог описаний источников карт, в файловой системе
@@ -45,11 +47,12 @@ $loaderMaxZoom = 16; 	// loader download tiles to this zoom only, not to map or 
 // 	Предварительная загрузка тайлов большего масштаба запускается при просмотре тайла указанного масштаба
 $aheadLoadStartZoom = 14; // start of the ahead loading from this zoom 
 
-// Определение покрытия Tiles cover detection
-$tileCacheServerPath = '/tileproxy'; 	// web path to GaladrielCache
-
 // Ситемные параметры System
 // Вызов php из командной строки
+// Определить команду php можно так:
+//	$phpCLIexec = trim(explode(' ',trim(shell_exec("ps -p ".(getmypid())." -o command=")))[0]);	// из PID системной командой получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
+// но но только в cli. tiles.php запускается из-под Apache2, и оттуда невозможно узнать,
+// какая строка запуска cli php.
 //$phpCLIexec = 'php-cli'; 	// php-cli executed name on your OS
 $phpCLIexec = 'php'; 	// php-cli executed name on your OS
 ?>

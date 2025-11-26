@@ -6,28 +6,15 @@ $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(15,19796,10302,'d5dbfe59');	// to source check; tile number and CRC32b hash
+$trueTile=array(15,19796,10302,'2010870b');	// to source check; tile number and CRC32b hash
 
-$functionGetURL = <<<'EOFU'
-function getURL($z,$x,$y) {
+$getURL = function ($z,$x,$y) {
 $server = array();
 $server[] = 'a.tile.openstreetmap.org';
 $server[] = 'b.tile.openstreetmap.org';
 $server[] = 'c.tile.openstreetmap.org';
 
-$userAgents = array();
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/604.5.6 (KHTML, like Gecko) Version/11.0.3 Safari/604.5.6';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgent = $userAgents[array_rand($userAgents)];
-
+$userAgent = randomUserAgent();
 $RequestHead='Referer: http://openstreet.com';
 //$RequestHead='';
 
@@ -43,6 +30,5 @@ $opts = array(
 	)
 );
 return array($url,$opts);
-}
-EOFU;
+};
 ?>

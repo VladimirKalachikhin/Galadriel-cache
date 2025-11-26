@@ -1,7 +1,8 @@
 <?php
-/*
+/* функции, используемые более чем в одном скрипте
+
 pixResolution - Размер пикселя указанного масштаба на указанной широте в метрах
-tileNum2degree - Tile numbers to lon./lat. left top corner
+tileNum2degree - Tile numbers to lon/lat of the left top corner
 tileNum2mercOrd - Tile numbers to linear coordinates left top corner on mercator ellipsoidal
 tileNum2ord - Tile numbers to linear coordinates left top corner on mercator spherical
 merc_x - Долготу в линейную координату x, Меркатор на эллипсоиде
@@ -20,6 +21,9 @@ addTransparent($img,$opacity=67) - делает полупрозрачными �
 splitToTiles($originalImg,$z,$x,$y,$ext='png') - режет картину (размерами, кратными тайлу) на тайлы
 
 checkInBounds - находится ли указанный тайл в пределах указанных границ
+
+randomUserAgent($userAgents=null) - возвращает случайную строку с информацией о браузере для http заголовка User-Agent
+
 */
 function pixResolution($lat_deg,$zoom,$tile_size=256,$equator=40075016.686){
 /* Размер пикселя указанного масштаба на указанной широте в метрах
@@ -252,86 +256,12 @@ return $img;
 }; // end function addTransparent
 
 
-function splitToTiles($originalImg,$z,$x,$y,$ext='png'){
-/* Режет картинку на тайлы по 256 пикселов.
-Возвращает массив картинок и путей вида [[tile,"$z/$x/$y.$ext"]].
-Предполагается, что $z,$x,$y - это верхний левый (первый) тайл.
-Если формат входного файла экзотический, то будет возвращён png.
-0 3 6
-1 4 7
-2 5 8
-*/
-$imgs = array();
-$imgSize = getimagesizefromstring($originalImg);
-//print_r($imgSize);
-$cols = intdiv($imgSize[0],256);	// ширина
-$rows = intdiv($imgSize[1],256);	// высота
-//echo "По горизонтали:$cols, по вертикали:$rows;\n";
-
-$gd_img = imagecreatefromstring($originalImg);	// создаём полноцветную картинку 
-for($c=0; $c<$cols; $c++){
-	// imagecrop и imagecopy не сохраняют прозрачность,
-	// поэтому порезка картинки делается с помощью imagecopy в картинку,
-	// предварительно покрашеную в прозрачность.
-	// Видимо, прозрачные пиксели вообще не переносятся, т.е. в целевой картинке красятся первым цветом.
-	// А первый цвет мы сделали прозрачным.
-	$imgC   = imagecreatetruecolor(256, $imgSize[1]);
-	$transparentColor = imagecolorallocatealpha($imgC, 0, 0, 0, 127);
-	imagefill($imgC, 0, 0, $transparentColor);
-	imagesavealpha($imgC,true);
-	imagecopy($imgC,$gd_img, 0, 0, $c*256, 0, 256, $imgSize[1]);	// копируем нашу картинку в созданную.
-	//imagepng($imgC,"./$/img/imgC$c.png");
-	for($r=0; $r<$rows; $r++){
-		$img   = imagecreatetruecolor(256, 256);
-		$transparentColor = imagecolorallocatealpha($img, 0, 0, 0, 127);
-		imagefill($img, 0, 0, $transparentColor);
-		imagesavealpha($img,true);
-		imagecopy($img, $imgC, 0, 0, 0, $r*256, 256, 256);	// копируем нашу картинку в созданную.
-		//imagepng($img,"./$/img/img$r.png");
-
-		// А тепрь из gd image сделаем обратно нормальную картику
-		ob_start();	// оно может быть вложенным
-		ob_clean();
-		switch($imgSize[2]){	// IMAGETYPE_XXX constant
-		case IMG_BMP:
-			imagebmp($img);
-			break;
-		case IMG_GIF:
-			imagegif($img);
-			break;
-		case IMG_JPG:
-			imagejpeg($img);
-			break;
-		case IMG_PNG:
-			imagepng($img);
-			break;
-		case IMG_WBMP:
-			image2wbmp($img);
-			break;
-		case IMG_WEBP:
-			imagewebp($img);
-			break;
-		default:
-			imagepng($img);
-			$ext = 'png';
-		};
-		imagedestroy($img);
-		$img = ob_get_contents();
-		ob_end_clean();
-		$imgs[] = array($img,"$z/".($x+$c)."/".($y+$r).".$ext");
-	};
-	imagedestroy($imgC);
-};
-imagedestroy($gd_img);
-return $imgs;
-}; // end function splitToTiles
-
-
 function checkInBounds($z,$x,$y,$bounds){
 /*
 $bounds - массив массивов координат углов, 
 {"leftTop":{"lat":lat,"lng":lng},"rightBottom":{"lat":lat,"lng":lng}}
 */
+//echo "[checkInBounds] $z,$x,$y; bounds:<pre>"; print_r($bounds); echo "</pre><br>\n";
 if(!$bounds) return true;
 $anti = false;
 if($bounds['leftTop']['lng']>0 and $bounds['rightBottom']['lng']<0) {	// граница переходит антимередиан
@@ -341,11 +271,111 @@ if($bounds['leftTop']['lng']>0 and $bounds['rightBottom']['lng']<0) {	// гра�
 $lefttopTile = tileNum2degree($z,$x,$y);	// array('lon'=>lon_deg,'lat'=>lat_deg)
 if($anti and $lefttopTile['lon']<0) $lefttopTile['lon'] += 360;
 // нижняя граница выше верха тайла или правая граница левее лева тайла
-if(($bounds['rightBottom']['lat'] > $lefttopTile['lat']) or ($bounds['rightBottom']['lng'] < $lefttopTile['lon'])) return false;	// выше или левее
+//echo "[checkInBounds] lefttopTile:<pre>"; print_r($lefttopTile); echo "</pre><br>\n";
+if(($bounds['rightBottom']['lat'] > $lefttopTile['lat']) or ($bounds['rightBottom']['lng'] < $lefttopTile['lon'])){
+	//echo "[checkInBounds] lefttopTile: выше или левее <br>\n";
+	return false;	// выше или левее
+};
 $rightbottomTile = tileNum2degree($z,$x+1,$y+1);	// array('lon'=>lon_deg,'lat'=>lat_deg)
 if($anti and $rightbottomTile['lon']<0) $rightbottomTile['lon'] += 360;
 // верхняя граница ниже низа тайла или левая граница правее права тайла
-if(($bounds['leftTop']['lat'] < $rightbottomTile['lat']) or ($bounds['leftTop']['lng'] > $rightbottomTile['lon'])) return false;	// правее или ниже
+if(($bounds['leftTop']['lat'] < $rightbottomTile['lat']) or ($bounds['leftTop']['lng'] > $rightbottomTile['lon'])) {
+	//echo "[checkInBounds] lefttopTile: правее или ниже <br>\n";
+	return false;	// правее или ниже
+};
 return true;
 }; // end function checkInBounds
+
+
+function randomUserAgent($userAgents=null){
+if(!$userAgents){
+	$userAgents = [
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:108.0) Gecko/20100101 Firefox/108.0",
+	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+	"Mozilla/5.0 (X11; Linux x86_64; rv:107.0) Gecko/20100101 Firefox/107.0",
+	"Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:107.0) Gecko/20100101 Firefox/107.0",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.54",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:108.0) Gecko/20100101 Firefox/108.0",
+	"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0",
+	"Mozilla/5.0 (Windows NT 10.0; rv:108.0) Gecko/20100101 Firefox/108.0",
+	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.46",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15",
+	"Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0",
+	"Mozilla/5.0 (Windows NT 10.0; rv:107.0) Gecko/20100101 Firefox/107.0",
+	"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:107.0) Gecko/20100101 Firefox/107.0",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.62",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 OPR/93.0.0.0",
+	"Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0",
+	"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6.1 Safari/605.1.15",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:106.0) Gecko/20100101 Firefox/106.0",
+	"Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Safari/605.1.15",
+	"Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0",
+	"Mozilla/5.0 (Windows NT 10.0; rv:102.0) Gecko/20100101 Firefox/102.0",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 Edg/108.0.1462.42",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (X11; Linux x86_64; rv:107.0) Gecko/20100101 Edge/107.0.1418.62",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36 OPR/94.0.0.0",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/109.0",
+	"Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:108.0) Gecko/20100101 Firefox/108.0",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0) Gecko/20100101 Firefox/102.0",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6 Safari/605.1.15",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36 OPR/92.0.0.0",
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:105.0) Gecko/20100101 Firefox/105.0"
+	];
+};
+return $userAgents[array_rand($userAgents)];
+}; // end function randomUserAgent
+
+
+function changeTORnode($mapname,$tilesPerNode=10){
+/* Предпринимается попытка смены выходной ноды TOR, если для mapname уже получено 
+$tilesPerNode тайлов 
+Use it if you hawe Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
+tor MUST have in torrc: ControlPort 9051 without authentication: CookieAuthentication 0 and #HashedControlPassword
+Alternative: set own port, config tor password by tor --hash-password my_password and stay password in `echo authenticate '\"\"'`
+*/
+global $opts;
+if(!@$opts['http']['proxy']) return;
+
+$getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	
+
+$dirName = sys_get_temp_dir()."/tileproxyCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
+$umask = umask(0); 	// сменим на 0777 и запомним текущую
+@mkdir(dirname($dirName), 0777, true);
+$tilesCntFile = "$dirName/tilesCnt_$mapname";
+$tilesCnt = @file_get_contents($tilesCntFile);
+
+//$context = stream_context_create($opts);
+//error_log("скачано через ".file_get_contents('https://check.torproject.org/api/ip',false,$context)." : $tilesCnt\n");
+if ($tilesCnt > $tilesPerNode) { 	// если уже пора
+	//echo"getting new Tor exit node\n";
+	exec($getTorNewNode);	// сменим выходную ноду Tor
+	//error_log("getting new Tor exit node. New node ".file_get_contents('https://check.torproject.org/api/ip',false,$context)."\n");
+	$tilesCnt = 1;
+}
+else $tilesCnt++;
+file_put_contents($tilesCntFile,$tilesCnt);
+@chmod($tilesCntFile,0666); 	// всем всё, чтобы работало от любого юзера. Но изменить права существующего файла, созданного другим юзером не удастся.
+umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
+}; // end function changeTORnode
 ?>

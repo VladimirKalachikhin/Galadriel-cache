@@ -2,9 +2,10 @@
 /**/
 ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 chdir(__DIR__); // задаем директорию выполнение скрипта
+require('fIRun.php'); 	// 
 require('./params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
 
-$SocketTimeout = 30;	// демон умрёт через сек.
+$SocketTimeout = 60;	// демон умрёт через сек.
 //$SocketTimeout = null;	// демон не умрёт никогда
 
 $r = filter_var($argv[1],FILTER_SANITIZE_FULL_SPECIAL_CHARS);	// один параметр -- имя карты без расширения
@@ -12,7 +13,7 @@ if(!$r) {
 	echo "Map name required.\n";
 	return;
 };
-if(IRun($r)) { 	// Я ли?
+if(IRun(basename(__FILE__))) {
 	echo "I'm already running, exiting.\n"; 
 	return;
 };
@@ -33,8 +34,8 @@ if($metadata) $ext = $metadata['value'];
 //if($ext=='pbf') return;	// векторные тайлы не умеем
 
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
-@mkdir(__DIR__."/tmp", 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
-$sockName = __DIR__."/tmp/tileproxy_$r";	// Просто в /tmp/ класть нельзя, ибо оно индивидуально для каждого процесса из-за systemd PrivateTmp
+@mkdir(__DIR__."/sockets", 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
+$sockName = __DIR__."/sockets/tileproxy_$r";	// Просто в /tmp/ класть нельзя, ибо оно индивидуально для каждого процесса из-за systemd PrivateTmp
 $masterSock = socket_create(AF_UNIX, SOCK_STREAM, 0);
 exec("rm -f $sockName");	// на всякий случай
 $res = socket_bind($masterSock, $sockName);
@@ -53,12 +54,14 @@ if($err = socket_last_error($masterSock)) { 	// с сокетом проблем
 			$res = socket_bind($masterSock, $sockName);
 			if(!$res){
 				echo "Failed to bind to master socket by: " . socket_strerror(socket_last_error($masterSock)) . "                                 \n"; 	// в общем-то -- обычное дело. Клиент закрывает соединение, мы об этом узнаём при попытке чтения.
+				error_log("Failed to bind to master socket by: " . socket_strerror(socket_last_error($masterSock)));
 				return;
 			}
 		}
 		break;
 	default:
 		echo "Failed to bind to master socket by: " . socket_strerror(socket_last_error($masterSock)) . "                                 \n"; 	// в общем-то -- обычное дело. Клиент закрывает соединение, мы об этом узнаём при попытке чтения.
+		error_log("Failed to bind to master socket by: " . socket_strerror(socket_last_error($masterSock)));
 		return;
 	}
 }
@@ -233,45 +236,6 @@ $n = array_search($socket,$socksError);	//
 if($n !== FALSE) unset($socksError[$n]);
 } // end function closeSock
 
-
-function IRun($tail='') {
-/**/
-global $phpCLIexec;
-$pid = getmypid();
-//echo "ps -A w | grep '".pathinfo(__FILE__,PATHINFO_BASENAME),"'\n";
-$toFind = pathinfo(__FILE__,PATHINFO_BASENAME)." $tail";
-@exec("ps -A w | grep '$toFind'",$psList);	// конечно, проще через pgrep -f , но не везде есть
-if(!$psList) { 	// for OpenWRT. For others -- let's hope so all run from one user
-	exec("ps w | grep '$toFind'",$psList);
-	echo "IRun: BusyBox based system found\n";
-}
-//echo "__FILE__=".__FILE__."; pid=$pid; phpCLIexec=$phpCLIexec; toFind=$toFind;\n"; print_r($psList); //
-//file_put_contents('IRun.txt', "__FILE__=".__FILE__."; pid=$pid; phpCLIexec=$phpCLIexec; toFind=$toFind;\n".print_r($psList,true)); //
-$run = FALSE; $isPHP = FALSE; $isTail = FALSE;
-foreach($psList as $str) {
-	if(strpos($str,(string)$pid)!==FALSE) continue;
-	//echo "|$str|\n";
-	if((strpos($str,'sh ')!==FALSE) or (strpos($str,'bash ')!==FALSE) or (strpos($str,'ps ')!==FALSE) or (strpos($str,'grep ')!==FALSE)) continue;
-	//echo "str=$str;\n";
-	//if((strpos($str,"$phpCLIexec ")!==FALSE) and (strpos($str,$toFind)!==FALSE)){	
-	// В docker image  thecodingmachine/docker-images-php $phpCLIexec===php, но реально запускается /usr/bin/real_php
-	// поэтому ищем имя скрипта, а в том, чем его запустили -- php
-	if(strpos($str,$toFind)!==FALSE){	
-		$str = explode(' ',$str);
-		//print_r($str);
-		foreach($str as $st){
-			if(strpos($st,"php")!==FALSE) $isPHP = true;
-			if($st == $tail) $isTail = true;
-			if($isPHP and $isTail){
-				$run=TRUE;
-				break 2;
-			};
-		};
-	};
-}
-//echo "run=$run;\n";
-return $run;
-};
 
 
 ?>

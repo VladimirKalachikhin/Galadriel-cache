@@ -3,6 +3,9 @@
 и ещё для чего-нибудь.
 Типа, API. Возвращает json.
 
+The web interface for obtaining information about available maps, loader management, etc.
+Return json
+
 curl -v http://stagerserver.local/tileproxy/cacheControl.php?getMapList
 curl -v http://stagerserver.local/tileproxy/cacheControl.php?getMapInfo=C-MAP
 
@@ -54,14 +57,17 @@ return:
 ';
 
 ob_start(); 	// попробуем перехватить любой вывод скрипта
-session_start();
 ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
-
 chdir(__DIR__); // задаем директорию выполнение скрипта
-require('params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
+
+require('fIRun.php'); 	// 
+
+require('params.php'); 	// пути и параметры 
+
+//$_REQUEST['getMapList'] = true;
+//$_REQUEST['getMapInfo'] = 'NAIS';
 
 $result = null;
-//$_REQUEST['getMapList'] = true;
 if(array_key_exists('getMapList',$_REQUEST)){	
 // Вернуть список имеющихся карт
 	// Получаем список имён карт
@@ -77,32 +83,39 @@ if(array_key_exists('getMapList',$_REQUEST)){
 		$mapsInfo[$mapName] = $humanName;
 	};
 	$result = $mapsInfo;
+	//echo "список имён карт:"; print_r($result); echo "\n";
 }
 elseif($mapName=filter_var($_REQUEST['getMapInfo'],FILTER_SANITIZE_URL)){	
 // Вернуть сведения о конкретной карте
-	if(strpos($mapName,'_COVER')) { 	// нужно показать покрытие, а не саму карту
-		require("$mapSourcesDir/common_COVER"); 	// файл, описывающий источник тайлов покрытия, используемые ниже переменные - оттуда.
-	}
-	else {
-		require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
-		@require("$mapSourcesDir/$mapName.php");	// при отсутствии оно обломится, и ничего возвращено не будет
-	};
+	require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
+	require("$mapSourcesDir/$mapName.php");	// при отсутствии оно обломится, и ничего возвращено не будет
 	$mapInfo = array(
-		'ext'=>$ext,
-		'ContentType'=>$ContentType,
-		'epsg'=>$EPSG, 
-		'minZoom'=>$minZoom,
-		'maxZoom'=>$maxZoom,
-		'data'=>$data
+		'humanName'=>$humanName,
+		'ttl'=>$ttl,	// например, клиент может повторно запросить карту через короткий $ttl
+		'mapTiles'=>$mapTiles
 	);
-	if($bounds) $mapInfo['bounds'] = $bounds;
-	if(($ext=='pbf' or $ContentType=='application/x-protobuf')and(file_exists("$mapSourcesDir/$mapName.json"))) $mapInfo['mapboxStyle'] = "$tileCacheServerPath/$mapSourcesDir/$mapName.json"; 	// путь в смысле web
+	if($clientData) $mapInfo['clientData']=$clientData;
+	if($requestOptions) $mapInfo['requestOptions']=$requestOptions;
+	if(isset($minZoom)) $mapInfo['minZoom']=$minZoom;
+	if(isset($maxZoom)) $mapInfo['maxZoom']=$maxZoom;
+	if($bounds) $mapInfo['bounds']=$bounds;
+	if(is_string($mapTiles)) {
+		if($ext) $mapInfo['ext']=$ext;
+		if($ContentType) $mapInfo['ContentType']=$ContentType;
+		if($content_encoding) $mapInfo['content_encoding']=$content_encoding;
+		if($vectorTileStyleURL) $mapInfo['vectorTileStyleURL']=$vectorTileStyleURL;
+		if($vectorTileFonsURL) $mapInfo['vectorTileFonsURL']=$vectorTileFonsURL;
+		if($vectorTileSpritesURL) $mapInfo['vectorTileSpritesURL']=$vectorTileSpritesURL;
+		if($EPSG) $mapInfo['epsg']=$EPSG;
+	};
 	$result = $mapInfo;
+	//echo "сведения о $mapName:"; print_r($result); echo "\n";
 }
-elseif($jobName=filter_var($_REQUEST['loaderJob'],FILTER_SANITIZE_URL)){	
+//elseif($jobName=filter_var($_REQUEST['loaderJob'],FILTER_SANITIZE_STRING)){	
+elseif($jobName=$_REQUEST['loaderJob']){	
 // Поставить задание на скачивание
 	$XYs = $_REQUEST['xys'];
-	//echo "XYs=$XYs; jobName=$jobName; <br>\n";
+	echo "XYs=$XYs; jobName=$jobName; <br>\n";
 	//$jobName='OpenTopoMap.11';
 	//$XYs="1189,569\n1190,569\n1191,569";
 	if($jobName != 'restart') {
@@ -135,7 +148,8 @@ elseif($jobName=filter_var($_REQUEST['loaderJob'],FILTER_SANITIZE_URL)){
 	$status = 0;
 	//echo (time()-$_SESSION['loaderJobStartLoader'])." ";
 	if((time()-$_SESSION['loaderJobStartLoader'])>3) {
-		exec("$phpCLIexec loaderSched.php $infinitely > /dev/null 2>&1 &",$ret,$status); 	// если запускать сам файл, ему нужны права
+		exec("$phpCLIexec loaderSched.php $infinitely > /dev/null &",$ret,$status); 	// если запускать сам файл, ему нужны права
+		//exec("$phpCLIexec loaderSched.php $infinitely > /dev/null 2>&1 &",$ret,$status); 	// если запускать сам файл, ему нужны права
 		//exec("$phpCLIexec loaderSched.php > log_$jobName.txt 2>&1 &",$ret,$status); 	// если запускать сам файл, ему нужны права
 		if($status==0)$_SESSION['loaderJobStartLoader'] = time();	// при успешном запуске
 	};
@@ -171,29 +185,18 @@ elseif(array_key_exists('loaderStatus',$_REQUEST)){
 		};
 	};
 	//echo "jobsInfo:<pre>"; print_r($jobsInfo); echo "</pre>";
-	// Определим, запущен ли загрузчик
-	$schedInfo = glob("$jobsDir/*.slock"); 	// имеющиеся PIDs запущенных планировщиков. Должен быть только один, но мало ли...
-	//echo "schedInfo:<pre>"; print_r($schedInfo); echo "</pre>";
-	$schedPID = FALSE;
-	foreach($schedInfo as $schedPID) {
-		$schedPID=explode('.slock',end(explode('/',$schedPID)))[0]; 	// basename не работает с неанглийскими буквами!!!!
-		if(file_exists( "/proc/$schedPID")) break; 	// процесс с таким PID работает
-		else {
-			unlink("$jobsDir/$schedPID.slock"); 	// файл-флаг остался от чего-то, но процесс с таким PID не работает - удалим
-			$schedPID = FALSE;
-		};
-	};
-	//echo "schedPID=$schedPID; <br>\n";
-	$result = array("loaderRun"=>$schedPID,"jobsInfo"=>$jobsInfo);
+	// Определим, запущен ли планировщик
+	if(IRun('loaderSched')) $result = array("loaderRun"=>true,"jobsInfo"=>$jobsInfo);
+	else $result = array("loaderRun"=>false,"jobsInfo"=>$jobsInfo);
 }
 else {
 	$result = array("usage"=>$usage);
 };
-//
+
 ob_clean(); 	// очистим, если что попало в буфер
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
 header('Content-Type: application/json;charset=utf-8;');
-//
+
 //echo json_encode($result,JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 echo json_encode($result,JSON_UNESCAPED_UNICODE);	// однострочный JSON передастся быстрее
 

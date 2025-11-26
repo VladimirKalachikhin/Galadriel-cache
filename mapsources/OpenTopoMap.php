@@ -1,4 +1,6 @@
 <?php
+// Все эти переменные глобальны!
+// All of this variables is global!
 $humanName = array('ru'=>'Топокарта OpenTopoMap','en'=>'OpenTopoMap');
 //$ttl = 60*60*24*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 $ttl = 60*60*24*30*12*3; //cache timeout in seconds время, через которое тайл считается протухшим, 3 года, потому что эти суки стали радикально упрощать карты бывших хохляцких территорий
@@ -6,37 +8,32 @@ $ttl = 60*60*24*30*12*3; //cache timeout in seconds время, через ко�
 $noTileReTry = 60*60; 	// no tile timeout, sec. Время, через которое переспрашивать тайлы, которые не удалось скачать. OpenTopoMap банит скачивальщиков, поэтому короткое.
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
-$maxZoom = 18;
+$maxZoom = 17;
+$data = array('noAutoScaled'=>true);	// не масштабировать графически за пределами максимального и минимального масштабов
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, тайлы с дурацкими надписями. '1556c7bd' чистый голубой квадрат 'c7b10d34' чистый голубой квадрат - не мусор! Иначе такие тайлы будут скачиваться снова и снова, а их много.
 $trash = array(
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
 $trueTile=array(15,19796,10302,'2046a299');	// to source check; tile number and CRC32b hash
-/*/
-$functionPrepareTileImg = <<<'EOFU1'
-function prepareTileImg($img){
-// Заменяет в картинке цвет на прозрачный, требует sudo apt install php-gd 
-// В OpenTopoMap цвет моря - 163,221,232 Если заменить его на прозрачный, можно наложить
-// эту карту на непрозрачные морские
-//
-$gd_img = imagecreatefromstring($img);
-$transparentColor = imagecolorexact($gd_img,163,221,232);	// imagecolorallocate() must be called to create each color that is to be used in the image represented by image. 
-//$transparentColor = imagecolorexact($gd_img,151,210,227);	// imagecolorallocate() must be called to create each color that is to be used in the image represented by image. 
-if($transparentColor !== false){
-	$color=imagecolortransparent($gd_img,$transparentColor);
-	ob_start();	// оно может быть вложенным
-	imagepng($gd_img);
-	imagedestroy($gd_img);
-	$img = ob_get_contents();
-	ob_end_clean();
-	//header("X-Debug: prepared tile");
-}
+
+$getURLoptions['r'] = pathinfo(__FILE__, PATHINFO_FILENAME);	// $getURLoptions будет передан в $getURL
+
+$prepareTileImgBeforeReturn = function ($img){
+/* В OpenTopoMap цвет моря - 163,221,232, а озёр - 151,210,227 
+Если заменить эти цвета на прозрачный, можно наложить эту карту на непрозрачные морские
+*/
+if(!$img) return array('img'=>$img);
+$img = setColorsTransparent($img,array(
+	array(163,221,232),
+	array(151,210,227),
+	array(151,209,227),
+	array(154,220,232)
+));
 return array('img'=>$img);
-} // end function prepareTileImg
-EOFU1;
-/*/
-$functionGetURL = <<<'EOFU'
-function getURL($z,$x,$y) {
+}; // end function prepareTileImg
+
+
+$getURL = function ($z,$x,$y,$options=array()) {
 /* К сожалению, OpenTopoMap очень не приветствует массовое скачивание карты, следит за этим,
 и банит по ip. Бан заключается в тридцатисекундной задержке отдачи тайла. Также, возможно,
 случайные тайлы не отдаются совсем, с ответом 404.
@@ -45,31 +42,15 @@ function getURL($z,$x,$y) {
 Приведённая сдесь конфигурация предполагает, что на этой же машине имеется узел tor
 и proxy polipo или privoxy, сконфигурированный только для приёма http и передаче их tor'у по socs.
 У tor должен быть включен управляющий сокет.
-
 По умолчанию всё это отключено. Для включения нужно раскомментировать параметр 'proxy' и 'timeout' в массиве $opts
 
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
-//error_log("OpenTopoMap $z,$x,$y");
-//echo "OpenTopoMap $z,$x,$y |||||||||||||||||||||||||||||||||\n";
-//error_log("OpenTopoMap $z,$x,$y |||||||||||||||||||||||||||||||||\n");	
 
 $server = array('a','b','c');
-$url = 'https://'.$server[array_rand($server)] . '.tile.opentopomap.org';
+$url = 'https://'.$server[array_rand($server)].'.tile.opentopomap.org';
 
-$userAgents = array();
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/604.5.6 (KHTML, like Gecko) Version/11.0.3 Safari/604.5.6';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgent = $userAgents[array_rand($userAgents)];
-
+$userAgent = randomUserAgent();
 $RequestHead='Referer: http://openstreet.com';
 //$RequestHead='';
 
@@ -88,32 +69,7 @@ $opts = array(
 // set it if you hawe Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
 // tor MUST have in torrc: ControlPort 9051 without authentication: CookieAuthentication 0 and #HashedControlPassword
 // Alternative: set own port, config tor password by tor --hash-password my_password and stay password in `echo authenticate '\"\"'`
-$getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	
-$tilesPerNode = 10; 	// change ip after попытка смены ip предпринимается каждые столько тайлов
-$map = 'OpenTopoMap';	// нужно только для смены выходной ноды
-if($getTorNewNode AND @$opts['http']['proxy']) { 	// можно менять выходную ноду Tor.
-	$dirName = sys_get_temp_dir()."/tileproxyCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
-	if(file_exists($dirName) === FALSE) { 	// не будем сбрасывать кеш -- пусть кешируется
-		mkdir($dirName, 0777,true); 	// 
-		chmod($dirName,0777); 	// права будут только на каталог OpenTopoMapCacheInfo. Если он вложенный, то на предыдущие, созданные по true в mkdir, прав не будет. Тогда надо использовать umask.
-	}
-	$tilesCntFile = "$dirName/tilesCnt_$map";
-	$tilesCnt = @file_get_contents($tilesCntFile);
-	
-	//$context = stream_context_create($opts);
-	//error_log("скачано через ".file_get_contents('https://check.torproject.org/api/ip',false,$context)." : $tilesCnt\n");
-	if ($tilesCnt > $tilesPerNode) { 	// если уже пора
-		//echo"getting new Tor exit node\n";
-		exec($getTorNewNode);	// сменим выходную ноду Tor
-		//error_log("getting new Tor exit node. New node ".file_get_contents('https://check.torproject.org/api/ip',false,$context)."\n");
-		$tilesCnt = 1;
-	}
-	else $tilesCnt++;
-	file_put_contents($tilesCntFile,$tilesCnt);
-	@chmod($tilesCntFile,0666); 	// всем всё, чтобы работало от любого юзера. Но изменить права существующего файла, созданного другим юзером не удастся.
-}
-
+changeTORnode($getURLoptions['OpenTopoMap']);
 return array($url,$opts);
-}
-EOFU;
+};
 ?>

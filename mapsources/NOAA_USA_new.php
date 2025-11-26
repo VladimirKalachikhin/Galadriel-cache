@@ -7,10 +7,9 @@ https://encdirect.noaa.gov/arcgis/rest/services/encdirect/enc_harbour/MapServer/
 
 php tilefromsource.php -z15 -x9644 -y12323 -rNOAA_USA_new --maxTry=15
 */
-require_once('fcommon.php');
 $humanName = array('ru'=>'Морская карта NOAA, USA, новая','en'=>'NOAA USA nautical chart, new');
-//$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
-$ttl = 0; 	// тайлы не протухают никогда
+$ttl = 86400*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, один год
+//$ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $ContentType = 'image/png'; 	// if content type differ then file extension
 $minZoom = 3;
@@ -19,25 +18,12 @@ $bounds = array('leftTop'=>array('lat'=>61.3329,'lng'=>134.4),'rightBottom'=>arr
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(14,4822,6161,'4c2d5cf7');	// to source check; tile number and CRC32b hash
+$trueTile=array(14,4822,6161,'9ca7d038');	// to source check; tile number and CRC32b hash
 
-$functionGetURL = <<<'EOFU'
-function getURL($z,$x,$y) {
+$getURL = function ($z,$x,$y) {
 /* 
 */
-$userAgents = array();
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/604.5.6 (KHTML, like Gecko) Version/11.0.3 Safari/604.5.6';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36';
-$userAgents[] = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgents[] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:59.0) Gecko/20100101 Firefox/59.0';
-$userAgent = $userAgents[array_rand($userAgents)];
-
+$userAgent = randomUserAgent();
 $RequestHead='Referer: https://encdirect.noaa.gov/';
 
 $opts = array(
@@ -55,6 +41,5 @@ $rightBottom = tileNum2ord($z,$x+1,$y+1);
 // bbox=-8244587.101865853%2C4963749.342781731%2C-8239160.072857463%2C4966931.034084185
 $url .= "bbox={$leftTop['x']}%2C{$rightBottom['y']}%2C{$rightBottom['x']}%2C{$leftTop['y']}";
 return array($url,$opts);
-}
-EOFU;
+};
 ?>

@@ -2,19 +2,28 @@
 $humanName = array('ru'=>'Погода, слой','en'=>'Weather layer');
 //$ttl = 86400; // 1 day cache timeout in seconds время, через которое тайл считается протухшим
 $ttl = 60*60*1; // cache timeout in seconds время, через которое тайл считается протухшим
-// $ttl = 0; 	// тайлы не протухают никогда
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 1;
 $maxZoom = 7;
 $freshOnly = TRUE; 	// не показывать протухшие тайлы
 // 
-$data = array(
+$clientData = array(
 );
 
-$functionGetURL = <<<'EOFU'
-function getURL($z,$x,$y,$getURLparms=array()) {
-if(!($layer=@$getURLparms['mapAddPath'])) $layer="/wind_stream/0h";
-$url = "https://weather.openportguide.de/tiles/actual$layer";
+// Базово слои поддерживаются по номеру слоя, и тогда должно было бы быть определено 5х8 слоёв.
+// Однако, если нам не нужно скачивание загрузчиком, который умеет только номера, мы можем
+// передать нужное сразу через параметр layer
+$request = $tileCacheServerPath.'/tiles.php?z={z}&x={x}&y={y}&r=Weather&options={"layer":"/';
+$mapTiles = array(
+	$request.'wind_stream/0h"}',
+);
+
+$getURLoptions=array();	
+
+$getURL = function ($z,$x,$y,$getURLparms=array()) {
+if(!isset($getURLparms['layer'])) $getURLparms['layer'] = "/wind_stream/0h";	// любой запрос без номера слоя будет запросом к умолчальному слою
+if(is_numeric($getURLparms['layer'])) $getURLparms['layer'] = "/wind_stream/0h";	// любой запрос по номеру слоя будет запросом к умолчальному слою
+$url = "https://weather.openportguide.de/tiles/actual{$getURLparms['layer']}";
 $url .= "/".$z."/".$x."/".$y.".png";
 $opts = array(
 	'http'=>array(
@@ -22,14 +31,55 @@ $opts = array(
 	)
 );
 return array($url,$opts);
-}
-EOFU;
-// При открытии
-$javascript = <<<'EOJO'
+};
+
+$getTile = function ($r,$z,$x,$y,$options=array()){
+global $getURLoptions;
+//echo "Weather.php [getTile] r=$r; z=$z; x=$x; y=$y; options:<pre>"; print_r($options); echo "</pre><br>\n";
+$img=null;
+if(!isset($options['layer'])) $options['layer'] = "/wind_stream/0h";	// любой запрос без номера слоя будет запросом к умолчальному слою
+if(is_numeric($options['layer'])) $options['layer'] = "/wind_stream/0h";	// любой запрос по номеру слоя будет запросом к умолчальному слою
+// У нас html путь равен пути в файловой системе
+$options['getURLoptions']['layer'] = $options['layer'];
+//echo "Weather.php [getTile] layer=$layer; options:<pre>"; print_r($options); echo "</pre><br>\n";
+$ret = getTileFromFile($r,$z,$x,$y,$options);
+return $ret;
+}; // end function getTile
+
+
+$putTile = function ($mapName,$imgArray,$trueTile=array(),$options=array()){
+if(!isset($options['layer'])) return array(1,"ERROR: no layer info in options for $mapName");
+if(is_numeric($options['layer'])) $options['layer'] = "/wind_stream/0h";	// любой запрос по номеру слоя будет запросом к умолчальному слою
+$ret = putTileToFile($mapName,$imgArray,$trueTile,$options);
+return $ret;
+}; // end function putTile
+
+// При выборе карты
+$javascript = <<<EOJO
+function displayWeatherLayer(event){
+//console.log('[displayWeatherLayer] event:',event.target);
+const layerControlTime = event.target;
+//console.log('[displayWeatherLayer] layerControlTime:',layerControlTime);
+let mapParm = {"mapTiles":[]};
+let request = '$request';
+//console.log('[displayWeatherLayer] request:',request);
+weatherLayers.querySelectorAll('input:checked').forEach(layerControl => {
+	//console.log('[displayWeatherLayer] layerControl:',layerControl);
+	mapParm.mapTiles.push(request+layerControl.value+'/'+layerControlTime.value+'"}')
+});
+//console.log('[displayWeatherLayer] mapParm:',mapParm);
+savedLayers['Weather'].remove();
+savedLayers['Weather'] = realDisplayMap('Weather',mapParm);
+savedLayers['Weather'].addTo(map);
+}; // end function displayWeatherLayer
+
+(function(mapLayer){
 let title, mapTXT, forecastTXT, windTXT, pressureTXT, temperatureTXT, precipitationTXT, waveTXT, windLegendTXT;
 let i18nFileNames = navigator.language.split(',').map((l)=>l.split(';')[0]);
+// Локализация по информации от браузера, а не от сервера!
 // Здесь игнорируются двойные локали (en-US), поэтому американскую локализацию сделать нельзя. Удмуртскую тоже.
 i18nFileNames = Array.from(new Set(i18nFileNames.map((l)=>l.split('-')[0].toLowerCase())));	// unique через set
+//i18nFileNames = ['en'];
 i18Loop: for(let i18nFileName of i18nFileNames){
 	//i18nFileName = '';
 	switch(i18nFileName){
@@ -56,9 +106,9 @@ i18Loop: for(let i18nFileName of i18nFileNames){
 		windLegendTXT = 'Wind legend, m/sec';
 	};
 };
+//console.log('[Weather] on select this:',this,mapLayer); // почему this - это options mapLayer?
 
 if(typeof weatherTab == 'undefined') {
-	additionalTileCachePath = ["/wind_stream/0h"]; 	// default map
 	// create Weather tab
 	let panelContent = {
 		id: 'weatherTab',                     // UID, used to access the panel
@@ -67,114 +117,86 @@ if(typeof weatherTab == 'undefined') {
 		pane: `
 			<div style="height:100%;">
 			by <a href="http://weather.openportguide.de/index.php/en/" target="_blank">Thomas Krüger Weather Service</a><br>
-			<form id="weatherLayers" style="position:relative; z-index:10; width:95%;">
-				<table  style="font-size:120%;float:right;word-break: break-all;width:70%;">
-					<caption><h3>${mapTXT}</h3></caption>
-					<tr style="height:3rem;"><td style="text-align:right;">${windTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="wind_stream" checked ></td></tr>
-					<tr style="height:3rem;"><td style="text-align:right;">${pressureTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="surface_pressure"></td></tr>
-					<tr style="height:3rem;"><td style="text-align:right;">${temperatureTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="air_temperature"></td></tr>
-					<tr style="height:3rem;"><td style="text-align:right;">${precipitationTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="precipitation"></td></tr>
-					<tr style="height:3rem;"><td style="text-align:right;">${waveTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="significant_wave_height"></td></tr>
+			<form style="position:relative; z-index:10; width:95%;">
+				<table  id="weatherLayers" style="font-size:120%;float:right;word-break: break-all;width:70%;">
+					<caption><h3>\${mapTXT}</h3></caption>
+					<tr style="height:3rem;"><td style="text-align:right;">\${windTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="wind_stream"></td></tr>
+					<tr style="height:3rem;"><td style="text-align:right;">\${pressureTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="surface_pressure"></td></tr>
+					<tr style="height:3rem;"><td style="text-align:right;">\${temperatureTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="air_temperature"></td></tr>
+					<tr style="height:3rem;"><td style="text-align:right;">\${precipitationTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="precipitation"></td></tr>
+					<tr style="height:3rem;"><td style="text-align:right;">\${waveTXT}</td><td style="text-align:center;"><input type="checkbox" name="weatherLayer" value="significant_wave_height"></td></tr>
 				</table>
-				<table style="font-size:120%;width:20%;">
-					<caption><h3>${forecastTXT}</h3></caption>
-					<tr style="height:3rem;"><td>O</td><td><input type="radio" name="weatherForecast" value="0h" checked onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
-					<tr style="height:3rem;"><td>6</td><td><input type="radio" name="weatherForecast" value="6h" onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
-					<tr style="height:3rem;"><td>12</td><td><input type="radio" name="weatherForecast" value="12h" onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
-					<tr style="height:3rem;"><td>24</td><td><input type="radio" name="weatherForecast" value="24h" onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
-					<tr style="height:3rem;"><td>36</td><td><input type="radio" name="weatherForecast" value="36h" onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
-					<tr style="height:3rem;"><td>48</td><td><input type="radio" name="weatherForecast" value="48h" onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
-					<tr style="height:3rem;"><td>60</td><td><input type="radio" name="weatherForecast" value="60h" onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
-					<tr style="height:3rem;"><td>72</td><td><input type="radio" name="weatherForecast" value="72h" onClick="
-																									additionalTileCachePath = [];
-																									for(let layer of document.querySelectorAll('input[name=weatherLayer]:checked')) {
-																										additionalTileCachePath.push('/'+layer.value+'/'+this.value);
-																									};
-																									if(! additionalTileCachePath) {additionalTileCachePath = ['/wind_stream/0h']};
-																									displayMap('Weather');
-																									"></td></tr>
+				<table  id="weatherForecastTimeLayers" style="font-size:120%;width:20%;">
+					<caption><h3>\${forecastTXT}</h3></caption>
+					<tr style="height:3rem;"><td>O</td><td><input type="radio" name="weatherForecast" value="0h" onClick="displayWeatherLayer(event);" </td></tr>
+					<tr style="height:3rem;"><td>6</td><td><input type="radio" name="weatherForecast" value="6h" onClick="displayWeatherLayer(event);"></td></tr>
+					<tr style="height:3rem;"><td>12</td><td><input type="radio" name="weatherForecast" value="12h" onClick="displayWeatherLayer(event);"></td></tr>
+					<tr style="height:3rem;"><td>24</td><td><input type="radio" name="weatherForecast" value="24h" onClick="displayWeatherLayer(event);"></td></tr>
+					<tr style="height:3rem;"><td>36</td><td><input type="radio" name="weatherForecast" value="36h" onClick="displayWeatherLayer(event);"></td></tr>
+					<tr style="height:3rem;"><td>48</td><td><input type="radio" name="weatherForecast" value="48h" onClick="displayWeatherLayer(event);"></td></tr>
+					<tr style="height:3rem;"><td>60</td><td><input type="radio" name="weatherForecast" value="60h" onClick="displayWeatherLayer(event);"></td></tr>
+					<tr style="height:3rem;"><td>72</td><td><input type="radio" name="weatherForecast" value="72h" onClick="displayWeatherLayer(event);"></td></tr>
 				</table>	
 			</form>
-			<div style="text-align: right; position: absolute; bottom: 0; right: 0; z-index:1;">
-			<span style="background:rgb(160, 0, 200);">&nbsp; &nbsp; 0-2 &nbsp; &nbsp;</span><br>
-			<span style="background:rgb(130, 0, 220);">&nbsp; &nbsp; 2-3 &nbsp; &nbsp;</span><br>
-			<span style="background:rgb(30, 60, 255);">&nbsp; &nbsp; 3-5 &nbsp; &nbsp;</span><br>
-			<span style="background:rgb(0, 160, 255);">&nbsp; &nbsp; 5-7 &nbsp; &nbsp;</span><br>
-			<span style="background:rgb(0, 200, 200);">&nbsp;&nbsp; 7-10 &nbsp;&nbsp;</span><br>
-			<span style="background:rgb(0, 210, 140);">&nbsp; 10-12 &nbsp;</span><br>
-			<span style="background:rgb(0, 220, 0);">&nbsp; 12-15 &nbsp;</span><br>
-			<span style="background:rgb(160, 230, 50);">&nbsp; 15-18 &nbsp;</span><br>
-			<span style="background:rgb(230, 220, 50);">&nbsp; 18-21 &nbsp;</span><br>
-			<span style="background:rgb(230, 175, 45);">&nbsp; 21-25 &nbsp;</span><br>
-			<span style="background:rgb(240, 130, 40);">&nbsp; 25-29 &nbsp;</span><br>
-			<span style="background:rgb(250, 60, 60);">&nbsp; 29-35 &nbsp;</span><br>
-			<span style="background:rgb(240, 0, 130);">&nbsp;&nbsp; 35&gt; &nbsp; &nbsp;</span><br>
-			${windLegendTXT}&nbsp;
+			<div style="text-align: right; position: absolute; bottom: 1em; right: 0; z-index:1;">
+				\${windLegendTXT}&nbsp;<br>
+				<span style="background:rgb(160, 0, 200);color:white;">&nbsp; &nbsp; 0-2 &nbsp; &nbsp;</span><br>
+				<span style="background:rgb(130, 0, 220);color:white;">&nbsp; &nbsp; 2-3 &nbsp; &nbsp;</span><br>
+				<span style="background:rgb(30, 60, 255);color:white;">&nbsp; &nbsp; 3-5 &nbsp; &nbsp;</span><br>
+				<span style="background:rgb(0, 160, 255);color:white;">&nbsp; &nbsp; 5-7 &nbsp; &nbsp;</span><br>
+				<span style="background:rgb(0, 200, 200);">&nbsp;&nbsp; 7-10 &nbsp;&nbsp;</span><br>
+				<span style="background:rgb(0, 210, 140);">&nbsp; 10-12 &nbsp;</span><br>
+				<span style="background:rgb(0, 220, 0);">&nbsp; 12-15 &nbsp;</span><br>
+				<span style="background:rgb(160, 230, 50);">&nbsp; 15-18 &nbsp;</span><br>
+				<span style="background:rgb(230, 220, 50);">&nbsp; 18-21 &nbsp;</span><br>
+				<span style="background:rgb(230, 175, 45);">&nbsp; 21-25 &nbsp;</span><br>
+				<span style="background:rgb(240, 130, 40);">&nbsp; 25-29 &nbsp;</span><br>
+				<span style="background:rgb(250, 60, 60);color:white;">&nbsp; 29-35 &nbsp;</span><br>
+				<span style="background:rgb(240, 0, 130);color:white;">&nbsp;&nbsp; 35&gt; &nbsp; &nbsp;</span>
 			</div>
-			<div>
-		`,        // DOM elements can be passed, too
+		`,
 	};
 	sidebar.addPanel(panelContent);
 }
 else {
 	sidebar.enablePanel('weatherTab');
-}
+};
 
+{	// блок для локализации переменных
+let url='';
+weatherLayers.querySelectorAll('input').forEach(layerControl => {
+	//console.log(layerControl);
+	for(const layer of mapLayer.getLayers()){
+		//console.log(layer._url);
+		if(layer._url.includes(layerControl.value)){
+			url = layer._url;
+			layerControl.checked = true;
+		};
+	};
+});
+const st = url.lastIndexOf('/')+1;
+const end = url.lastIndexOf('"');
+const timeLayer = url.substring(st,end);
+//console.log('timeLayer=',timeLayer);
+// Поскольку у нас время одинаковое для всех слоёв погоды, считаем, что это время последнего показываемого слоя
+for(const layerControl of weatherForecastTimeLayers.querySelectorAll('input')){
+	if(layerControl.value == timeLayer){
+		layerControl.checked = true;
+		break;
+	};
+};
+};
+
+}); // end function javascriptOpen
 EOJO;
-$data['javascriptOpen'] = $javascript;
-// При закрытии
-$javascript = <<<'EOJC'
+$clientData['javascriptOpen'] = $javascript;
+// При закрытии карты
+$javascript = <<<EOJC
+(function(layer){
 sidebar.removePanel('weatherTab');
 additionalTileCachePath = null;
+}); // end function javascriptClose
 EOJC;
-$data['javascriptClose'] = $javascript;
+$clientData['javascriptClose'] = $javascript;
+
 ?>

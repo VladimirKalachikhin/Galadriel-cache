@@ -9,7 +9,7 @@ clearCache.php MapName fresh
 */
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
-require('fcommon.php');
+require('fCommon.php');
 require('params.php'); 	// пути и параметры
 
 $fresh = FALSE;
@@ -73,7 +73,7 @@ foreach($files as $file) {
 		[$z,$x,$y] = array_slice(explode('/',$file),-3);
 		//if($z>2) break;	// FOR TEST //////////////
 		$y = pathinfo($y,PATHINFO_FILENAME);
-		if(!checkInBounds($z,$x,$y,$bounds)){	// тайл вообще должен быть?
+		if(!checkInBounds($z,$x,$y,$bounds)){	// тайл вообще должен быть? fCommon.php
 			echo "deleting out of bounds tile $file\n";
 			unlink($file);
 			continue;
