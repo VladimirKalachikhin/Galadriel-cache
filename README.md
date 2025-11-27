@@ -1,4 +1,4 @@
-[Русское описание](README.md)  
+[Русское описание](README.ru-RU.md)  
 # GaladrielCache [![License: CC BY-NC-SA 4.0](Cc-by-nc-sa_icon.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)
 This is a simple caching/proxy solution for the tiled map, designed to be used on low-powered devices such as Raspberry Pi or NAS. The author uses it in the [wi-fi router/GSM modem under OpenWRT](https://github.com/VladimirKalachikhin/MT7620_openwrt_firmware) on his sailboat Galadriel.  
 GaladrielCache can be used with any on-line map viewer. [OruxMaps](http://www.oruxmaps.com/cs/en/) is a good choice. The [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map) is the best choice because it fully supports API.   
