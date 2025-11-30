@@ -36,9 +36,9 @@ $getTile = function ($r,$z,$x,$y,$options=array()){$img=null;return array('img'=
 ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
-$infinitely = false;
+$infinitely = false;	// бесконечное количество попыток ПОЛУЧЕНИЯ тайла, а не его сохранения
 if(@$argv[1]=='--infinitely') $infinitely = true;
-
+$infinitely = true;
 require('fCommon.php');	// не используется здесь, но в fTilesStorage.php могут применятся любые функции
 require('fIRun.php'); 	// 
 
@@ -46,7 +46,7 @@ require('params.php'); 	// пути и параметры
 require 'fTilesStorage.php';	// стандартные функции получения/записи тайла из локального хранилища
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 $maxTry = 5 * $maxTry; 	// увеличим количество попыток получить файл
-
+$maxTry = 1;
 $pID = getmypid(); 	// process ID
 $timer = array(); 	// массив для подсчёта затраченного времени
 $lag = 300; 	// сек, на которое может отличатся время, затраченное на карту, от среднего, чтобы карта не подвергалась регулировке затраченного времени. Чем больше - тем ближе скорость скачивания к скорости отдачи для примерно одинаковых по производительности источников, но больше тормозит всё самый медленный.
@@ -93,7 +93,7 @@ do {
 	};
 	// просмотрели все файлы заданий, не нашли, с чем работать - выход
 	if(! $jobName) { 	
-		//error_log("loader.php $pID - No jobs to executing - break.");
+		error_log("loader.php $pID - No jobs to executing - break.");
 		break;
 	};
 	// Выбрали файл задания - всё ли с ним хорошо?
@@ -205,10 +205,10 @@ do {
 	//echo "Будем скачивать $map, слой $mapLayer, тайл $zoom,$x,$y\n";
 	
 	// Собственно, содержательная деятельность: получение тайла или выполнение пользовательской процедуры
+	$result=0; $msg='';
 	if($customPHP){	// имеется пользовательская процедура PHP
 		$customPHP = trim($customPHP);
 		//error_log("loader.php $pID - Evaled PHP"); 	//
-		$result=0; $msg='';
 		eval($customPHP);
 		// Если $customPHP определяет функцию getTile - то выполним стандартное действие:
 		// запустим getTile и с результатом запустим putTile
@@ -223,6 +223,7 @@ do {
 		else {
 			//error_log("loader.php $pID - Executed custom exec string '$execString'"); 	//
 			exec($execString,$output,$result); 	// exec будет ждать завершения
+			$msg = implode(' ',$output);
 		};
 	}
 	else{	// пользовательской процедуры нет
@@ -247,31 +248,27 @@ do {
 			//error_log("loader.php $pID - Executed default exec string |$execString|"); 	//
 			//file_put_contents('savedTiles',"$execString\n",FILE_APPEND);	
 			exec($execString,$output,$result); 	// exec будет ждать завершения
-			$result = 0;
+			$msg = implode(' ',$output);
 		};
 	};
-	if($result !== 0){
-		//error_log("loader.php $pID - Try to retrieve tile x:$x y:$y from $jobName which is failed");
-		if($infinitely){
-			//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
-			//echo "Удлинение файла задания filesize before=".filesize("$jobsInWorkDir/$jobName").";\n";
-
-			clearstatcache(TRUE,"$jobsInWorkDir/$jobName");	/////////////////////////////////////////
-			$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
-			$res = flock($job,LOCK_EX);
-			if($res === false){
-				error_log("loader.php $pID - Unable locking job file Error");
+	if($result !== 0){	// что-то пошло не так, но мы никогда не узнаем, что, иначе, чем разбором $msg
+		if((strpos(strtolower($msg),'save')!==false) and (strpos(strtolower($msg),'error')!==false)){	// там какие-то проблемы сохранения тайла
+			// Возможно завершения места на диске, облом базы данных или другие проблемы сохранения
+			$str = "loader.php $pID gets ERROR of store tile $x,$y from $jobName, tile returned to job";
+			if(!writeTileStringToJob($jobName,$x,$y)){	// вернём запись о тайле обратно в файл задания
+				error_log("loader.php $pID terminated by ERROR of write job file $jobName");
 				exit(1);
 			};
-			fseek($job,0,SEEK_END); 	// сдвинем указатель в конец
-			fwrite($job, $x.",".$y."\n");
-			fflush($job);
-			flock($job, LOCK_UN); 	//снимем блокировку		
-			fclose($job); 	// освободим файл ///////////////////////////////////////////////////////
-			$str = ", but tile $x,$y will be requested again";
-
-			//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
-			//echo "Удлинение файла задания filesize after=".filesize("$jobsInWorkDir/$jobName").";\n";
+		}
+		else{	// там какие-то другие проблемы, считаем, что проблемы получения
+			if($infinitely){	// указано получать бесконечно
+				//error_log("loader.php $pID - Try to retrieve tile x:$x y:$y from $jobName which is failed");
+				if(writeTileStringToJob($jobName,$x,$y)) $str = ", but tile $x,$y will be requested again";
+				else {
+					error_log("loader.php $pID terminated by ERROR of write job file $jobName");
+					exit(1);
+				};
+			};
 		};
 	};
 	
@@ -283,6 +280,29 @@ do {
 } while($jobName);
 @flock($job, LOCK_UN); 	// на всякий случай - снимем блокировку		
 @fclose($job); 	// освободим файл
-//error_log("loader.php - The loader $pID has finished");
+error_log("loader.php - The loader $pID has finished");
 exit(0);
+
+function writeTileStringToJob($jobName,$x,$y){
+global $jobsInWorkDir,$pID;
+//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+//echo "Удлинение файла задания filesize before=".filesize("$jobsInWorkDir/$jobName").";\n";
+
+clearstatcache(TRUE,"$jobsInWorkDir/$jobName");	/////////////////////////////////////////
+$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
+$res = flock($job,LOCK_EX);
+if($res === false){
+	error_log("loader.php $pID - Unable locking job file Error");
+	return false;
+};
+fseek($job,0,SEEK_END); 	// сдвинем указатель в конец
+fwrite($job, $x.",".$y."\n");
+fflush($job);
+flock($job, LOCK_UN); 	//снимем блокировку		
+fclose($job); 	// освободим файл ///////////////////////////////////////////////////////
+
+//clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
+//echo "Удлинение файла задания filesize after=".filesize("$jobsInWorkDir/$jobName").";\n";
+return true;
+}; // end function writeTileStringToJob
 ?>

@@ -187,7 +187,7 @@ foreach($imgArray as $imgInfo){
 	//chmod(dirname($fileName),0777); 	// идейно правильней, но тогда права будут только на этот каталог, а не на предыдущие, созданные по true в mkdir
 	$res = file_put_contents($fileName,$imgInfo[0],LOCK_EX);
 	if($res===false){
-		return array(false,"ERROR saved file $fileName");
+		return array(false,"ERROR save file $fileName");
 	};
 	chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
 	error_log("[putTileToFile] Saved ".strlen($imgInfo[0])." bytes to $fileName");	

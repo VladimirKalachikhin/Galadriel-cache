@@ -2,7 +2,7 @@
 session_start();	// возможно, какие-то пользовательские функции используют сессию. Сама система - нет.
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.0.0
+Version 3.0.1
 История History:
 3.0.0	- new API, multilayer and complex maps and etc.
 2.10.0	- map's function PrepareTileFile for tilefromsource.php with support for uploading more them one tile
