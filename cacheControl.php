@@ -61,8 +61,11 @@ ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 chdir(__DIR__); // задаем директорию выполнение скрипта
 
 require('fIRun.php'); 	// 
+require 'fCommon.php';	// функции, используемые более чем в одном крипте
+require 'fTilesStorage.php';	// стандартные функции получения тайла из локального источника
 
 require('params.php'); 	// пути и параметры 
+if(!$phpCLIexec) $phpCLIexec = trim(explode(' ',trim(shell_exec("ps -p ".(getmypid())." -o command=")))[0]);	// из PID системной командой получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
 
 //$_REQUEST['getMapList'] = true;
 //$_REQUEST['getMapInfo'] = 'NAIS';
@@ -75,6 +78,7 @@ if(array_key_exists('getMapList',$_REQUEST)){
 	foreach(glob("$mapSourcesDir/*.php") as $name) {
 		$mapName=explode('.php',end(explode('/',$name)))[0]; 	// basename не работает с неанглийскими буквами!!!!
 		$humanName = array();
+		require('mapsourcesVariablesList.php');	//
 		include($name);
 		if($humanName){	// из описания источника
 			if(!$humanName['en']) $humanName['en'] = $mapName;

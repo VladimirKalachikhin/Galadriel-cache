@@ -13,7 +13,7 @@ if(!$r) {
 	echo "Map name required.\n";
 	return;
 };
-if(IRun(basename(__FILE__))) {
+if(IRun()) {
 	echo "I'm already running, exiting.\n"; 
 	return;
 };
@@ -24,14 +24,37 @@ if(!file_exists("$tileCacheDir/$r.mbtiles")) {
 echo "Server started for '$r' map in '$tileCacheDir' directory\n";
 
 $db = new SQLite3("$tileCacheDir/$r.mbtiles",SQLITE3_OPEN_READONLY);
+$metadata = array();
 $res = $db->query("
-SELECT value
+SELECT name,value
 FROM metadata
 WHERE name='format'
+	OR name='name'
+	OR name='bounds'
+	OR name='minzoom'
+	OR name='maxzoom'
 ");
-$metadata = $res->fetchArray(SQLITE3_ASSOC);
-if($metadata) $ext = $metadata['value'];
-//if($ext=='pbf') return;	// векторные тайлы не умеем
+while($data = $res->fetchArray(SQLITE3_ASSOC)){
+	switch($data['name']){
+	case 'name':
+		$metadata['humanName'] = array('en'=>$data['value']);	// эти придурки традиционно не знают о существовании других языков
+		break;
+	case 'format':
+		$metadata['ext'] = $data['value'];
+		break;
+	case 'bounds':
+		$bounds = explode(',',$data['value']);
+		$metadata['bounds'] = array('leftTop'=>array('lat'=>$bounds[3],'lng'=>$bounds[0]),'rightBottom'=>array('lat'=>$bounds[1],'lng'=>$bounds[2]));
+		break;
+	case 'minzoom':
+		$metadata['minZoom'] = $data['value'];
+		break;
+	case 'maxzoom':
+		$metadata['maxZoom'] = $data['value'];
+		break;
+	};
+};
+//echo "metadata:"; print_r($metadata); echo "\n";
 
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
 @mkdir(__DIR__."/sockets", 0777, true); 	// если кеш используется в другой системе, юзер будет другим и облом. Поэтому - всем всё. но реально используется umask, поэтому mkdir 777 не получится
@@ -172,28 +195,36 @@ do {
 		//echo "\nПРИНЯТО ОТ КЛИЕНТА ".mb_strlen($buf,'8bit')." байт\n";
 		//echo"|$buf|\n";
 		extract(unserialize($buf),EXTR_OVERWRITE);
-		//echo "\nПРИНЯТО ОТ КЛИЕНТА и декодировано: z=$z; x=$x; y=$y;\n";
-		//error_log("Reciewed and decoded: z=$z; x=$x; y=$y;");
-		// Переход от номеров XYZ к номерам mbtiles:
-		// zoom_level = z
-		// tile_column = x
-		// tile_row = 2^z - 1 - $y = (2 << ($z-1)) - 1 -$y
-		if($z) $y = (2 << ($z-1)) - 1 -$y;	// не нужно пересчитывать номер нулевого тайла
-		$res = $db->query("
-SELECT tile_data
+		//echo "\nПРИНЯТО ОТ КЛИЕНТА и декодировано: request=$request; z=$z; x=$x; y=$y;\n";
+		//error_log("Reciewed and decoded: request=$request; z=$z; x=$x; y=$y;");
+		$n = array_search($socket,$sockets);	// 
+		switch($request){
+		case 'getTile':
+			// Переход от номеров XYZ к номерам mbtiles:
+			// zoom_level = z
+			// tile_column = x
+			// tile_row = 2^z - 1 - $y = (2 << ($z-1)) - 1 -$y
+			if($z) $y = (2 << ($z-1)) - 1 -$y;	// не нужно пересчитывать номер нулевого тайла
+			$res = $db->query(
+"SELECT tile_data
 FROM tiles
 WHERE zoom_level=$z
 	AND tile_column=$x
 	AND tile_row=$y
 ");
-		$img = $res->fetchArray(SQLITE3_ASSOC);
-		//echo "Запрос: z=$z; x=$x; y=$y; \n";//Ответ:"; print_r($img); echo "\n";
-		if($img) $img = $img['tile_data'];
-		//error_log("Query: z=$z; x=$x; y=$y; Result have ".(mb_strlen($img,'8bit'))." bytes");
-		// array('img'=>$img,'ContentType'=>$ContentType,'content_encoding'=>$content_encoding,'ext'=>$ext);
-		$n = array_search($socket,$sockets);	// 
-		$messages[$n] = serialize(array('img'=>$img,'ext'=>$ext));
-		unset($img);
+			$img = $res->fetchArray(SQLITE3_ASSOC);
+			//echo "Запрос: z=$z; x=$x; y=$y; \n";//Ответ:"; print_r($img); echo "\n";
+			if($img) $img = $img['tile_data'];
+			//error_log("Query: z=$z; x=$x; y=$y; Result have ".(mb_strlen($img,'8bit'))." bytes");
+			$messages[$n] = serialize(array('img'=>$img,'ext'=>$metadata['ext']));
+			unset($img);
+			break;
+		case 'putTile':
+			break;
+		case 'getMetainfo':
+		default:
+			$messages[$n] = serialize($metadata);
+		};
 	}
 } while (true);
 foreach($sockets as $socket) {

@@ -40,9 +40,11 @@ $infinitely = false;	// бесконечное количество попыто
 if(@$argv[1]=='--infinitely') $infinitely = true;
 $infinitely = true;
 require('fCommon.php');	// не используется здесь, но в fTilesStorage.php могут применятся любые функции
+require 'fTilesStorage.php';	// стандартные функции получения тайла из локального источника
 require('fIRun.php'); 	// 
 
 require('params.php'); 	// пути и параметры
+if(!$phpCLIexec) $phpCLIexec = trim(explode(' ',trim(shell_exec("ps -p ".(getmypid())." -o command=")))[0]);	// из PID системной командой получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
 require 'fTilesStorage.php';	// стандартные функции получения/записи тайла из локального хранилища
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 $maxTry = 5 * $maxTry; 	// увеличим количество попыток получить файл
@@ -237,10 +239,9 @@ do {
 
 		$optStr = '';
 		if($mapLayer!=null) $optStr = "--options='{\"layer\":$mapLayer}'";
-		$phpCLIexec = trim(explode(' ',getCurrentCommand())[0]);	// из PID получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
 		$execString = "$phpCLIexec tilefromsource.php  -z$zoom -x$x -y$y -r$map --maxTry=$maxTry $optStr";
 		if(IRun($execString)) {
-			echo "Такой тайл уже загружается\n";
+			//echo "Такой тайл уже загружается\n";
 			$result = 0;
 			sleep(1); 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Не сильно тормозит?
 		}

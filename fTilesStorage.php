@@ -203,30 +203,45 @@ return array(true,'');
 // Хранилище SQLite: mbtiles, oruxmaps(?)
 // SQLite storage:  mbtiles, oruxmaps
 function getTileFromSQLite($r,$z,$x,$y,$options=array()){
-/* Получает (растровый) тайл из файла $r.mbtiles, от демона, который этот файл пасёт.
+/* Получает тайл из файла $r.mbtiles, от демона, который этот файл пасёт.
+*/
+$result = SQLiteWrapper($r,'getTile',array('z'=>$z,'x'=>$x,'y'=>$y));
+if(!$result) return array('img'=>null);
+return $result;
+};
+
+function SQLiteWrapper($mapName,$request,$data=array()){
+/* Получает запрошенное в $request из файла $mapName.mbtiles, от демона, который этот файл пасёт.
 При отсутствии демона -- запускает его.
 Предполагается, что переменные из params.php глобальны 
+
+$request: getTile, putTile, getMetainfo
+$data: getTile, putTile: array('z'=>$z,'x'=>$x,'y'=>$y)
 */
 global $phpCLIexec;
 
 // Просто в /tmp/ сокет делать нельзя, ибо оно индивидуально для каждого процесса из-за systemd PrivateTmp
 // Если каталога нет, то он будет создан при запуске сервера, ниже.
-$sockName = __DIR__."/sockets/tileproxy_$r";	
-//echo "[serveMBTiles] r=$r, z=$z, x=$x, y=$y, sockName=$sockName;\n";
+$sockName = __DIR__."/sockets/tileproxy_$mapName";	
+//echo "[SQLiteWrapper] r=$r, z=$z, x=$x, y=$y, sockName=$sockName;\n";
 $socket = socket_create(AF_UNIX, SOCK_STREAM, 0);
 $res = @socket_connect($socket,$sockName);
 if(!$res){	// нет живого сокета
-	exec("$phpCLIexec SQLiteTilesServer.php $r > /dev/null 2>&1 &"); 	// запустим срвер exec не будет ждать завершения
+	exec("$phpCLIexec SQLiteTilesServer.php $mapName > /dev/null 2>&1 &"); 	// запустим срвер exec не будет ждать завершения
 	sleep(1);	// а надо ли ждать, пока стартует сервер? socket_connect сколько-то ждёт и так. Надо! иначе оно реально не успевает, и открытие карты вообще ни к чему не приводит.
 	$res = @socket_connect($socket,$sockName);
-}
-if(!$res) return array('img'=>null);
+};
+if(!$res) return false;
 
-$msg = serialize(array('z'=>$z,'x'=>$x,'y'=>$y))."\n";
+$data['request']=$request;
+$msg = serialize($data)."\n";
+
 $msgLen = mb_strlen($msg,'8bit');
-//echo "[serveMBTiles] Посылаем серверу $msgLen байт:|$msg|\n";
-$res = socket_write($socket, $msg, $msgLen);	// Посылаем запрос, считаем, что он короткий и гарантированно отдастся за один socket_write
-if(!$res) return array('img'=>null);
+//echo "[SQLiteWrapper] Посылаем серверу $msgLen байт:|$msg|\n";
+// Посылаем запрос, считаем, что он короткий и гарантированно отдастся за один socket_write
+$res = socket_write($socket, $msg, $msgLen);	
+if(!$res) return false;
+
 // По причине нехватки буферов и неудачного расположения светил данные могут поступать в сокет
 // неполностью. Поэтому нужно читать, пока не кончится.
 // Однако, поскольку мы читаем в режиме PHP_BINARY_READ, мы не знаем, когда данные кончились:
@@ -236,10 +251,10 @@ if(!$res) return array('img'=>null);
 // Поэтому сигналом о том, что данные кончились является закрытие сокета сервером.
 $result = ''; $bufSize = 1048576;
 do{
-	//error_log("[serveMBTiles] Wait from server");
+	//error_log("[SQLiteWrapper] Wait from server");
 	$buf = socket_read($socket, $bufSize, PHP_BINARY_READ);
-	//echo "[serveMBTiles] Получили от сервера: ".(mb_strlen($buf,'8bit'))." байт\n";// "|$result|\n";
-	//error_log("[serveMBTiles] Recieved from server: ".(mb_strlen($buf,'8bit'))." bytes");
+	//echo "[SQLiteWrapper] Получили от сервера: ".(mb_strlen($buf,'8bit'))." байт\n";// "|$result|\n";
+	//error_log("[SQLiteWrapper] Recieved from server: ".(mb_strlen($buf,'8bit'))." bytes");
 	if($buf!==false){
 		$result .= $buf;
 		//if(mb_strlen($buf,'8bit')<=$bufSize) break;	// прочли всё - не обязательно, данные могли идти маленькими кусками
@@ -249,9 +264,8 @@ do{
 @socket_close($socket); 	// он может быть уже закрыт
 
 $result = unserialize($result);
-//error_log("[serveMBTiles] Request: r=$r, z=$z, x=$x, y=$y; Respoce: ".(mb_strlen($result['img'],'8bit'))." bytes of {$result['ext']}");
-echo "[serveMBTiles] Декодировали: ".(mb_strlen($result['img'],'8bit'))." байт\n";// "|$result|\n";
-if(!$result) return array('img'=>null);
+//error_log("[SQLiteWrapper] Request: r=$r, z=$z, x=$x, y=$y; Respoce: ".(mb_strlen($result['img'],'8bit'))." bytes of {$result['ext']}");
+//echo "[SQLiteWrapper] Декодировали: ".(mb_strlen($result['img'],'8bit'))." байт\n";// "|$result|\n";
 return $result;
 };
 

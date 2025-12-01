@@ -115,6 +115,8 @@ $prepareTileImg = false;
 if($options['prepareTileImg']) $prepareTileImg = true;
 
 require('params.php'); 	// пути и параметры
+if(!$phpCLIexec) $phpCLIexec = trim(explode(' ',trim(shell_exec("ps -p ".(getmypid())." -o command=")))[0]);	// из PID системной командой получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
+
 // Переопределение переменных из params.php
 if($clioptions['maxTry']) $maxTry = intval($clioptions['maxTry']);
 if($clioptions['tryTimeout']) $tryTimeout = intval($clioptions['tryTimeout']);

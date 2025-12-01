@@ -39,7 +39,7 @@ fclose($fp);
 
 Однако, никакой flock не мешает просто удалить флаг-файл. И тогда можно запустить второй экземпляр.
 */
-if(!$ownCmdline) $ownCmdline = getCurrentCommand();
+if(!$ownCmdline) $ownCmdline = trim(getCurrentCommand());
 $ownPid = posix_getpid();
 //echo "ownPid=$ownPid; ownCmdline=$ownCmdline;\n";
 exec('ps ax | grep "'.$ownCmdline.'"',$psList);
@@ -49,7 +49,7 @@ foreach($psList as $str) {
 	if(strpos($str,(string)$ownPid)!==false) continue;
 	if(strpos($str,'ps ax')!==false) continue;
 	if(strpos($str,'grep')!==false) continue;
-	//echo "$str\n";
+	//echo "[IRun] str=$str;\n";
 	$found = true;
 };
 return $found;
