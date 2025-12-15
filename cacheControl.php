@@ -76,7 +76,7 @@ if(array_key_exists('getMapList',$_REQUEST)){
 	// Получаем список имён карт
 	$mapsInfo = null;
 	foreach(glob("$mapSourcesDir/*.php") as $name) {
-		$mapName=explode('.php',end(explode('/',$name)))[0]; 	// basename не работает с неанглийскими буквами!!!!
+		$mapName=explode('.php',end(explode('/',$name)))[0]; 	// basename не работает с неанглийскими буквами!!!! Да нормально всё работает...
 		$humanName = array();
 		require('mapsourcesVariablesList.php');	//
 		include($name);
@@ -119,11 +119,11 @@ elseif($mapName=filter_var($_REQUEST['getMapInfo'],FILTER_SANITIZE_URL)){
 elseif($jobName=$_REQUEST['loaderJob']){	
 // Поставить задание на скачивание
 	$XYs = $_REQUEST['xys'];
-	echo "XYs=$XYs; jobName=$jobName; <br>\n";
+	//echo "XYs=$XYs; jobName=$jobName; <br>\n";
 	//$jobName='OpenTopoMap.11';
 	//$XYs="1189,569\n1190,569\n1191,569";
 	if($jobName != 'restart') {
-		$name_parts = pathinfo($jobName);	// pathinfo не работает с русскими буквами!
+		$name_parts = pathinfo($jobName);
 		//echo "name_parts:<pre>"; print_r($name_parts); echo "</pre>";
 		if(!(is_numeric($name_parts['extension']) AND (intval($name_parts['extension']) <=20 AND intval($name_parts['extension']) >=0))) goto LOADERJOBEND; 	// расширение - не масштаб
 		if(!is_file("$mapSourcesDir/".$name_parts['filename'].'.php')) goto LOADERJOBEND; 	// нет такого источника
@@ -184,7 +184,7 @@ elseif(array_key_exists('loaderStatus',$_REQUEST)){
 		$jobsInfo[$jobName] = round((1-$jobComleteSize/$jobSize)*100); 	// выполнено
 		
 		if($stopLoader) {	// просто удалим выполняющиеся файлы заданий
-			unlink($jobName);
+			unlink("$jobsInWorkDir/$jobName");
 			unlink("$jobsDir/$jobName");
 		};
 	};
@@ -192,6 +192,10 @@ elseif(array_key_exists('loaderStatus',$_REQUEST)){
 	// Определим, запущен ли планировщик
 	if(IRun('loaderSched')) $result = array("loaderRun"=>true,"jobsInfo"=>$jobsInfo);
 	else $result = array("loaderRun"=>false,"jobsInfo"=>$jobsInfo);
+}
+elseif(array_key_exists('collectMBTiles',$_REQUEST)){	
+	exec("$phpCLIexec collectMBTiles.php > /dev/null 2>&1 &",$ret,$status);
+	$result = array("collectMBTiles"=>$status);
 }
 else {
 	$result = array("usage"=>$usage);

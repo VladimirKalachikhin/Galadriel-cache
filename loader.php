@@ -38,14 +38,13 @@ chdir(__DIR__); // задаем директорию выполнение скр
 
 $infinitely = false;	// бесконечное количество попыток ПОЛУЧЕНИЯ тайла, а не его сохранения
 if(@$argv[1]=='--infinitely') $infinitely = true;
-$infinitely = true;
 require('fCommon.php');	// не используется здесь, но в fTilesStorage.php могут применятся любые функции
 require 'fTilesStorage.php';	// стандартные функции получения тайла из локального источника
 require('fIRun.php'); 	// 
 
 require('params.php'); 	// пути и параметры
 if(!$phpCLIexec) $phpCLIexec = trim(explode(' ',trim(shell_exec("ps -p ".(getmypid())." -o command=")))[0]);	// из PID системной командой получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
-require 'fTilesStorage.php';	// стандартные функции получения/записи тайла из локального хранилища
+
 $bannedSourcesFileName = "$jobsDir/bannedSources";
 $maxTry = 5 * $maxTry; 	// увеличим количество попыток получить файл
 $maxTry = 1;
@@ -90,7 +89,7 @@ do {
 		};
 		//echo "jobName=$jobName; is_file($jobsInWorkDir/$jobName)=".is_file("$jobsInWorkDir/$jobName")." filesize($jobsInWorkDir/$jobName)=".filesize("$jobsInWorkDir/$jobName")." \n";
 		// Проверим, что файл задания есть и не пуст
-		if( $jobName AND is_file("$jobsInWorkDir/$jobName") AND (filesize("$jobsInWorkDir/$jobName") > 4) AND (filesize("$jobsInWorkDir/$jobName")<>4096)) break; 	// выбрали файл для обслуживания
+		if( $jobName AND is_file("$jobsInWorkDir/$jobName") AND (filesize("$jobsInWorkDir/$jobName") > 2) AND (filesize("$jobsInWorkDir/$jobName")<>4096)) break; 	// выбрали файл для обслуживания
 		else $jobName = FALSE;	
 	};
 	// просмотрели все файлы заданий, не нашли, с чем работать - выход
@@ -114,19 +113,20 @@ do {
 	// Существует ли файл до сих пор?
 	clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
 	$job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл /////////////////////////////
-	if(!$job) break; 	// файла не оказалось
+	if(!$job) continue; 	// файла не оказалось
 	$res = flock($job,LOCK_EX);
 	if($res === false){
 		error_log("loader.php $pID - Unable locking job file Error");
-		exit(1);
+		continue;	// если не смогли залочить файл - значит, его залочил кто-то другой
 	};
+	//echo "Файл $jobName существует, карта $map\n";
 	$php = false; $customPHP = ''; $execString = '';
 	do{
 		$s=fgets($job);	// считаем строку
 		//echo "s=$s;\n";
 		if($s===false) { 	// файл оказался пуст, кроме строк комментариев и пользовательских процедур
 			//echo "Файл пуст!\n";
-			$res = ftruncate($job,0); 	// укоротим файл на строку
+			$res = ftruncate($job,0); 	// укоротим файл совсем
 			if($res === false){
 				error_log("loader.php $pID - Unable truncated file $jobName");
 				exit(1);
@@ -174,9 +174,9 @@ do {
 	$res = ftruncate($job,$pos-mb_strlen($xy)); 	// укоротим файл на строку
 	if($res === false){
 		error_log("loader.php $pID - Unable truncated file $jobName");
-		exit(1);
+		exit(1);	// тут что-то не то с файлом, лучше прекратить деятельность?
 	};
-	echo "loader.php $pID - File $jobName is truncated to 1 line.\n";
+	//echo "loader.php $pID - File $jobName is truncated to 1 line.\n";
 
 	// возьмём номер тайла
 	list($x,$y) = explode(',',trim($xy));	// наконец, получаем координаты следующего тайла, который надо получить
@@ -189,11 +189,11 @@ do {
 	require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
 	$res=include("$mapSourcesDir/$map.php"); 	// файл, описывающий источник, используемые ниже переменные - оттуда
 	if(!$res){	// нет параметров для этой карты (хотя об этом должен позаботиться планировшик)
-		//error_log("loader.php $pID - There is no map specified in this job. Let's kill the job.");
-		$res = ftruncate($job,0); 	// укоротим файл на строку
+		error_log("loader.php $pID - There is no map specified in this job. Let's kill the job.");
+		$res = ftruncate($job,0); 	// укоротим файл совсем
 		if($res === false){
 			error_log("loader.php $pID - Unable truncated file $jobName");
-			exit(1);
+			exit(1);	// тут что-то не то с файлом, лучше прекратить деятельность?
 		};
 		flock($job, LOCK_UN); 	//снимем блокировку
 		fclose($job); 	// освободим файл ///////////////////////////////////////////////////////////
@@ -229,6 +229,16 @@ do {
 		};
 	}
 	else{	// пользовательской процедуры нет
+		if(!$getURL){
+			// вообще-то, при отсутствии getURL getTile говорит, что тайл получать не надо, а
+			// tilefromsource возвращается с ret 1 и сообщением Impossible
+			// Но это всё потайлово, а здесь мы сразу грохнем всё задание.
+			// Это имеет смысл, если планировщик задания создаёт. Ибо планировщик хоть и знает
+			// про getURL, но не знает про пользовательские процедуры
+			error_log("loader.php $pID - There is no specified getURL for map $map. Let's kill the job.");
+			file_put_contents($job, '');	// укоротим файл совсем
+			continue;	// берём следующий файл задания.
+		};
 		$needToRetrieve = false;
 		// Получим сведения из хранилища о том, что файл действительно нужно получить извне
 		if($getTile) extract($getTile($map,$zoom,$x,$y,array('needToRetrieve'=>true,'layer'=>$mapLayer)),EXTR_IF_EXISTS);	// оно возвращает array('img'=>,'needToRetrieve'=>...)
@@ -252,25 +262,22 @@ do {
 			$msg = implode(' ',$output);
 		};
 	};
-	if($result !== 0){	// что-то пошло не так, но мы никогда не узнаем, что, иначе, чем разбором $msg
-		if((strpos(strtolower($msg),'save')!==false) and (strpos(strtolower($msg),'error')!==false)){	// там какие-то проблемы сохранения тайла
-			// Возможно завершения места на диске, облом базы данных или другие проблемы сохранения
-			$str = "loader.php $pID gets ERROR of store tile $x,$y from $jobName, tile returned to job";
-			if(!writeTileStringToJob($jobName,$x,$y)){	// вернём запись о тайле обратно в файл задания
-				error_log("loader.php $pID terminated by ERROR of write job file $jobName");
-				exit(1);
-			};
-		}
-		else{	// там какие-то другие проблемы, считаем, что проблемы получения
-			if($infinitely){	// указано получать бесконечно
-				//error_log("loader.php $pID - Try to retrieve tile x:$x y:$y from $jobName which is failed");
-				if(writeTileStringToJob($jobName,$x,$y)) $str = ", but tile $x,$y will be requested again";
-				else {
-					error_log("loader.php $pID terminated by ERROR of write job file $jobName");
-					exit(1);
-				};
-			};
+	if(($result > 0) and ($result < 8)){	// Преходящие проблемы
+		error_log("loader.php $pID - Try to retrieve tile x:$x y:$y from $jobName which is failed. $msg");
+		if(writeTileStringToJob($jobName,$x,$y)) error_log(", but tile $x,$y will be requested again");	// вернём запись о тайле обратно в файл задания. Даже если оно неудачно - и ладно.
+	}
+	elseif(($result >= 8) and ($result < 32)){	// Критические проблемы
+		if($infinitely){	// указано получать бесконечно
+			error_log("loader.php $pID - Try to retrieve tile x:$x y:$y from $jobName which is failed. $msg");
+			if(writeTileStringToJob($jobName,$x,$y)) error_log(", but tile $x,$y will be requested again");
 		};
+		// а иначе - пропустим тайл
+	}
+	else {	// опечатки, забытые параметры, неверные вызовы, etc.
+		if($result == 37) error_log("loader.php $pID - There is a problems with tile storage for map $map. Let's kill the job.");
+		else error_log("loader.php $pID - There is a bad parms or settings for map $map. Let's kill the job.");
+		file_put_contents($job, '');	// укоротим файл совсем
+		continue;	// берём следующий файл задания.
 	};
 	
 	$now=microtime(TRUE)-$now;
@@ -291,6 +298,7 @@ global $jobsInWorkDir,$pID;
 
 clearstatcache(TRUE,"$jobsInWorkDir/$jobName");	/////////////////////////////////////////
 $job = fopen("$jobsInWorkDir/$jobName",'r+'); 	// откроем файл также, как раньше, иначе flock не сработает
+if(!$job) return true;	// файла уже нет, считаем, что всё нормально
 $res = flock($job,LOCK_EX);
 if($res === false){
 	error_log("loader.php $pID - Unable locking job file Error");

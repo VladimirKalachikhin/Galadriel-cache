@@ -2,8 +2,9 @@
 session_start();	// возможно, какие-то пользовательские функции используют сессию. Сама система - нет.
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.0.2
+Version 3.1.0
 История History:
+3.1.0	- store to database in the MBTiles format
 3.0.0	- new API, multilayer and complex maps and etc.
 2.10.0	- map's function PrepareTileFile for tilefromsource.php with support for uploading more them one tile
 2.9.0	- map's $bounds support
@@ -112,12 +113,14 @@ if($requestOptions['prepareTileImg']) {	// обработка картинки, 
 //header("X-Debug: The tile was received in ".(microtime(true)-$now)." sec."); 
 showTile($img,$mime_type,$content_encoding,$ext);	// отдадим тайл клиенту
 
-if($requestOptions['layer']) $r .= '__'.addslashes($requestOptions['layer']);
-if($needToRetrieve){	// Нужно запустить фоновое скачивание тайла из источника 
-	createJob($r,$z,$x,$y,TRUE);	// скачать только этот тайл
-};
-if(($img !== false) and ($z >= $aheadLoadStartZoom)){	// Нужно запустить фоновое скачивание тайла из источника 
-	createJob($r,$z,$x,$y); 	// положим в очередь
+if($getURL){	// если есть, чем скачивать
+	if($requestOptions['layer']) $r .= '__'.addslashes($requestOptions['layer']);
+	if($needToRetrieve){	// Нужно запустить фоновое скачивание тайла из источника 
+		createJob($r,$z,$x,$y,TRUE);	// скачать только этот тайл
+	};
+	if(($img !== false) and ($z >= $aheadLoadStartZoom)){	// Нужно запустить фоновое скачивание тайла из источника 
+		createJob($r,$z,$x,$y); 	// положим в очередь
+	};
 };
 
 ob_end_clean(); 			// очистим, если что попало в буфер

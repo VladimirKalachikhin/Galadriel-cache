@@ -20,7 +20,9 @@ $options['needToRetrieve']	checks whether the tile needs to be  retrieve from so
 $options['layer'] = (string)$layer	get tile from path $r/$layer/
 
 Return:
+{'img':$img, '':...}
 $img = null - no tile present
+This array _extract_ed to variables 
 */
 global $ext,$ttl,$freshOnly,$bounds,$noTileReTry,$getURL;	// из описания карты
 global $tileCacheDir,$phpCLIexec;	// из файла конфигурации
@@ -61,17 +63,18 @@ unset($options['needToRetrieve']);
 $showTHENloading = 0;	// ничего не показывать 
 
 // Узнаем время последнего изменения тайла, а заодно - вообще наличие тайла
+$now = time();
 clearstatcache();
 $imgFileTime = @filemtime($fileName); 	// файла может не быть
 //echo "tiles.php: $r/$z/$x/$y tile exist:$imgFileTime, and expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
 if($imgFileTime) { 	// файл есть
 	if($checkonly) return array('checkonly'=>filesize($fileName));
-	if(($imgFileTime+$ttl) < time()) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
+	if(($imgFileTime+$ttl) < $now) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
 		if($freshOnly) { 	// протухшие не показывать
 			if($getURL)	{
-				if($needToRetrieve) $showTHENloading = 4; 	//только скачивать
+				if($needToRetrieve) $showTHENloading = 4; 	//только скачивать (да, его нужно скачивать)
 				else $showTHENloading = 2; 	//сперва скачивать, потом показывать
-			};
+			}
 			// else ;	// ничего не показывать
 		}
 		else { 	// протухшие показывать
@@ -115,7 +118,7 @@ if($img === false){	// файла нет
 }
 elseif(!$img) { 	// файл нулевой длины
  	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
-	if(($imgFileTime+$ttl) < time()) { 	
+	if(($imgFileTime+$ttl) < $now) { 	
 		// файл протух. Однако, пустым мог оказаться только что скачанный файл,
 		// а $imgFileTime у нас от старого. Ну и ладно.
 		// if($freshOnly) { 	// не будем также в этом случае применять требование
@@ -138,7 +141,7 @@ case 4:
 	return array('img'=>$img,'needToRetrieve'=>true);
 	break;
 default:
-	return array('img'=>$img,'needToRetrieve'=>false);	// на всякий случай собщим, что скачивать не надо
+	return array('img'=>$img,'needToRetrieve'=>false);	// на всякий случай собщим, что скачивать не надо. Ага, если нет getURL - на всякий случай?
 };
 }; // end function getTileFromFile
 
@@ -171,6 +174,7 @@ if($trueTile){
 	};
 	return array(true,'');	// ничего не сохраняем
 };
+
 if($imgArray[0][0]===null){	// если первый тайл неправильный
 	$fileName = "$tileCacheDir/$mapName$addPath/".$imgArray[0][1];
 	clearstatcache(true,$fileName);
@@ -202,18 +206,149 @@ return array(true,'');
 
 // Хранилище SQLite: mbtiles, oruxmaps(?)
 // SQLite storage:  mbtiles, oruxmaps
+
 function getTileFromSQLite($r,$z,$x,$y,$options=array()){
 /* Получает тайл из файла $r.mbtiles, от демона, который этот файл пасёт.
+Предполагается, что мы имеем дело только с хранилищем формата mbtiles, и никаких слоёв нет.
+
+$options['checkonly']		checks is the tile exist. No tile return.
+$options['needToRetrieve']	checks whether the tile needs to be  retrieve from source. May or may not return a tile.
+
+Return:
+{'img':$img, '':...}
+$img = null - no tile present
+This array _extract_ed to variables 
 */
+global $ext,$ttl,$freshOnly,$bounds,$noTileReTry,$getURL;	// из описания карты
+global $phpCLIexec;	// из файла конфигурации
+/* $showTHENloading
+0; 	// ничего не показывать 
+1; 	// сперва показывать, потом скачивать 
+2; 	//сперва скачивать, потом показывать
+3; 	// только показывать 
+4; 	// только скачивать 
+
+Должны ли мы получить тайл от источника синхронно?
+	получить
+Загрузить тайл из файловой системы
+Если надо - запустить получение тайла из источника в фоне.
+
+*/
+//
+$checkonly = $options['checkonly'];
+unset($options['checkonly']);	// потому что options передастся в $getURL, а там эти переменные лишние
+$needToRetrieve = $options['needToRetrieve'];
+unset($options['needToRetrieve']);
+$now = time();
+$showTHENloading = 0;	// ничего не показывать 
 $result = SQLiteWrapper($r,'getTile',array('z'=>$z,'x'=>$x,'y'=>$y));
-if(!$result) return array('img'=>null);
-return $result;
+//echo "[getTileFromSQLite] Получено от демона ".mb_strlen($result['img'])." байт.\n";
+if($result['img'] !== false) {	// тайл есть, хотя, возможно, и null. Демон говорит, что img=false, если тайла действительно нет.
+	if($checkonly) return array('checkonly'=>mb_strlen($result['img']));
+	if($result['timestamp'] and (($result['timestamp']+$ttl) < $now)) { 	// файл протух.
+		if($freshOnly) { 	// протухшие не показывать
+			if($getURL)	{
+				if($needToRetrieve) $showTHENloading = 4; 	//только скачивать
+				else $showTHENloading = 2; 	//сперва скачивать, потом показывать
+			};
+			// else ;	// ничего не показывать
+		}
+		else { 	// протухшие показывать
+			if($getURL) {
+				if($needToRetrieve) $showTHENloading = 4; 	//только скачивать
+				else $showTHENloading = 1; 	// сперва показывать, потом скачивать
+			}
+			else $showTHENloading = 3;	// только показывать
+		};
+	}
+	else $showTHENloading = 3;	// файл есть и не протух - только показывать
+}
+else {	// тайла нет
+	if($checkonly) return array('checkonly'=>false);
+	if($getURL) {	// файла нет, но в описании карты указано, где взять
+		// Границы проверяются здесь, потому что это затратно, и делается когда уже всё.
+		// А так - границы должны бы проверяться в tiles.php, до вызова getTile
+		if(checkInBounds($z,$x,$y,$bounds)){	// тайл вообще должен быть?
+				if($needToRetrieve) $showTHENloading = 4; 	//только скачивать
+				else $showTHENloading = 2; 	//сперва скачивать, потом показывать
+		};	// иначе - файла и не должно быть, ничего не показывать
+	};	// иначе - файла и не должно быть, ничего не показывать
+};
+//echo "[getTileFromSQLite] showTHENloading=$showTHENloading;\n";
+switch($showTHENloading){
+case 0:	//ничего не показывать 
+	return array('img'=>null,'needToRetrieve'=>false);	// например, есть needToRetrieve, но тайла нет, и скачивать нечем
+	break;
+case 2:	//сперва скачивать, потом показывать
+	$execStr = "$phpCLIexec tilefromsource.php  -z$z -x$x -y$y -r$r  --options='".(json_encode($options,JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))."'";	// строку json - в кавычках обязательно!
+	//echo "[getTileFromFile] execStr=$execStr;<br>\n";
+	if(IRun($execStr)) sleep(1); 	// Предотвращает множественную загрузку одного тайла одновременно, если у proxy больше одного клиента. Просто подождём, пока другой экземпляр не загрузит этот тайл.
+	else exec($execStr,$output,$result); 	// exec будет ждать завершения. Неважно, какой там $output,$result - нас дальше интересует, что в результате произошло
+	//echo "[getTileFromFile] result=$result; output:<pre>";print_r($output);echo "</pre><br>\n";
+
+	// Возможно, тайл получен от источника и положен в кеш
+	$result = SQLiteWrapper($r,'getTile',array('z'=>$z,'x'=>$x,'y'=>$y));
+case 3:	// только показывать 
+	return array('img'=>$result['img'],'needToRetrieve'=>false);	// на всякий случай собщим, что скачивать не надо
+	break;
+case 1:	// сперва показывать, потом скачивать 
+case 4:	// только скачивать 
+	return array('img'=>$result['img'],'needToRetrieve'=>true);
+	break;
+};
+};	// end function getTileFromSQLite
+
+
+function putTileToSQLite($mapName,$imgArray,$trueTile=array(),$options=array()){
+/* Для начала предполагается, что мы имеем дело только с хранилищем формата mbtiles 
+https://github.com/mapbox/mbtiles-spec/blob/master/1.3/spec.md#vector-tileset-metadata
+*/
+//echo "[putTileToSQLite] mapName=$mapName; options:<pre>"; print_r($options); echo "</pre><br>\n";
+if(!$imgArray) return array(false,"No getted any images");
+
+list($z,$x,$y,$ext,$img) = requestedTileInfo($imgArray);	// номер первого тайла в $imgArray
+// нужно только проверить совпадение полученного и правильного тайла,
+// если $trueTile - массив со свойствами правильного тайла
+if($trueTile){
+	//echo "Check tile $z $x $y "; print_r($trueTile); echo "\n";
+	if($z==$trueTile[0] and $x==$trueTile[1] and $y==$trueTile[2]){	// в описании карты указано, какой тайл правильный
+		$hash = hash('crc32b',$img);
+		if($hash==$trueTile[3]){	// тайл такой, какой нужно
+			return array(true,"The tile is true");	// ничего не сохраняем
+		}
+		else{
+			return array(false,"The tile is not true, must be {$trueTile[3]}, recieved $hash");	// ничего не сохраняем
+		};
+	};
+	return array(true,'');	// ничего не сохраняем
 };
 
+if($img===null){	// если первый тайл неправильный
+	$result = SQLiteWrapper($mapName,'getTile',array('z'=>$z,'x'=>$x,'y'=>$y));
+	if($result){	// однако, в хранилище есть такой файл, и он не пустой
+		return array(true,"Got null, but have any images");	// тогда не будем перезаписывать
+	};
+};
+foreach($imgArray as $imgInfo){
+	list($z,$x,$y,$ext,$img) = requestedTileInfo($imgInfo);	// оно понимает и один массив с тайлом и путём z/x/y.ext
+	$result = SQLiteWrapper($mapName,'putTile',array('img'=>$img,'z'=>$z,'x'=>$x,'y'=>$y));
+	if(!$result['success']) return array(false,"ERROR {$result['message']} save to $mapName database");	// если обломалось, остальные тайлы сохранять не будем
+	error_log("[putTileToSQLite] Saved ".strlen($img)." bytes to $mapName database");	
+};
+
+return array(true,'');
+}; // end function putTileToSQLite
+
+
 function SQLiteWrapper($mapName,$request,$data=array()){
-/* Получает запрошенное в $request из файла $mapName.mbtiles, от демона, который этот файл пасёт.
+/* Выполняет $request с файлом $mapName.mbtiles, путём передачи $request демону, 
+который этот файл пасёт.
 При отсутствии демона -- запускает его.
 Предполагается, что переменные из params.php глобальны 
+
+Клиентское приложение к демону. Предполагается, что оно передаёт данные, потом получает,
+а потом демон закрывает сокет, что служит сигналом к прекращению ожидания получения данных.
+Поэтому здесь не используется socket_select и полноценный цикл общения с сокетом.
 
 $request: getTile, putTile, getMetainfo
 $data: getTile, putTile: array('z'=>$z,'x'=>$x,'y'=>$y)
@@ -223,24 +358,47 @@ global $phpCLIexec;
 // Просто в /tmp/ сокет делать нельзя, ибо оно индивидуально для каждого процесса из-за systemd PrivateTmp
 // Если каталога нет, то он будет создан при запуске сервера, ниже.
 $sockName = __DIR__."/sockets/tileproxy_$mapName";	
-//echo "[SQLiteWrapper] r=$r, z=$z, x=$x, y=$y, sockName=$sockName;\n";
 $socket = socket_create(AF_UNIX, SOCK_STREAM, 0);
 $res = @socket_connect($socket,$sockName);
 if(!$res){	// нет живого сокета
-	exec("$phpCLIexec SQLiteTilesServer.php $mapName > /dev/null 2>&1 &"); 	// запустим срвер exec не будет ждать завершения
-	sleep(1);	// а надо ли ждать, пока стартует сервер? socket_connect сколько-то ждёт и так. Надо! иначе оно реально не успевает, и открытие карты вообще ни к чему не приводит.
-	$res = @socket_connect($socket,$sockName);
+	exec("$phpCLIexec SQLiteTilesServer.php $mapName > /dev/null 2>&1 &"); 	// запустим демона, exec не будет ждать завершения
+	for($i=0;$i<60;$i++){	// демон открывает базу данных, что процесс. Надо ждать.
+		usleep(500000);	// а надо ли ждать, пока стартует сервер? socket_connect сколько-то ждёт и так. Надо! иначе оно реально не успевает, и открытие карты вообще ни к чему не приводит.
+		$res = socket_connect($socket,$sockName);
+		if($res) break;
+	};
 };
 if(!$res) return false;
+//error_log("Connected!");
 
 $data['request']=$request;
 $msg = serialize($data)."\n";
-
 $msgLen = mb_strlen($msg,'8bit');
-//echo "[SQLiteWrapper] Посылаем серверу $msgLen байт:|$msg|\n";
+//echo "[SQLiteWrapper] Посылаем демону $msgLen байт<br>\n";
 // Посылаем запрос, считаем, что он короткий и гарантированно отдастся за один socket_write
-$res = socket_write($socket, $msg, $msgLen);	
-if(!$res) return false;
+// Ваще не факт.
+// Демон читает сокеты по socket_select, поэтому он всегда знает, когда кончились данные.
+// Поэтому не надо никак сигнализировать об окончании передачи.
+// Он-то всегда знает, а мы - нет. Если из сокета что-то получено за три раза - это три
+// сообщения, или одно?
+// Поэтому шлём признак конца сообщения: \n
+do{
+	//echo "Посылаем\n";
+	$res = socket_write($socket, $msg, $msgLen);	
+	//$res = socket_send($socket, $msg, $msgLen,MSG_EOR);
+	//echo "Послали $res байт\n";
+	if($res===false) {
+		//echo "Облом отдачи данных\n";
+		@socket_close($socket); 	// он может быть уже закрыт
+		return false;
+	}
+	elseif($res < $msgLen){	// клиент не принял всё. У него проблемы?
+		error_log("Not all data was writed to socket $n by: " . socket_strerror(socket_last_error($sock)));
+		$msgLen-=$res;
+		continue;	//
+	};
+	break;
+}while(true);	// нужно ли вот это - остаётся открытым. Потребность не наблюдалась.
 
 // По причине нехватки буферов и неудачного расположения светил данные могут поступать в сокет
 // неполностью. Поэтому нужно читать, пока не кончится.
@@ -252,20 +410,29 @@ if(!$res) return false;
 $result = ''; $bufSize = 1048576;
 do{
 	//error_log("[SQLiteWrapper] Wait from server");
+	// socket_read штатно не прекращает чтение никаким способом, посылай ему /n или нет
+	// Поэтому прекращение ожидания прихода данных можно сделать либо закрытием сокета
+	// отсылающей стороной, либо использованием режима socket_set_nonblock($socket); и чтением
+	// и контролем данных руками в цикле.
+	// Из этого должно следовать, что в штатном режиме socket_read прочтёт всё за один раз, и цикл
+	// не нужен, но нет - в PHP_NORMAL_READ оно читает кусками, иногда мелкими, хотя отправляющая
+	// сторона говорит, что отправила всё за один раз.
+	// В режиме PHP_BINARY_READ оно читает за один раз, если прекращение чтения сделано закрытием
+	// сокета.
+	//echo "Ждём от демона\n";
 	$buf = socket_read($socket, $bufSize, PHP_BINARY_READ);
-	//echo "[SQLiteWrapper] Получили от сервера: ".(mb_strlen($buf,'8bit'))." байт\n";// "|$result|\n";
-	//error_log("[SQLiteWrapper] Recieved from server: ".(mb_strlen($buf,'8bit'))." bytes");
+	//$buf = socket_read($socket, $bufSize, PHP_NORMAL_READ);	// обязательно требует, чтобы строка кончалась на \n, иначе не принимает всё
+	//echo "[SQLiteWrapper] Получили от демона: ".(mb_strlen($buf,'8bit'))." байт<br>\n";// "|$result|\n";
 	if($buf!==false){
 		$result .= $buf;
 		//if(mb_strlen($buf,'8bit')<=$bufSize) break;	// прочли всё - не обязательно, данные могли идти маленькими кусками
 	};
-	// else - на той стороне закрыли сокет, по облому или передали всё
 }while($buf);
 @socket_close($socket); 	// он может быть уже закрыт
 
 $result = unserialize($result);
 //error_log("[SQLiteWrapper] Request: r=$r, z=$z, x=$x, y=$y; Respoce: ".(mb_strlen($result['img'],'8bit'))." bytes of {$result['ext']}");
-//echo "[SQLiteWrapper] Декодировали: ".(mb_strlen($result['img'],'8bit'))." байт\n";// "|$result|\n";
+//echo "[SQLiteWrapper] Декодировали img: ".(mb_strlen($result['img'],'8bit'))." байт<br>\n"; echo "<br><pre>\n"; var_dump($result); echo "</pre>\n";
 return $result;
 };
 
@@ -275,7 +442,7 @@ return $result;
 // Common image prepare function for save to storage
 
 function splitToTiles($originalImg,$z,$x,$y,$ext='png'){
-/* Режет картинку на тайлы по 256 пикселов.
+/* Режет картинку на тайлы по 256 пикселов в разграфке ZXY.
 Возвращает массив картинок и путей вида [[tile,"$z/$x/$y.$ext"]].
 Предполагается, что $z,$x,$y - это верхний левый (первый) тайл.
 Если формат входного файла экзотический, то будет возвращён png.
@@ -352,19 +519,25 @@ imagedestroy($gd_img);
 return $imgs;
 }; // end function splitToTiles
 
+
 function requestedTileInfo($imgArray){
-/* Получает массив массивов [$img,"$z/$x/$y.$ext"]
-возвращает массив [$z,$x,$y,$ext,$img] первого элемента.
+/* Получает массив [$img,"$z/$x/$y.$ext"] или массив таких массивов.
+возвращает массив [$z,$x,$y,$ext,$img] из этого массива или из первого элемента массива массивов.
 Считается, что первый элемент - запрошенный тайл.
 */
-list($z,$x,$y) = explode('/',$imgArray[0][1]);
+//echo "[requestedTileInfo] imgArray: "; print_r($imgArray); echo "\n";
+if(is_array($imgArray[0])) $imgInfo = $imgArray[0];
+else $imgInfo = $imgArray;
+//echo "[requestedTileInfo] imgInfo: "; print_r($imgInfo); echo "\n";
+list($z,$x,$y) = explode('/',$imgInfo[1]);
 $y = explode('.',$y);
 $ext = $y[1];
 $y = $y[0];
-//echo "[requestedTileInfo] {$imgArray[0][1]} z=$z; x=$x; y=$y; ext=$ext;\n";
-$img = $imgArray[0][0];
+//echo "[requestedTileInfo] {$imgInfo[1]} z=$z; x=$x; y=$y; ext=$ext;\n";
+$img = $imgInfo[0];
 return array($z,$x,$y,$ext,$img);
 }; // end function requestedTileInfo
+
 
 function requestedTileFirst($z,$x,$y,$ext,$imgArray){
 $requestedTileInfo = "$z/$x/$y.$ext";

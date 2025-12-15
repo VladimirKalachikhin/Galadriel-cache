@@ -359,9 +359,10 @@ if(!@$opts['http']['proxy']) return;
 
 $getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	
 
-$dirName = sys_get_temp_dir()."/tileproxyCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
+//$dirName = sys_get_temp_dir()."/tileproxyCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
+$dirName = "tmp/tileproxyCacheInfo/";
 $umask = umask(0); 	// сменим на 0777 и запомним текущую
-@mkdir(dirname($dirName), 0777, true);
+@mkdir($dirName, 0777, true);
 $tilesCntFile = "$dirName/tilesCnt_$mapname";
 $tilesCnt = @file_get_contents($tilesCntFile);
 

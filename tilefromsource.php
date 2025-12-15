@@ -18,6 +18,32 @@ $options['getURLoptions'] = $getURLoptions - переменный, которы�
 Считается, что тайл от внешнего источника никогда не запрашивается напрямую кем-либо:
 он сперва скачивается в кеш, а потом берётся оттуда.
 
+Коды возврата:
+Return codes:
+Преходящие проблемы
+Temporary problems
+1	Source is banned
+2	Retrieve max tries, but nothing was received
+
+Критические проблемы
+Critical problems
+8	No url for do retrive from source
+9	403 Forbidden or No Content responce
+10	404 Not Found (or similar)
+11	404 Not Found (or similar) on 301 Moved Permanently
+12	403 Forbidden or No Content responce on 301 Moved Permanently
+13	Bad or unknown mime-type
+14	Text response
+
+Ошибки
+Errors
+32	Bad command line parameters
+33	No map description file present
+34	No get from source procedure
+35	No storage procedure
+36	Require check tile, but no tile info
+37	Storage error
+
 It's cli only!
 Makes one request to an external source, and receives a picture from it.
 This image is a single tile or rectangle consisting of several tiles. In the latter case, the
@@ -78,12 +104,12 @@ php tilefromsource.php  -z13 -x5204 -y2908 -rOpenTopoMap --maxTry=5 --tryTimeout
 
 "
 	;
-	exit(1);
+	exit(32);
 };
 $r = filter_var($clioptions['r'],FILTER_SANITIZE_URL);
 if(!$r){
-	error_log("tilefromsource.php - Unsuccessfully: No map name");
-	exit(1);
+	error_log("tilefromsource.php - Impossible: No map name");
+	exit(32);
 };
 $cnt = 0;
 if(array_key_exists('x',$clioptions)) $cnt++;
@@ -107,8 +133,8 @@ if(	($cnt<3 and $cnt>0)
 		)
 	)
 ) {
-	error_log("tilefromsource.php - Unsuccessfully: Incorrect tile info: {$clioptions['r']}/{$clioptions['z']}/{$clioptions['x']}/{$clioptions['y']}");		
-	exit(1);
+	error_log("tilefromsource.php - Impossible: Incorrect tile info: {$clioptions['r']}/{$clioptions['z']}/{$clioptions['x']}/{$clioptions['y']}");		
+	exit(32);
 };
 
 $prepareTileImg = false;
@@ -130,16 +156,16 @@ $mapSourcesDir = 'mapsources'; 	// map sources directory, in filesystem.
 
 // Параметры карты
 if(!(@include "$mapSourcesDir/$r.php")){
-	error_log("tilefromsource.php - Unsuccessfully: Map description file not found");
-	exit(1);
+	error_log("tilefromsource.php - Impossible: Map description file not found");
+	exit(33);
 };
 if(!$getURL){
-	error_log("tilefromsource.php - Unsuccessfully: No do retrieve from source procedure");
-	exit(1);
+	error_log("tilefromsource.php - Impossible: No get from source procedure");
+	exit(34);
 };
 if(!$putTile){
-	error_log("tilefromsource.php - Unsuccessfully: No storage procedure");
-	exit(1);
+	error_log("tilefromsource.php - Impossible: No storage procedure");
+	exit(35);
 };
 
 if($checkonly and ($cnt == 0)) {	// требуется только проверка тайла, и какого именно - не указано.
@@ -149,8 +175,8 @@ if($checkonly and ($cnt == 0)) {	// требуется только провер
 		$z = $trueTile[0];
 	}
 	else {	// Но негде взять адрес тайла
-		error_log("tilefromsource.php - Unsuccessfully: Require check tile, but no tile info");
-		exit(1);
+		error_log("tilefromsource.php - Impossible: Require check tile, but no tile info");
+		exit(36);
 	};
 }
 else {
@@ -160,12 +186,12 @@ else {
 };
 
 if(($z<$minZoom)or($z>$maxZoom)){
-	error_log("tilefromsource.php - Unsuccessfully: Request is out of zoom");
-	exit(1);
+	error_log("tilefromsource.php - Impossible: Request is out of zoom");
+	exit(0);	// тайл не стали получать, но его и не должно быть - норма.
 };
 if(!checkInBounds($z,$x,$y,$bounds)){	// тайл вообще должен быть?
-	error_log("tilefromsource.php - Unsuccessfully: Request is out of map bounds");
-	exit(1);
+	error_log("tilefromsource.php - Impossible: Request is out of map bounds");
+	exit(0);	// тайл не стали получать, но его и не должно быть - норма.
 };
 //echo "maxTry=$maxTry; tryTimeout=$tryTimeout; checkonly=$checkonly; options:"; print_r($options); echo "\n";
 
@@ -178,7 +204,7 @@ if(!$checkonly										// проверяем и забаненный источ
 	and ((time()-@$bannedSources[$z][0])<$noInternetTimeout)	// если срок бана из конфига не истёк
 ) {
 	error_log("tilefromsource.php - Unsuccessfully: Source is banned");
-	exit(1);
+	exit(1);	// banned
 };
 // Проблем связи и источника нет - будем получать тайл
 if(isset($options['getURLoptions'])) {
@@ -199,8 +225,8 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 	if(is_array($uri))	list($uri,$opts) = $uri;
 	if(!is_array($opts)) $opts = array();
 	if(!$uri) { 	// по каким-то причинам нет uri тайла, очевидно, картинки нет и не будет
-		error_log("tilefromsource.php - Unsuccessfully: No url for do retrive from source");
-		exit(1);
+		error_log("tilefromsource.php - Impossible: No url for do retrive from source");
+		exit(8);	// No url
 	};
 	// Параметры запроса
 	if(!@$opts['http']) {
@@ -246,10 +272,10 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 		case 'wait':
 			doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce, do bann source");
-			exit(1);	// бессмысленно ждать, прекращаем получение тайла
+			exit(9);	// 403 Forbidden бессмысленно ждать, прекращаем получение тайла
 		case 'done':
 			error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce");
-			exit(1);	// бессмысленно ждать, прекращаем получение тайла
+			exit(9);	// бессмысленно ждать, прекращаем получение тайла
 		};
 	}
 	elseif((strpos($http_response_header[0],'404') !== FALSE) or (strpos($http_response_header[0],'416') !== FALSE)) { 	// файл не найден or Requested Range Not Satisfiable - это затейники из ЦГКИПД
@@ -261,10 +287,10 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 		case 'wait':
 			doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			error_log("tilefromsource.php - retrieve $tries's try: 404 Not Found (or similar), do bann source");
-			exit(1);	// бессмысленно ждать, прекращаем получение тайла
+			exit(10);	// бессмысленно ждать, прекращаем получение тайла
 		case 'done':
 			error_log("tilefromsource.php - retrieve $tries's try: 404 (or similar). Not Found and go away");
-			exit(1);	// бессмысленно ждать, прекращаем получение тайла
+			exit(10);	// бессмысленно ждать, прекращаем получение тайла
 		};
 	}
 	elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
@@ -279,10 +305,10 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 				case 'wait':
 					doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					error_log("tilefromsource.php - retrieve $tries's try: 404 Not Found (or similar) on 301 Moved Permanently, do bann source");
-					exit(1);	// бессмысленно ждать, прекращаем получение тайла
+					exit(11);	// бессмысленно ждать, прекращаем получение тайла
 				case 'done':
 					error_log("tilefromsource.php - retrieve $tries's try: 404 (or similar) on 301 Moved Permanently. Not Found and go away");
-					exit(1);	// бессмысленно ждать, прекращаем получение тайла
+					exit(11);	// бессмысленно ждать, прекращаем получение тайла
 				};
 			}
 			elseif((substr($header,0,4)=='HTTP') AND ((strpos($header,'403') !== FALSE) or ((strpos($http_response_header[0],'204') !== FALSE)))) { 	// Forbidden.
@@ -294,10 +320,10 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 				case 'wait':
 					doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce on 301 Moved Permanently, do bann source");
-					exit(1);	// бессмысленно ждать, прекращаем получение тайла
+					exit(12);	// бессмысленно ждать, прекращаем получение тайла
 				case 'done':
 					error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce on 301 Moved Permanently");
-					exit(1);	// бессмысленно ждать, прекращаем получение тайла
+					exit(12);	// бессмысленно ждать, прекращаем получение тайла
 				};
 			}
 			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'503') !== FALSE)) { 	// Service Unavailable
@@ -314,7 +340,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 		if(isset($mime_type)) { 	// mime_type того, что должно быть, указан в конфиге источника
 			if($in_mime_type != $mime_type) { 	// mime_type присланного не совпадает с требуемым
 				error_log("tilefromsource.php - retrieve $tries's try: Reciewed $in_mime_type, but expected $mime_type.");
-				exit(1);	// прекращаем получение тайла
+				exit(13);	// прекращаем получение тайла
 			};
 			break; 	// тайл получен
 		}
@@ -327,7 +353,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 				else {
 					error_log("tilefromsource.php - retrieve $tries's try: No tile and unknown responce: {$http_response_header[0]}");
 				};
-				exit(1);	// прекращаем получение тайла
+				exit(14);	// прекращаем получение тайла
 			};
 			break; 	// тайл получен
 		};
@@ -343,7 +369,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 			else {
 				error_log("tilefromsource.php - retrieve $tries's try: No tile and unknown responce: {$http_response_header[0]}");
 			};
-			exit(1);	// прекращаем получение тайла
+			exit(13);	// прекращаем получение тайла
 		};
 		break; 	// тайл получен
 	};
@@ -351,7 +377,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 //echo "Было $tries попыток из $maxTry\n";
 if(!$newimg and ($tries==($maxTry+1))){
 	error_log("tilefromsource.php - retrieve max tries, but nothing was received.");
-	exit(1);
+	exit(2);
 };
 
 // Картинак получена, возможно, она null
@@ -395,7 +421,7 @@ if($checkonly){	// надо только проверить, скачался л
 else {
 	// сохраним тайл
 	list($res,$msg) = $putTile($r,$newimg,null,$options);
-	if(!$res) $exitCode = 1;
+	if(!$res) $exitCode = 37;
 	if(trim($msg)) error_log("tilefromsource.php - $msg");
 };
 

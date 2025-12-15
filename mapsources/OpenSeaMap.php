@@ -16,16 +16,7 @@ $trash = array(
 $trueTile=array(15,19095,9521,'7fc1e790');	// to source check; tile number and CRC32b hash
 
 $getURL = function ($z,$x,$y) {
-/* К сожалению, OpenTopoMap очень не приветствует массовое скачивание карты, следит за этим,
-и банит по ip. Бан заключается в тридцатисекундной задержке отдачи тайла. Также, возможно,
-случайные тайлы не отдаются совсем, с ответом 404.
-Это всё не препятствует обычному просмотру карты, но, если надо скачать более-менее обширные
-площади - скачивать надо, достаточно часто меняя ip. Проще всего это сделать через tor.
-Приведённая сдесь конфигурация предполагает, что на этой же машине имеется узел tor
-и proxy lightdm, сконфигурированный только для приёма http и передаче их tor'у по socs.
-У tor должен быть включен управляющий сокет.
-По умолчанию всё это отключено. Для включения нужно раскомментировать параметр 'proxy' в массиве $opts
-
+/* 
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
 //error_log("OpenSeaMap $z,$x,$y");
@@ -46,10 +37,13 @@ $opts = array(
 	)
 );
 //print_r($opts);
-// set it if you hawe Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
+// set it if you have Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
 // tor MUST have in torrc: ControlPort 9051 without authentication: CookieAuthentication 0 and #HashedControlPassword
 // Alternative: set own port, config tor password by tor --hash-password my_password and stay password in `echo authenticate '\"\"'`
 changeTORnode($getURLoptions['OpenTopoMap']);
 return array($url,$opts);
 };
+
+$getTile = 'getTileFromSQLite'; 	
+$putTile = 'putTileToSQLite';
 ?>

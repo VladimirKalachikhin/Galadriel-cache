@@ -7,7 +7,7 @@ Tiles locally stored on OSM z/x/y file structure, so you may use SD with raster 
 This code is written without using AI, "best practices", OOP, and an IDE.
 
 
-## v. 3.0
+## v. 3.1
 
 Contains:
 * [Features](#features)
@@ -38,6 +38,7 @@ Contains:
 * * [clearCache](#clearcache)
 * * [checkSources](#checksources)
 * * [Coverage](#coverage)
+* * [Automatic perception of the MBTiles maps](#automatic-perception-of-the-mbtiles-maps)
 * [Demo](#demo)
 * [Support](#support)
 
@@ -48,7 +49,7 @@ Contains:
 1. User-defined map sources.
 2. Flexible and robust tile loading with proxy support.
 3. Asynchronous prior loading of large zoom levels.
-4. Asynchronous cache freshing.
+4. Asynchronous cache refreshing.
 5. Separated robust mass downloader.
 6. Plugin-based storage solution with support for file system and [MBTiles](https://github.com/mapbox/mbtiles-spec/blob/master/1.3/spec.md) storage.
 7. Multilayer and complex maps for clients who support API.
@@ -398,6 +399,15 @@ tilesCOVER.php?z=Zoom&x=X_tile_num&y=Y_tile_num&r=map_Name
 ```
 This return current_zoom+8 zoom level coverage of the `map_Name` map. It is clear that every pixel of this tile indicate one tile +8 zoom level. Additionally displayed coverage of loader's max zoom level.  
 The [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) supports this feature.
+
+
+### Automatic perception of the MBTiles maps
+If you have file with the MBTiles map, you can create a map description file automatically. Place MBTiles file to the **$tileCacheDir** directory and run
+```
+php collectMBTiles.php 
+```
+This is enough for raster tiles, but not for vector tiles. For vector tiles, you need to prepare a style file. Creating a style file is beyond the scope of this description, but a reference to the `mapName.json` style file will be inserted into the automatically created map description.  
+The [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master) runs `collectMBTiles.php` on every reload, so  just place the raster MBTiles file in the **$tileCacheDir** directory and it will be available in the [GaladrielMap](https://github.com/VladimirKalachikhin/Galadriel-map/tree/master).
 
 
 

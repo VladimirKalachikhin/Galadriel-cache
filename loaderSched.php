@@ -19,14 +19,15 @@ $umask = umask(0); 	// сменим на 0777 и запомним текущую
 @mkdir($jobsInWorkDir, 0777, true);
 umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 
-if(IRun(basename(__FILE__))) {
+if(IRun()) {
 	error_log("loaderSched.php - I'm already ruunning, exiting.");
 	return;
 };
 
-// Занесём себя в crontab grep -v - инвертировать результат, т.е., в crontab заносится всё, кроме __FILE__
-exec("crontab -l | grep -v '".(basename(__FILE__))."'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
-exec('(crontab -l ; echo "* * * * * '.getCurrentCommand().'  > /dev/null") | crontab -'); 	// каждую минуту  > /dev/null - это если cron настроен так, что шлёт письмо юзеру, если задание что-то вернуло
+$thisCommand = getCurrentCommand();	// избавляет от знания реальной команды php и знает о параметрах
+// Занесём себя в crontab grep -v - инвертировать результат, т.е., в crontab заносится всё, кроме thisCommand
+exec("crontab -l | grep -v '$thisCommand'  | crontab -"); 	// удалим себя из cron, потому что я мог быть запущен cron'ом, а умерший - не мог удалить
+exec("(crontab -l ; echo \"* * * * * $thisCommand  > /dev/null\") | crontab -"); 	// каждую минуту  > /dev/null - это если cron настроен так, что шлёт письмо юзеру, если задание что-то вернуло
 error_log("loaderSched.php - The Loader's scheduler started with pID ".getmypid());
 
 $infinitely = '';
@@ -34,7 +35,9 @@ if(@$argv[1]=='--infinitely') $infinitely = '--infinitely';
 
 $bannedSourcesFileName = "$jobsDir/bannedSources"; 	// служебный файл, куда загрузчик кладёт инфо о проблемах, а скачивальщик смотрит
 @unlink($bannedSourcesFileName);	// удалим файл с информацией о проблемах источников - он мог сохраниться из-за краха
-while($jobs = preg_grep('~.[0-9]$~', scandir($jobsDir))) {	// возьмём только файлы с цифровым расшрением
+// Нужен чтобы хотя бы один оборот, потому что могут быть задания для загрузчиков в jobsInWorkDir
+// как новые, и тогда надо запустить загрузчик; так и завершённые, и тогда их надо убить.
+do {	
 	//echo "Очередь заданий перед началом обработки:"; print_r($jobs); echo "\n";
 	$loaderPIDs = array(); 	// запущенные процессы загрузки
 	exec('ps ax | grep "loader.php"',$loaderPIDs);
@@ -46,15 +49,15 @@ while($jobs = preg_grep('~.[0-9]$~', scandir($jobsDir))) {	// возьмём т�
 	$loaderPIDs = array_filter($loaderPIDs);	// но на самом деле массив с PID загрузчиков нам не нужен. Нужно только их количество.
 	//echo "Вероятно, есть загрузчики: "; print_r($loaderPIDs); echo "\n";
 	//exit;
+	$jobs = preg_grep('~.[0-9]$~', scandir($jobsDir));	// возьмём только файлы с цифровым расшрением
 	// Проверим наличие, установим и снимем задания
-	foreach($jobs as $i => $job) { 	// Ддля каждого файла задания
+	foreach($jobs as $i => $job) { 	// Для каждого файла задания
 		//echo "Очередь заданий к началу обработки:"; print_r($jobs); echo "\n";
 		if(!is_file("$jobsDir/$job")) { 	// этого задания уже нет
 			//echo "$i -е задание $job не является заданием\n";
 			unset($jobs[$i]);
 			continue; 	// 
 		};
-		//echo "$jobsDir/$job \n$jobsInWorkDir/$job \n";
 		error_log("loaderSched.php - There is a job $job");
 		
 		$path_parts = pathinfo($job);
@@ -133,8 +136,8 @@ while($jobs = preg_grep('~.[0-9]$~', scandir($jobsDir))) {	// возьмём т�
 		// Рассматриваемое задание выполняется.
 		clearstatcache(TRUE,"$jobsInWorkDir/$job");
 		$fs = filesize("$jobsInWorkDir/$job"); 	// выполняющееся скачивание
-		//echo "The size of the $jobsInWorkDir/$job is $fs bytes.\n";
-		if($fs<=4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
+		echo "The size of the $jobsInWorkDir/$job is $fs bytes.\n";
+		if($fs<=2 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
 			error_log("loaderSched.php - The job $job is completed.");
 			unlink("$jobsInWorkDir/$job");	// 
 			if($Zoom >= $loaderMaxZoom) { 	//
@@ -149,7 +152,7 @@ while($jobs = preg_grep('~.[0-9]$~', scandir($jobsDir))) {	// возьмём т�
 				$newZoom = substr($nextJob, strrpos($nextJob,'.')+1); 	// 
 				if($newZoom > $maxZoom) unlink("$nextJob");	// что-то не так с масштабами?
 				else {
-					error_log("loaderSched.php - Let's set the zoom for downloading $newZoom");
+					error_log("loaderSched.php - Ok, Let's set the zoom for downloading $newZoom");
 					$umask = umask(0); 	// сменим на 0777 и запомним текущую
 					copy("$nextJob","$jobsInWorkDir/" . basename($nextJob)); 	// поставим на скачивание следующий уровень
 					chmod("$jobsInWorkDir/" . basename($nextJob),0666); 	// чтобы запуск от другого юзера
@@ -158,16 +161,17 @@ while($jobs = preg_grep('~.[0-9]$~', scandir($jobsDir))) {	// возьмём т�
 			};
 		};
 	};	// конец перебора заданий
-	//echo "Очередь заданий к концу обработки:"; print_r($jobs); echo "\n";
+	echo "Имеющиеся задания к концу обработки:"; print_r($jobs); echo "\n";
 	
 	// Если есть задания для загрузчиков -- созданные выше, или добавленные со стороны
 	$loaderJobs = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
+	echo "Выполняющиеся задания loaderJobs:"; print_r($loaderJobs); echo "\n";
 	// Удалим завершившиеся загружающиеся задания
 	foreach($loaderJobs as $i => $jobName) { 	// 
 		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
 		$fs = filesize("$jobsInWorkDir/$jobName"); 	// выполняющееся скачивание
-		//echo "Есть задание $jobName размером $fs\n";
-		if($fs<=4 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
+		//echo "Есть задание $jobName размером $fs, завершено?\n";
+		if($fs<=2 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
 			echo "Deleting the completed job file $jobsInWorkDir/$jobName.\n";
 			unlink("$jobsInWorkDir/$jobName");	
 			unset($loaderJobs[$i]);
@@ -176,10 +180,10 @@ while($jobs = preg_grep('~.[0-9]$~', scandir($jobsDir))) {	// возьмём т�
 	if($loaderJobs) { 	// Если есть задания для загрузки
 		error_log("loaderSched.php - There are jobs for loaders -- loaders are needed.");
 		// Запустим указанное в конфиге количество загрузчиков
-		//$execString = "$phpCLIexec loader.php $infinitely > /dev/null 2>&1 &";
-		$execString = "$phpCLIexec loader.php $infinitely > /dev/null &";	// так в консоли видно и сообщения загрузчиков
+		$execString = "$phpCLIexec loader.php $infinitely > /dev/null 2>&1 &";
+		//$execString = "$phpCLIexec loader.php $infinitely > /dev/null &";	// так в консоли видно и сообщения загрузчиков
 		for($runs=count($loaderPIDs); $runs<$maxLoaderRuns; $runs++) { 	// если уже запущено меньше разрешённого количества загрузчиков - запустим ещё
-			error_log("loaderSched.php - Launching another loader.");
+			//error_log("loaderSched.php - Launching another loader.");
 			exec($execString,$output,$result);
 			if($result==1){
 				error_log("loaderSched.php - Start loader filed, abort. execString=$execString;");
@@ -188,11 +192,12 @@ while($jobs = preg_grep('~.[0-9]$~', scandir($jobsDir))) {	// возьмём т�
 		};
 	};
 	//break;
+	echo "Ждём оборота =================================\n";
 	sleep(5);
-}; 	// пока есть задания для планировщика. Загрузчики останутся работать.
+} while(count($jobs)); 	// пока есть задания для планировщика. Загрузчики останутся работать.
 
 // удалим себя из cron
-exec("crontab -l | grep -v '".__FILE__."'  | crontab -");
+exec("crontab -l | grep -v '$thisCommand'  | crontab -");
 // удалим файл с информацией о проблемах источников
 @unlink($bannedSourcesFileName);	
 error_log("loaderSched.php - The loader scheduler has ended.");

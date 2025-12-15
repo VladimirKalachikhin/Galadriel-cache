@@ -19,6 +19,8 @@ function IRun($ownCmdline=''){
 /* Return true if the process with same command line is run.
 Must be work in busybox.
 
+В docker image  thecodingmachine/docker-images-php $phpCLIexec===php, но реально запускается /usr/bin/real_php
+
 Выглядит более надёжным в смысле совместимости с вариантами linux
 такое решение:
 // Проверяем, не запущен ли уже такой процесс
