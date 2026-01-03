@@ -6,6 +6,7 @@
 ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 chdir(__DIR__); // задаем директорию выполнение скрипта
 require('params.php'); 	// пути и параметры
+require 'fTilesStorage.php';	// стандартные функции получения тайла из локального источника
 
 $logFileName = 'checkSources.log';
 file_put_contents($logFileName, date('d.m.Y H:i')." Следующий источники вернули тайл, отличающийся от правильного:\nThe following sources returned a tile different from the correct one:\n\n");
@@ -33,7 +34,7 @@ foreach($mapsInfo as $mapName) {
 	if($exitcode) {
 		file_put_contents($logFileName,"$mapName $res\n$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly\n\n",FILE_APPEND);
 		echo "no same tile or no tile";
-		if($res) echo " $res";
+		if($res) echo " with res: $res";
 		echo "\n";
 	}
 	else {

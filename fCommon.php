@@ -23,7 +23,7 @@ splitToTiles($originalImg,$z,$x,$y,$ext='png') - режет картину (ра
 checkInBounds - находится ли указанный тайл в пределах указанных границ
 
 randomUserAgent($userAgents=null) - возвращает случайную строку с информацией о браузере для http заголовка User-Agent
-
+changeTORnode($mapname,$tilesPerNode=10)	Предпринимается попытка смены выходной ноды TOR, если для mapname уже получено $tilesPerNode тайлов
 */
 function pixResolution($lat_deg,$zoom,$tile_size=256,$equator=40075016.686){
 /* Размер пикселя указанного масштаба на указанной широте в метрах

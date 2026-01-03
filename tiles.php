@@ -2,7 +2,7 @@
 session_start();	// возможно, какие-то пользовательские функции используют сессию. Сама система - нет.
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.1.0
+Version 3.1.1
 История History:
 3.1.0	- store to database in the MBTiles format
 3.0.0	- new API, multilayer and complex maps and etc.
