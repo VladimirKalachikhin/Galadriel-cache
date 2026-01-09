@@ -364,7 +364,7 @@ if(!$res){	// нет живого сокета
 	exec("$phpCLIexec SQLiteTilesServer.php $mapName > /dev/null 2>&1 &"); 	// запустим демона, exec не будет ждать завершения
 	for($i=0;$i<60;$i++){	// демон открывает базу данных, что процесс. Надо ждать.
 		usleep(500000);	// а надо ли ждать, пока стартует сервер? socket_connect сколько-то ждёт и так. Надо! иначе оно реально не успевает, и открытие карты вообще ни к чему не приводит.
-		$res = socket_connect($socket,$sockName);
+		$res = @socket_connect($socket,$sockName);
 		if($res) break;
 	};
 };

@@ -24,6 +24,7 @@ Return codes:
 Temporary problems
 1	Source is banned
 2	Retrieve max tries, but nothing was received
+3	The tile is already loading
 
 Критические проблемы
 Critical problems
@@ -137,6 +138,12 @@ if(	($cnt<3 and $cnt>0)
 	exit(32);
 };
 
+require('fIRun.php'); 	// 
+if(IRun()){
+	error_log("tilefromsource.php - The tile {$clioptions['r']}/{$clioptions['z']}/{$clioptions['x']}/{$clioptions['y']} is already loading");
+	exit(0);
+};
+
 $prepareTileImg = false;
 if($options['prepareTileImg']) $prepareTileImg = true;
 
@@ -201,9 +208,9 @@ clearstatcache(true,$bannedSourcesFileName);
 $bannedSources = unserialize(@file_get_contents($bannedSourcesFileName)); 	// считаем файл проблем
 if(!$bannedSources) $bannedSources = array();
 if(!$checkonly										// проверяем и забаненный источник
-	and ((time()-@$bannedSources[$z][0])<$noInternetTimeout)	// если срок бана из конфига не истёк
+	and ((time()-@$bannedSources[$r][0])<$noInternetTimeout)	// если срок бана из конфига не истёк
 ) {
-	error_log("tilefromsource.php - Unsuccessfully: Source is banned");
+	error_log("tilefromsource.php - Unsuccessfully: Source $r is banned");
 	exit(1);	// banned
 };
 // Проблем связи и источника нет - будем получать тайл
@@ -270,7 +277,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 			error_log("tilefromsource.php - retrieve $tries's try: will be an enpty tile by 403 Forbidden or No Content responce and on403==skip parameter");
 			break 2;
 		case 'wait':
-			doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
+			doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce, do bann source");
 			exit(9);	// 403 Forbidden бессмысленно ждать, прекращаем получение тайла
 		case 'done':
@@ -285,7 +292,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 			error_log("tilefromsource.php - retrieve $tries's try: Save enpty tile by 404 Not Found (or similar)");
 			break 2;
 		case 'wait':
-			doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
+			doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 			error_log("tilefromsource.php - retrieve $tries's try: 404 Not Found (or similar), do bann source");
 			exit(10);	// бессмысленно ждать, прекращаем получение тайла
 		case 'done':
@@ -303,7 +310,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 					error_log("tilefromsource.php - retrieve $tries's try: Save enpty tile by 404 Not Found (or similar) on 301 Moved Permanently");
 					break 3;
 				case 'wait':
-					doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
+					doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					error_log("tilefromsource.php - retrieve $tries's try: 404 Not Found (or similar) on 301 Moved Permanently, do bann source");
 					exit(11);	// бессмысленно ждать, прекращаем получение тайла
 				case 'done':
@@ -318,7 +325,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 					error_log("tilefromsource.php - retrieve $tries's try: Save enpty tile by 403 Forbidden or No Content responce on 301 Moved Permanently and on403==skip parameter");
 					break 3;
 				case 'wait':
-					doBann($z,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
+					doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
 					error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce on 301 Moved Permanently, do bann source");
 					exit(12);	// бессмысленно ждать, прекращаем получение тайла
 				case 'done':
@@ -426,8 +433,8 @@ else {
 };
 
 // Обслужим источник
-if(@$bannedSources[$z]) { 	// снимем проблемы с источником, нормальный тайл или нет
-	unset($bannedSources[$z]); 	// снимем проблемы с источником
+if(@$bannedSources[$r]) { 	// снимем проблемы с источником, нормальный тайл или нет
+	unset($bannedSources[$r]); 	// снимем проблемы с источником
 	$umask = umask(0); 	// сменим на 0777 и запомним текущую
 	file_put_contents($bannedSourcesFileName, serialize($bannedSources));
 	@chmod($bannedSourcesFileName,0666); 	// чтобы при запуске от другого юзера была возаможность 
