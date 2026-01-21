@@ -117,8 +117,16 @@ if(array_key_exists('x',$clioptions)) $cnt++;
 if(array_key_exists('y',$clioptions)) $cnt++;
 if(array_key_exists('z',$clioptions)) $cnt++;
 
-if(isset($clioptions['options'])) $options = json_decode($clioptions['options'],true);
+if(isset($clioptions['options'])) {
+	$options = json_decode($clioptions['options'],true);
+	if($options === null){
+		error_log("tilefromsource.php - getted options, but false decode JSON. JSON set to empty.");
+		$options = array();
+	};
+}
 else $options = array();
+
+//echo "tilefromsource.php - options: "; print_r($options); echo "\n"; exit;
 $checkonly = $options['checkonly'];
 if(array_key_exists('checkonly',$clioptions)) $checkonly = true;
 $options['checkonly'] = $checkonly;
@@ -180,6 +188,12 @@ if($checkonly and ($cnt == 0)) {	// требуется только провер
 		$x = $trueTile[1];
 		$y = $trueTile[2];
 		$z = $trueTile[0];
+		if(is_array($mapTiles)){	// карта многослойная
+			if(!isset($options['layer'])) {
+				if(isset($trueTile[4])) $options['layer'] = $trueTile[4];
+				else $options['layer'] = 0;	// правильный тайл - у нижнего слоя
+			};
+		};
 	}
 	else {	// Но негде взять адрес тайла
 		error_log("tilefromsource.php - Impossible: Require check tile, but no tile info");

@@ -75,7 +75,7 @@ $trash = array();
 
 // Для контроля источника: номер правильного тайла и его CRC32b хеш,
 // to source check; tile number and CRC32b hash
-// array($zoom,$x,$y,$hash)
+// array($zoom,$x,$y,$hash,layer)
 // Например Example: [15,20337,10160,'d205b575']
 $trueTile=array();	
 

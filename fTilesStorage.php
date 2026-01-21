@@ -4,8 +4,25 @@ Standard functions for getting/writing tiles from/to local storage - cache, mbti
 
 Файловое хранилище
 File storage
+
 getTileFromFile($r,$z,$x,$y,$options=array())
 putTileToFile($r,$z,$x,$y,$options=array())
+
+
+Хранилище SQLite: mbtiles, oruxmaps(?)
+SQLite storage:  mbtiles, oruxmaps
+
+getTileFromSQLite($r,$z,$x,$y,$options=array())
+putTileToSQLite($mapName,$imgArray,$trueTile=array(),$options=array())
+SQLiteWrapper($mapName,$request,$data=array())
+
+
+Функции обработки картинки для сохранения
+Common image prepare function for save to storage
+
+function splitToTiles($originalImg,$z,$x,$y,$ext='png') - режет картину (размерами, кратными тайлу) на тайлы
+function requestedTileInfo($imgArray)
+function requestedTileFirst($z,$x,$y,$ext,$imgArray)
 
 */
 
@@ -193,7 +210,7 @@ foreach($imgArray as $imgInfo){
 	if($res===false){
 		return array(false,"ERROR save file $fileName");
 	};
-	chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
+	@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
 	error_log("[putTileToFile] Saved ".strlen($imgInfo[0])." bytes to $fileName");	
 	//file_put_contents('savedTiles',"[putTileToFile] ".strlen($imgInfo[0])." bytes to $fileName\n",FILE_APPEND);	
 };

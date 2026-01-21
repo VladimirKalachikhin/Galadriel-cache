@@ -5,7 +5,7 @@
 //session_start();	
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.1.2
+Version 3.1.3
 История History:
 3.1.0	- store to database in the MBTiles format
 3.0.0	- new API, multilayer and complex maps and etc.
