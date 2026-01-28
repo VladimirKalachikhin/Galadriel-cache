@@ -10,9 +10,7 @@ $trueTile=array(15,19796,10302,'2010870b');	// to source check; tile number and 
 
 $getURL = function ($z,$x,$y) {
 $server = array();
-$server[] = 'a.tile.openstreetmap.org';
-$server[] = 'b.tile.openstreetmap.org';
-$server[] = 'c.tile.openstreetmap.org';
+$server[] = 'tile.openstreetmap.org';
 
 $userAgent = randomUserAgent();
 $RequestHead='Referer: http://openstreet.com';
