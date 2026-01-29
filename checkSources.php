@@ -28,8 +28,10 @@ foreach($mapsInfo as $mapName) {
 	if(!$trueTile) continue;
 	echo "Processing $mapName ... ";
 	list($z,$x,$y,$hash)=$trueTile;
+	$output=array(); $exitcode=null;
 	$res = exec("$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly",$output,$exitcode);
 	$res = trim($res);
+	//echo "output:";print_r($output);echo"\n";
 	//echo "res=$res; exitcode=$exitcode;\n";
 	if($exitcode) {
 		file_put_contents($logFileName,"$mapName $res\n$phpCLIexec tilefromsource.php -z$z -x$x -y$y -r$mapName --maxTry=15 --checkonly\n\n",FILE_APPEND);

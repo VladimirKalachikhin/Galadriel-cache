@@ -44,11 +44,13 @@ fclose($fp);
 if(!$ownCmdline) $ownCmdline = trim(getCurrentCommand());
 $ownPid = posix_getpid();
 //echo "ownPid=$ownPid; ownCmdline=$ownCmdline;\n";
+$psList = array();
 exec('ps ax | grep "'.$ownCmdline.'"',$psList);
 //echo "psList:";print_r($psList);echo"\n";
 $found = false;
 foreach($psList as $str) {
 	if(strpos($str,(string)$ownPid)!==false) continue;
+	if(strpos($str,' sh')!==false) continue;
 	if(strpos($str,'ps ax')!==false) continue;
 	if(strpos($str,'grep')!==false) continue;
 	//echo "[IRun] str=$str;\n";

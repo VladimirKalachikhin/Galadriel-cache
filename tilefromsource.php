@@ -25,6 +25,7 @@ Temporary problems
 1	Source is banned
 2	Retrieve max tries, but nothing was received
 3	The tile is already loading
+4	Tile is not true
 
 Критические проблемы
 Critical problems
@@ -436,6 +437,7 @@ if($checkonly){	// надо только проверить, скачался л
 	list($res,$msg) = $putTile($r,$newimg,$trueTile,$options);
 	// tilefromsource вызывается в checkSources.php для проверки доступности всех карт, 
 	// поэтому ответ должен быть вменяем
+	if(!$res) $exitCode = 4;
 	if(trim($msg)) echo "$msg\n";	
 	else echo "\n"; 
 }
