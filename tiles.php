@@ -5,8 +5,9 @@
 //session_start();	
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.1.4
+Version 3.1.5
 История History:
+3.1.5	- cloudflare must die
 3.1.0	- store to database in the MBTiles format
 3.0.0	- new API, multilayer and complex maps and etc.
 2.10.0	- map's function PrepareTileFile for tilefromsource.php with support for uploading more them one tile

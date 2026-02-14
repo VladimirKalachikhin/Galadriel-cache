@@ -269,6 +269,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 	};
 	if(!@$opts['http']['timeout']) { 
 		$opts['http']['timeout'] = (float)$getTimeout;	// таймаут ожидания получения тайла, сек. params.php
+		if(!$opts['http']['timeout']) $opts['http']['timeout'] = 30;
 	};
 	if(!isset($opts['http']['follow_location'])) { 
 		$opts['http']['follow_location'] = 1;	// Follow Location header redirects.
@@ -355,7 +356,14 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 	};
 
 	// Обработка проблем полученного
-	$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений
+	$in_length = intval(substr(end(getResponceFiled($http_response_header,'Content-Length')),15));
+	//echo "Получено ".(strlen($newimg))." байт, дложно быть $in_length;\n";
+	if($in_length and (strlen($newimg)!=$in_length)){	// Было получено не столько (меньше, чем) должно было быть. Это делает cloudflare. При отсутствии Content-Length будет 0.
+		error_log("tilefromsource.php - retrieve $tries's try: Reciewed ".(strlen($newimg))." bytes, but must be $in_length bytes.");
+		$newimg = FALSE; 	// тайл получить не удалось
+		continue;	// попытаемся получить снова?
+	};
+	$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений. Если Content-Type вообще нет - будет пустая строка.
 	//echo "in_mime_type=$in_mime_type;\n";
 	//echo "trash "; print_r($trash); echo "\n";
 	if($in_mime_type) { 	// mime_type присланного сообщили

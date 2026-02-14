@@ -76,10 +76,30 @@ if(array_key_exists('getMapList',$_REQUEST)){
 	// Получаем список имён карт
 	$mapsInfo = null;
 	foreach(glob("$mapSourcesDir/*.php") as $name) {
+		//echo "$name<br>\n";
+		/*/ Это ооооочень медленно. Может быть, token_get_all()?
+		$res = exec($phpCLIexec.' -l "'.$name.'"',$output,$ret);
+		if($ret){
+			error_log("$name $res, skip");
+			continue;
+		};
+		/*/
 		$mapName=explode('.php',end(explode('/',$name)))[0]; 	// basename не работает с неанглийскими буквами!!!! Да нормально всё работает...
 		$humanName = array();
 		require('mapsourcesVariablesList.php');	//
 		include($name);
+		/*/ Это ещё боле медленно. Кроме того, eval != include? При include нет никаких warnings, а при eval - есть.
+		$src = file_get_contents($name);
+		$src = substr(substr($src,strpos($src,'<?php')+5),0,strrpos($src,'?>'));	// заведомо считаем, что оно там есть
+		try {
+			eval($src);
+		}
+		catch (ParseError $error) {
+			//error_log("$name has exception: {$error->getMessage()}, skip map.");
+			echo "$name has exception: {$error->getMessage()}, skip map.<br>\n";
+			continue;
+		};
+		/*/
 		if($humanName){	// из описания источника
 			if(!$humanName['en']) $humanName['en'] = $mapName;
 		}
