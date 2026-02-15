@@ -211,8 +211,8 @@ foreach($imgArray as $imgInfo){
 		return array(false,"ERROR save file $fileName");
 	};
 	@chmod($fileName,0666); 	// чтобы при запуске от другого юзера была возможность заменить тайл, когда он протухнет
-	error_log("[putTileToFile] Saved ".strlen($imgInfo[0])." bytes to $fileName");	
-	//file_put_contents('savedTiles',"[putTileToFile] ".strlen($imgInfo[0])." bytes to $fileName\n",FILE_APPEND);	
+	error_log("[putTileToFile] Saved ".mb_strlen($imgInfo[0],'8bit')." bytes to $fileName");	
+	//file_put_contents('savedTiles',"[putTileToFile] ".mb_strlen($imgInfo[0],'8bit')." bytes to $fileName\n",FILE_APPEND);	
 };
 umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 return array(true,'');
@@ -259,9 +259,9 @@ unset($options['needToRetrieve']);
 $now = time();
 $showTHENloading = 0;	// ничего не показывать 
 $result = SQLiteWrapper($r,'getTile',array('z'=>$z,'x'=>$x,'y'=>$y));
-//echo "[getTileFromSQLite] Получено от демона ".mb_strlen($result['img'])." байт.\n";
+//echo "[getTileFromSQLite] Получено от демона ".mb_strlen($result['img'],'8bit')." байт.\n";
 if($result['img'] !== false) {	// тайл есть, хотя, возможно, и null. Демон говорит, что img=false, если тайла действительно нет.
-	if($checkonly) return array('checkonly'=>mb_strlen($result['img']));
+	if($checkonly) return array('checkonly'=>mb_strlen($result['img'],'8bit'));
 	if($result['timestamp'] and (($result['timestamp']+$ttl) < $now)) { 	// файл протух.
 		if($freshOnly) { 	// протухшие не показывать
 			if($getURL)	{
@@ -350,7 +350,7 @@ foreach($imgArray as $imgInfo){
 	list($z,$x,$y,$ext,$img) = requestedTileInfo($imgInfo);	// оно понимает и один массив с тайлом и путём z/x/y.ext
 	$result = SQLiteWrapper($mapName,'putTile',array('img'=>$img,'z'=>$z,'x'=>$x,'y'=>$y));
 	if(!$result['success']) return array(false,"ERROR {$result['message']} save to $mapName database");	// если обломалось, остальные тайлы сохранять не будем
-	error_log("[putTileToSQLite] Saved ".strlen($img)." bytes to $mapName database");	
+	error_log("[putTileToSQLite] Saved ".mb_strlen($img,'8bit')." bytes to $mapName database");	
 };
 
 return array(true,'');

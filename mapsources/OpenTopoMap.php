@@ -1,9 +1,9 @@
 <?php
 // Все эти переменные глобальны!
 // All of this variables is global!
-$humanName = array('ru'=>'Топокарта OpenTopoMap','en'=>'OpenTopoMap');
-//$ttl = 60*60*24*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
-$ttl = 60*60*24*30*12*3; //cache timeout in seconds время, через которое тайл считается протухшим, 3 года, потому что эти суки стали радикально упрощать карты бывших хохляцких территорий
+$humanName = array('ru'=>'Топокарта OpenTopoMap (старая)','en'=>'OpenTopoMap (the old)');
+$ttl = 60*60*24*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
+//$ttl = 60*60*24*30*12*3; //cache timeout in seconds время, через которое тайл считается протухшим, 3 года, потому что эти суки стали радикально упрощать карты бывших хохляцких территорий
 //$ttl = 0; 	// тайлы не протухают никогда
 $noTileReTry = 60*60; 	// no tile timeout, sec. Время, через которое переспрашивать тайлы, которые не удалось скачать. OpenTopoMap банит скачивальщиков, поэтому короткое.
 $ext = 'png'; 	// tile image type/extension
@@ -12,10 +12,10 @@ $maxZoom = 17;
 $data = array('noAutoScaled'=>true);	// не масштабировать графически за пределами максимального и минимального масштабов
 // crc32 хеши тайлов, которые не надо сохранять: логотипы, тайлы с дурацкими надписями. '1556c7bd' чистый голубой квадрат 'c7b10d34' чистый голубой квадрат - не мусор! Иначе такие тайлы будут скачиваться снова и снова, а их много.
 $trash = array(
-	'2afb4cc6'	// кретинская картинка, которую с некоторых пор они отправляют вместо тайла в случае ...? Да в случае русских, казлы.
+	'2afb4cc6'	// кретинская картинка, которую с некоторых пор они отправляют вместо тайла в случае ...?
 );
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(15,19796,10302,'2046a299');	// to source check; tile number and CRC32b hash
+$trueTile=array(15,19796,10302,'bb69e346');	// to source check; tile number and CRC32b hash
 
 $getURLoptions['r'] = pathinfo(__FILE__, PATHINFO_FILENAME);	// $getURLoptions будет передан в $getURL
 
@@ -52,16 +52,16 @@ $server = array('a','b','c');
 $url = 'https://'.$server[array_rand($server)].'.tile.opentopomap.org';
 
 $userAgent = randomUserAgent();
-$RequestHead='Referer: http://opentopomap.org';
+$RequestHead = "Referer: http://opentopomap.org\r\n";
 //$RequestHead='';
 
 $url .= "/".$z."/".$x."/".$y.".png";
 $opts = array(
 	'http'=>array(
 		'method'=>"GET",
-		'header'=>"User-Agent: $userAgent\r\n" . "$RequestHead\r\n",
+		'header'=>"User-Agent: $userAgent\r\n$RequestHead",
 		//'proxy'=>'tcp://127.0.0.1:8118',
-		'timeout' => 60,
+		//'timeout' => 60,
 		'request_fulluri'=>TRUE
 	)
 );

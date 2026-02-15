@@ -17,7 +17,7 @@ $maxTry = 3; 	// number of tryes to download tile from source
 // 	Пауза между попытками скачать тайл, сек.
 $tryTimeout = 3; 	// pause between try to download tile from source, sec
 // 	Время ожидания ответа источника тайла, сек.
-$getTimeout = 20; 	// timeout tile source response, sec
+$getTimeout = 60; 	// timeout tile source response, sec
 // 	Пауза между запросами, если обнаружено отсутствие связи
 $noInternetTimeout = 20; 	// no try the source this time if no internet connection found, sec
 

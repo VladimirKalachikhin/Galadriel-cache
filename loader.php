@@ -161,7 +161,7 @@ do {
 	}while(!$s);
 	//echo "s=$s; execString=$execString; customPHP=$customPHP;\n";
 	
-	$strSize = strlen($s); 	// размер первой строки в байтах
+	$strSize = mb_strlen($s,'8bit'); 	// размер первой строки в байтах
 	// Возьмём последнюю строку с номером тайла
 	// Всякая фигня в конце файла, не являющаяся номером тайла, включая пустые строки
 	// будет обрезаться. Фигня - построчно, с каждым обращением к файлу, а пустые строки - сразу.
@@ -171,7 +171,7 @@ do {
 	$pos = ftell($job);	//  Returns the current position of the file read/write pointer
 	if($seek == -1) $pos -= 1;
 	//echo "s=$s; strSize=$strSize; xy=$xy; pos=$pos;\n";
-	$res = ftruncate($job,$pos-mb_strlen($xy)); 	// укоротим файл на строку
+	$res = ftruncate($job,$pos-mb_strlen($xy,'8bit')); 	// укоротим файл на строку
 	if($res === false){
 		error_log("loader.php $pID - Unable truncated file $jobName");
 		exit(1);	// тут что-то не то с файлом, лучше прекратить деятельность?

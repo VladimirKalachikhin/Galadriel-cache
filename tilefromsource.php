@@ -280,86 +280,69 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 
 	// Запрос - собственно, получаем файл
 	$newimg = @file_get_contents($uri, FALSE, $context); 	// 
-	//echo "http_response_header:"; print_r($http_response_header); echo "s\n";
+	//echo "http_response_header:"; print_r($http_response_header); echo "\n";
 	
 	// Обработка проблем ответа
-	if(!$newimg and !@$http_response_header) { 	 //echo "связи нет или Connection refused  ".$http_response_header[0]."<br>\n"; 	при 403 переменная не заполняется?
-		continue;
-	}
-	elseif((strpos($http_response_header[0],'403') !== FALSE) or (strpos($http_response_header[0],'204') !== FALSE)) { 	// Forbidden or No Content
-		switch($on403){
-		case 'skip':
+	$http_status = trim(explode(' ',end(getResponceFiled($http_response_header,'HTTP/')))[1]);	// последняя строка типа HTTP/1.1 200 OK, их может быть много в случае redirect. Код - всегда второе слово в строке.
+	//echo "http_status=$http_status;\n";
+	if($http_status != '200'){
+		echo "http_response_header:"; print_r($http_response_header); echo "\n";
+		switch($http_status){
+		case '':	// нет связи
+			error_log("tilefromsource.php - retrieve $tries's try: no Internet connection? Retry.");
+			continue 2;
+		case '301':	// куда-то перенаправляли, по умолчанию в $opts - следовать, однако, или не сработало, или не завершилось, или оно реально Moved Permanently
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
-			error_log("tilefromsource.php - retrieve $tries's try: will be an enpty tile by 403 Forbidden or No Content responce and on403==skip parameter");
+			error_log("tilefromsource.php - retrieve $tries's try: will be an enpty tile by Moved Permanently responce.");
 			break 2;
-		case 'wait':
-			doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
-			error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce, do bann source");
-			exit(9);	// 403 Forbidden бессмысленно ждать, прекращаем получение тайла
-		case 'done':
-			error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce");
-			exit(9);	// бессмысленно ждать, прекращаем получение тайла
-		};
-	}
-	elseif((strpos($http_response_header[0],'404') !== FALSE) or (strpos($http_response_header[0],'416') !== FALSE)) { 	// файл не найден or Requested Range Not Satisfiable - это затейники из ЦГКИПД
-		switch($on404){
-		case 'skip':
-			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
-			error_log("tilefromsource.php - retrieve $tries's try: Save enpty tile by 404 Not Found (or similar)");
-			break 2;
-		case 'wait':
-			doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
-			error_log("tilefromsource.php - retrieve $tries's try: 404 Not Found (or similar), do bann source");
-			exit(10);	// бессмысленно ждать, прекращаем получение тайла
-		case 'done':
-			error_log("tilefromsource.php - retrieve $tries's try: 404 (or similar). Not Found and go away");
-			exit(10);	// бессмысленно ждать, прекращаем получение тайла
-		};
-	}
-	elseif(strpos($http_response_header[0],'301') !== FALSE) { 	// куда-то перенаправляли, по умолчанию в $opts - следовать
-		foreach($http_response_header as $header) {
-			if((substr($header,0,4)=='HTTP') AND (strpos($header,'200') !== FALSE)) break; 	// файл получен, перейдём к обработке
-			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'404') !== FALSE)) { 	// файл не найден.
-				switch($on404){
-				case 'skip':
-					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
-					error_log("tilefromsource.php - retrieve $tries's try: Save enpty tile by 404 Not Found (or similar) on 301 Moved Permanently");
-					break 3;
-				case 'wait':
-					doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
-					error_log("tilefromsource.php - retrieve $tries's try: 404 Not Found (or similar) on 301 Moved Permanently, do bann source");
-					exit(11);	// бессмысленно ждать, прекращаем получение тайла
-				case 'done':
-					error_log("tilefromsource.php - retrieve $tries's try: 404 (or similar) on 301 Moved Permanently. Not Found and go away");
-					exit(11);	// бессмысленно ждать, прекращаем получение тайла
-				};
-			}
-			elseif((substr($header,0,4)=='HTTP') AND ((strpos($header,'403') !== FALSE) or ((strpos($http_response_header[0],'204') !== FALSE)))) { 	// Forbidden.
-				switch($on403){
-				case 'skip':
-					$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
-					error_log("tilefromsource.php - retrieve $tries's try: Save enpty tile by 403 Forbidden or No Content responce on 301 Moved Permanently and on403==skip parameter");
-					break 3;
-				case 'wait':
-					doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
-					error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce on 301 Moved Permanently, do bann source");
-					exit(12);	// бессмысленно ждать, прекращаем получение тайла
-				case 'done':
-					error_log("tilefromsource.php - retrieve $tries's try: 403 Forbidden or No Content responce on 301 Moved Permanently");
-					exit(12);	// бессмысленно ждать, прекращаем получение тайла
-				};
-			}
-			elseif((substr($header,0,4)=='HTTP') AND (strpos($header,'503') !== FALSE)) { 	// Service Unavailable
-				continue;
+		case '204':	// No Content
+		case '403':	// Forbidden
+			switch($on403){
+			case 'skip':
+				$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
+				error_log("tilefromsource.php - retrieve $tries's try: will be an enpty tile by Forbidden or No Content responce and on403==skip parameter");
+				break 3;
+			case 'wait':
+				doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
+				error_log("tilefromsource.php - retrieve $tries's try: Forbidden or No Content responce, do bann source.");
+				exit(9);	// 403 Forbidden бессмысленно ждать, прекращаем получение тайла
+			case 'done':
+			default:
+				error_log("tilefromsource.php - retrieve $tries's try: Forbidden or No Content responce");
+				exit(9);	// бессмысленно ждать, прекращаем получение тайла
 			};
+			break;	// чиста штоб не забыть
+		case '416':	// Requested Range Not Satisfiable - это затейники из ЦГКИПД
+		case '404':	// echo "файл не найден\n";
+			switch($on404){
+			case 'skip':
+				$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
+				error_log("tilefromsource.php - retrieve $tries's try: Save enpty tile by Not Found (or similar) responce.");
+				break 3;
+			case 'wait':
+				doBann($r,$bannedSourcesFileName,'Forbidden'); 	// забаним источник 
+				error_log("tilefromsource.php - retrieve $tries's try: Not Found (or similar) responce, do bann source.");
+				exit(10);	// бессмысленно ждать, прекращаем получение тайла
+			case 'done':
+			default:
+				error_log("tilefromsource.php - retrieve $tries's try: Not Found (or similar) and go away.");
+				exit(10);	// бессмысленно ждать, прекращаем получение тайла
+			};
+			break;
+		case '503':	// Service Unavailable
+			error_log("tilefromsource.php - retrieve $tries's try: Service Unavailable responce. Retry.");
+			continue 2;
+		default:	// вернуло неизвестное
+			continue;
 		};
 	};
 
 	// Обработка проблем полученного
 	$in_length = intval(substr(end(getResponceFiled($http_response_header,'Content-Length')),15));
-	//echo "Получено ".(strlen($newimg))." байт, дложно быть $in_length;\n";
-	if($in_length and (strlen($newimg)!=$in_length)){	// Было получено не столько (меньше, чем) должно было быть. Это делает cloudflare. При отсутствии Content-Length будет 0.
-		error_log("tilefromsource.php - retrieve $tries's try: Reciewed ".(strlen($newimg))." bytes, but must be $in_length bytes.");
+	//echo "Получено ".(mb_strlen($newimg,'8bit'))." байт, дложно быть $in_length;\n";
+	if($in_length and (mb_strlen($newimg,'8bit')!=$in_length)){	// Было получено не столько (меньше, чем) должно было быть. Это делает cloudflare. При отсутствии Content-Length будет 0.
+		echo "http_response_header:"; print_r($http_response_header); echo "\n";
+		error_log("tilefromsource.php - retrieve $tries's try: Reciewed ".(mb_strlen($newimg,'8bit'))." bytes, but must be $in_length bytes.");
 		$newimg = FALSE; 	// тайл получить не удалось
 		continue;	// попытаемся получить снова?
 	};
@@ -369,6 +352,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 	if($in_mime_type) { 	// mime_type присланного сообщили
 		if(isset($mime_type)) { 	// mime_type того, что должно быть, указан в конфиге источника
 			if($in_mime_type != $mime_type) { 	// mime_type присланного не совпадает с требуемым
+				echo "http_response_header:"; print_r($http_response_header); echo "\n";
 				error_log("tilefromsource.php - retrieve $tries's try: Reciewed $in_mime_type, but expected $mime_type.");
 				exit(13);	// прекращаем получение тайла
 			};
@@ -376,6 +360,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 		}
 		else { 	// требуемый mime_type в конфиге не указан
 			if((substr($in_mime_type,0,5)!='image') and (substr($in_mime_type,-10)!='x-protobuf')) { 	// тайл - не картинка и не векторный тайл
+				echo "http_response_header:"; print_r($http_response_header); echo "\n";
 				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
 					error_log("tilefromsource.php - retrieve $tries's try: server return '{$http_response_header[0]}' and text instead tile: '$newimg'");
 					//error_log("$uri: http_response_header:".implode("\n",$http_response_header));
@@ -392,6 +377,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type
 		$in_mime_type = finfo_buffer($file_info,$newimg); 	// определим mime_type присланного
 		if((substr($in_mime_type,0,5)!='image') and (substr($in_mime_type,-10)!='x-protobuf')) { 	// тайл - не картинка и не векторный тайл
+			echo "http_response_header:"; print_r($http_response_header); echo "\n";
 			if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
 				error_log("tilefromsource.php - retrieve $tries's try: server return '{$http_response_header[0]}' and text instead tile: '$newimg'");
 				//error_log("$uri: http_response_header:".implode("\n",$http_response_header));
@@ -411,7 +397,7 @@ if(!$newimg and ($tries==($maxTry+1))){
 };
 
 // Картинак получена, возможно, она null
-//echo "Получена картинка размером ".(strlen($newimg))." байт.\n"; //var_dump($newimg);
+//echo "Получена картинка размером ".(mb_strlen($newimg,'8bit'))." байт.\n"; //var_dump($newimg);
 // Не мусор ли оно
 //echo "tilefromsource.php - trash: ";print_r($trash);echo"\n";
 if(@$globalTrash) { 	// имеется глобальный список ненужных тайлов
@@ -431,7 +417,7 @@ if(@$trash) { 	// имеется список ненужных тайлов
 if($prepareTileImg and $prepareTileImgAfterRecieve) {
 	$newimg = $prepareTileImgAfterRecieve($newimg,$z,$x,$y,$ext);
 };
-//echo "Картинка после prepareTileImgAfterRecieve имеет размер ".(strlen($newimg))." байт.\n";
+//echo "Картинка после prepareTileImgAfterRecieve имеет размер ".(mb_strlen($newimg,'8bit'))." байт.\n";
 
 $exitCode = 0;	// успешно
 // нужно только проверить скачиваемость тайла, и, возможно, совпадение полученного и
@@ -440,7 +426,7 @@ $exitCode = 0;	// успешно
 if(!is_array($newimg)) $newimg = array(array($newimg,"$z/$x/$y.$ext"));
 //echo "options:"; print_r($options); echo "\n";
 if($checkonly){	// надо только проверить, скачался ли правильный файл
-	echo "\n\033[1mtilefromsource.php\033[0m checkonly mode: Success, the tile may be recieve, but not store\n";
+	echo "\n\033[1mtilefromsource.php\033[0m checkonly mode: The tile may be recieve, but not store\n";
 	if(!$trueTile) $trueTile = true;
 	list($res,$msg) = $putTile($r,$newimg,$trueTile,$options);
 	// tilefromsource вызывается в checkSources.php для проверки доступности всех карт, 
