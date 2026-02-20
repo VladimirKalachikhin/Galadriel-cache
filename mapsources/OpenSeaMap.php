@@ -15,7 +15,8 @@ $trash = array(
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
 $trueTile=array(15,19095,9521,'7fc1e790');	// to source check; tile number and CRC32b hash
 
-$getURL = function ($z,$x,$y) {
+
+$getURL = function ($z,$x,$y,$getURLoptions=array()) {
 /* 
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */

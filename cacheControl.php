@@ -16,44 +16,27 @@ curl -v http://stagerserver.local/tileproxy/cacheControl.php?loaderStatus\&resta
 $usage='Usage:
 	Получить список карт
 cacheControl.php?getMapList		get maps list
-return:
-{
-	"map_source_file_name": {
-		"en": "Human-readable english map name or map_source_file_name",
-		["ru": ...]
-	}
-}
+return: JSON
 
 	Получить сведения о карте из её файла описания:
-cacheControl.php?getMapInfo=map_source_file_name	get map info
-return:
-{
-    "ext": "...",
-    "ContentType": "...",
-    "epsg": "...",
-    "minZoom": ?,
-    "maxZoom": ?,
-    "data": "...",
-    "mapboxStyle": "..."
-}
+	Get map info:
+cacheControl.php?getMapInfo=map_source_file_name	
+return: JSON
 
-	Поставить задание на скачивание
-cacheControl.php?loaderJob=map_source_file_name.zoom&xys=csv_of_XY[&infinitely] create & run tile loading job, 
-return:
-{
-	"status": 0,
-	"jobName": map_source_file_name.zoom
-}
+	Получить описание карты:
+	Get map description:
+cacheControl.php?getMapDescription=map_source_file_name	
+return: JSON
 
-	Получить состояние заданий на скачивание
-cacheControl.php?loaderStatus[&stopLoader]|[&restartLoader][&infinitely]] 	get loader status
-return:
-{
-	"loaderRun": scheduler_PID,
-	"jobsInfo": {
-		"map_source_file_name.zoom": %_of_complite
-	}
-}
+	Поставить задание на скачивание:
+	Create & run tile loading job:
+cacheControl.php?loaderJob=map_source_file_name.zoom&xys=csv_of_XY[&infinitely] 
+return: JSON
+
+	Получить состояние заданий на скачивание:
+	Get loader status:
+cacheControl.php?loaderStatus[&stopLoader]|[&restartLoader][&infinitely]] 	
+return: JSON
 ';
 
 ob_start(); 	// попробуем перехватить любой вывод скрипта
@@ -134,6 +117,42 @@ elseif($mapName=filter_var($_REQUEST['getMapInfo'],FILTER_SANITIZE_URL)){
 	};
 	$result = $mapInfo;
 	//echo "сведения о $mapName:"; print_r($result); echo "\n";
+}
+elseif($mapName=filter_var($_REQUEST['getMapDescription'],FILTER_SANITIZE_URL)){	
+// Вернуть сведения о конкретной карте
+	$mapInfo = array();	// массив имя_карты => описание, массив
+	require('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
+	require("$mapSourcesDir/$mapName.php");	// при отсутствии оно обломится, и ничего возвращено не будет
+	if(is_string($mapTiles)) $mapInfo[$mapName] = array();	// простая карта
+	elseif(is_string($mapTiles[0])) $mapInfo[$mapName] = array();	// многослойная карта
+	else {	// составная карта
+		foreach($mapTiles as $map){
+			$mapInfo[$map['mapName']] = array();
+		};
+	};
+	foreach($mapInfo as $mapName => &$info){
+		include('mapsourcesVariablesList.php');	// потому что в файле источника они могут быть не все, и для новой карты останутся старые
+		$res = include("$mapSourcesDir/$mapName.php");
+		if($res === false) continue;
+		$info['humanName'] = $humanName;
+		$info['mapDescription'] = $mapDescription;
+		if($EPSG) $info['epsg']=$EPSG;
+		if(isset($minZoom)) $info['minZoom']=$minZoom;
+		if(isset($maxZoom)) $info['maxZoom']=$maxZoom;
+		if($bounds) $info['bounds']=$bounds;
+		$info['mapDescriptionFile'] = realpath("$mapSourcesDir/$mapName.php");
+		$info['mapDataFile'] = realpath("$tileCacheDir/$mapName/");
+		if($info['mapDataFile']===false) $info['mapDataFile'] = realpath("$tileCacheDir/$mapName.mbtiles");
+		if($vectorTileStyleURL) $info['vectorTileStyleURL'] = $vectorTileStyleURL;
+		if($getURL){
+			$info['online'] = true;
+			$uri = $getURL(0,0,0,null);
+			if(is_array($uri))	list($uri,$opts) = $uri;
+			if($opts['http']['proxy']) $info['proxy'] = $opts['http']['proxy'];
+		};
+	};
+	unset($info);	// Reference to a $value of the last array element remain even after the foreach loop. It is recommended to destroy these using unset().
+	$result = $mapInfo;
 }
 //elseif($jobName=filter_var($_REQUEST['loaderJob'],FILTER_SANITIZE_STRING)){	
 elseif($jobName=$_REQUEST['loaderJob']){	

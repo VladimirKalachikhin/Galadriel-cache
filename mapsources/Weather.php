@@ -20,6 +20,7 @@ $mapTiles = array(
 
 $getURLoptions=array();	
 
+
 $getURL = function ($z,$x,$y,$getURLparms=array()) {
 if(!isset($getURLparms['layer'])) $getURLparms['layer'] = "/wind_stream/0h";	// любой запрос без номера слоя будет запросом к умолчальному слою
 if(is_numeric($getURLparms['layer'])) $getURLparms['layer'] = "/wind_stream/0h";	// любой запрос по номеру слоя будет запросом к умолчальному слою

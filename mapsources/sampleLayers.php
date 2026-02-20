@@ -1,5 +1,36 @@
 <?php
 $humanName = array('ru'=>'Пример слоёв: Погода','en'=>'Sample of Layers: Weather');
+$mapDescription = array('ru'=>'Карта погоды
+<a href="http://weather.openportguide.de/index.php/en/">weather.openportguide.de</a>
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service Thomas Krüger Weather Service
+','en'=>'<a href="http://weather.openportguide.de/index.php/en/">weather.openportguide.de</a>
+');
 $ttl = 60*30; // cache timeout in seconds время, через которое тайл считается протухшим
 //$ttl = 10;
 $ext = 'png'; 	// tile image type/extension

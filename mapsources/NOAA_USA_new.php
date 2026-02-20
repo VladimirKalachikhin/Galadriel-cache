@@ -20,7 +20,10 @@ $trash = array( 	// crc32 хеши тайлов, которые не надо с
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
 $trueTile=array(14,4822,6161,'397d98cc');	// to source check; tile number and CRC32b hash
 
-$getURL = function ($z,$x,$y) {
+$getURLoptions['r'] = pathinfo(__FILE__, PATHINFO_FILENAME);	// 'navionics'. $getURLoptions будет передан в $getURL
+
+
+$getURL = function ($z,$x,$y,$getURLoptions=array()) {
 /* 
 */
 $userAgent = randomUserAgent();
@@ -40,6 +43,7 @@ $leftTop = tileNum2ord($z,$x,$y);	// fcommon.php
 $rightBottom = tileNum2ord($z,$x+1,$y+1);
 // bbox=-8244587.101865853%2C4963749.342781731%2C-8239160.072857463%2C4966931.034084185
 $url .= "bbox={$leftTop['x']}%2C{$rightBottom['y']}%2C{$rightBottom['x']}%2C{$leftTop['y']}";
+changeTORnode($getURLoptions['r']);
 return array($url,$opts);
 };
 ?>

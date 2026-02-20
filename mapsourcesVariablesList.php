@@ -6,7 +6,11 @@
 
 // Человеко-читаемые наименования карт, массив вида 'ru'=>'','en'=>''
 // Human readable maps names
-$humanName = array();	
+$humanName = array('en'=>'');	
+
+// Описание карты, массив вида 'ru'=>'','en'=>''
+// Map description, by language.
+$mapDescription = array('en'=>'');	
 
 // время, через которое тайл считается протухшим, сек.
 // cache timeout in seconds.  86400 sec = 1 day. After this, tile trying to reload from source.
@@ -32,11 +36,11 @@ $ContentType = "image/$ext";
 $content_encoding = '';
 // Если карта векторная - и клиенту и серверу могут понадобится ресурсы: стиль, шрифты и спрайты
 // If the map is vector, both the client and the server may need resources: style, fonts, and sprites.
-$vectorTileStyleFile = '';
+$vectorTileStyleFile = '';	// Только для отрисовки на сервере. For server rendering only.
 $vectorTileStyleURL = '';
-$vectorTileFonsDir = '';
+$vectorTileFonsDir = '';	// Только для отрисовки на сервере. For server rendering only.
 $vectorTileFonsURL = '';
-$vectorTileSpritesDir = '';
+$vectorTileSpritesDir = '';	// Только для отрисовки на сервере. For server rendering only.
 $vectorTileSpritesURL = '';
 
 // Минимальный масштаб карты
@@ -48,7 +52,7 @@ $maxZoom = 21;
 // Проекция карты, Web Mercator. Может быть также 3395. Ничего другого быть не может, потому что ничего больше Leaflet не умеет.
 // map projection, for map viewer (such as web client) or get tile algorithm.
 // Not used for cache/proxy. Must be 3857 (default) or 3395 due to the Leaflet limitations. 
-$EPSG=3857; 	
+$EPSG='EPSG:3857'; 	
 
 // что делать, если Not Found или Forbidden: skip, wait, done.
 // 'skip' - эквивалентно отсутствию файла, будет сохранён пустой тайл

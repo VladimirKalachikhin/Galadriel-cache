@@ -418,6 +418,7 @@ Alternative: set own port, config tor password by tor --hash-password my_passwor
 */
 global $opts;
 if(!@$opts['http']['proxy']) return;
+if(!$mapname) $mapname = 'changeTORnode';
 
 $getTorNewNode = "(echo authenticate '\"\"'; echo signal newnym; echo quit) | nc localhost 9051"; 	
 

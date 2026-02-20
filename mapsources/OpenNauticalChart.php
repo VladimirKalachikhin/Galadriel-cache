@@ -18,7 +18,7 @@ $trueTile=array(15,19906,9851,'6d3f3777');	// to source check; tile number and C
 $getURLoptions['r'] = pathinfo(__FILE__, PATHINFO_FILENAME);	// $getURLoptions будет передан в $getURL
 
 
-$getURL = function ($z,$x,$y) {
+$getURL = function ($z,$x,$y,$getURLoptions=array()) {
 /* 
  http://192.168.10.10/tileproxy/tiles.php?z=12&x=2374&y=1161&r=OpenTopoMap
 */
@@ -42,7 +42,7 @@ $opts = array(
 // set it if you have Tor as proxy, and want change exit node every $tilesPerNode try. https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip
 // tor MUST have in torrc: ControlPort 9051 without authentication: CookieAuthentication 0 and #HashedControlPassword
 // Alternative: set own port, config tor password by tor --hash-password my_password and stay password in `echo authenticate '\"\"'`
-changeTORnode($getURLoptions['OpenNauticalChart']);
+changeTORnode($getURLoptions['r']);
 return array($url,$opts);
 };
 ?>

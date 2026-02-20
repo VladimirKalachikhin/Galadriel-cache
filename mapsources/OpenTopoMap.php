@@ -2,6 +2,9 @@
 // Все эти переменные глобальны!
 // All of this variables is global!
 $humanName = array('ru'=>'Топокарта OpenTopoMap (старая)','en'=>'OpenTopoMap (the old)');
+$mapDescription = array('ru'=>'<a href="https://opentopomap.org">opentopomap.org</a>
+','en'=>'<a href="https://opentopomap.org">opentopomap.org</a>
+');
 $ttl = 60*60*24*30*12*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 //$ttl = 60*60*24*30*12*3; //cache timeout in seconds время, через которое тайл считается протухшим, 3 года, потому что эти суки стали радикально упрощать карты бывших хохляцких территорий
 //$ttl = 0; 	// тайлы не протухают никогда
@@ -18,6 +21,7 @@ $trash = array(
 $trueTile=array(15,19796,10302,'bb69e346');	// to source check; tile number and CRC32b hash
 
 $getURLoptions['r'] = pathinfo(__FILE__, PATHINFO_FILENAME);	// $getURLoptions будет передан в $getURL
+
 
 $prepareTileImgBeforeReturn = function ($img){
 /* В OpenTopoMap цвет моря - 163,221,232, а озёр - 151,210,227 

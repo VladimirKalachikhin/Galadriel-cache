@@ -58,7 +58,7 @@ do {
 			unset($jobs[$i]);
 			continue; 	// 
 		};
-		error_log("loaderSched.php - There is a job $job");
+		//error_log("loaderSched.php - There is a job $job");
 		
 		$path_parts = pathinfo($job);
 		$mapName = $path_parts['filename'];
@@ -136,7 +136,7 @@ do {
 		// Рассматриваемое задание выполняется.
 		clearstatcache(TRUE,"$jobsInWorkDir/$job");
 		$fs = filesize("$jobsInWorkDir/$job"); 	// выполняющееся скачивание
-		echo "The size of the $jobsInWorkDir/$job is $fs bytes.\n";
+		//echo "The size of the $jobsInWorkDir/$job is $fs bytes.\n";
 		if($fs<=2 OR $fs==4096) { 	// условно - пустой файл, это задание завершилось
 			error_log("loaderSched.php - The job $job is completed.");
 			unlink("$jobsInWorkDir/$job");	// 
@@ -161,11 +161,11 @@ do {
 			};
 		};
 	};	// конец перебора заданий
-	echo "Имеющиеся задания к концу обработки:"; print_r($jobs); echo "\n";
+	//echo "Имеющиеся задания к концу обработки:"; print_r($jobs); echo "\n";
 	
 	// Если есть задания для загрузчиков -- созданные выше, или добавленные со стороны
 	$loaderJobs = preg_grep('~.[0-9]$~', scandir($jobsInWorkDir)); 	// возьмём только файлы с цифровым расшрением
-	echo "Выполняющиеся задания loaderJobs:"; print_r($loaderJobs); echo "\n";
+	//echo "Выполняющиеся задания loaderJobs:"; print_r($loaderJobs); echo "\n";
 	// Удалим завершившиеся загружающиеся задания
 	foreach($loaderJobs as $i => $jobName) { 	// 
 		clearstatcache(TRUE,"$jobsInWorkDir/$jobName");
@@ -178,21 +178,21 @@ do {
 		};
 	};
 	if($loaderJobs) { 	// Если есть задания для загрузки
-		error_log("loaderSched.php - There are jobs for loaders -- loaders are needed.");
+		//error_log("loaderSched.php - There are jobs for loaders -- loaders are needed.");
 		// Запустим указанное в конфиге количество загрузчиков
 		$execString = "$phpCLIexec loader.php $infinitely > /dev/null 2>&1 &";
 		//$execString = "$phpCLIexec loader.php $infinitely > /dev/null &";	// так в консоли видно и сообщения загрузчиков
 		for($runs=count($loaderPIDs); $runs<$maxLoaderRuns; $runs++) { 	// если уже запущено меньше разрешённого количества загрузчиков - запустим ещё
-			//error_log("loaderSched.php - Launching another loader.");
+			error_log("loaderSched.php - Launching another loader.");
 			exec($execString,$output,$result);
 			if($result==1){
-				error_log("loaderSched.php - Start loader filed, abort. execString=$execString;");
+				error_log("loaderSched.php - Start loader failed, abort. execString=$execString;");
 				exit(1);
 			};
 		};
 	};
 	//break;
-	echo "Ждём оборота =================================\n";
+	//echo "Ждём оборота =================================\n";
 	sleep(5);
 } while(count($jobs)); 	// пока есть задания для планировщика. Загрузчики останутся работать.
 

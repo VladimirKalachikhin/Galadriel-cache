@@ -5,8 +5,9 @@
 //session_start();	
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.1.6
+Version 3.2.0
 История History:
+3.2.0	- just map describe var
 3.1.5	- cloudflare must die
 3.1.0	- store to database in the MBTiles format
 3.0.0	- new API, multilayer and complex maps and etc.

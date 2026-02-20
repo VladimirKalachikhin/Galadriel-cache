@@ -6,6 +6,7 @@
 ini_set('error_reporting', E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 chdir(__DIR__); // задаем директорию выполнение скрипта
 require('params.php'); 	// пути и параметры
+if(!$phpCLIexec) $phpCLIexec = trim(explode(' ',trim(shell_exec("ps -p ".(getmypid())." -o command=")))[0]);	// из PID системной командой получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
 require 'fTilesStorage.php';	// стандартные функции получения тайла из локального источника
 
 $logFileName = 'checkSources.log';
