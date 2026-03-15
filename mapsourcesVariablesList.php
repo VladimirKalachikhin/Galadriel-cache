@@ -86,10 +86,10 @@ $trueTile=array();
 
 // Массив для взаимодействия с клиентом, например, GaladrielMap
 // Array to influence from map source file to client app, GaladrielMap for example.
-$clientata = array();	
+$clientData = array();	
 // GaladrielMap понимает:
 // The GaladrielMap accepted:
-// $data['javascriptOpen'] 	- код javascript, который будет сперва eval в глобальном контексте, а потом последняя определённая в нём функция будет выполнена при открытии карты.
+// $clientData['javascriptOpen'] 	- код javascript, который будет сперва eval в глобальном контексте, а потом последняя определённая в нём функция будет выполнена при открытии карты.
 //							Чтобы это произошло, код должен содержать функцию, которую вернёт eval,
 //							т.е., содержать конструкцию (function(mapLayer){})
 //							Функции во время выполнения будет передан мультислой карты.
@@ -97,18 +97,20 @@ $clientata = array();
 //							For this to happen, the code must contain a function that eval returns,
 //							that is, contain the construct (function(mapLayer){})
 //							The map multilayer will be passed to the function during execution.
-// $data['javascriptClose']	- код javascript, который будет сперва eval в глобальном контексте, а потом последняя определённая в нём функция будет выполнена при закрытии карты.
+// $clientData['javascriptClose']	- код javascript, который будет сперва eval в глобальном контексте, а потом последняя определённая в нём функция будет выполнена при закрытии карты.
 //							Так же как и предыдущий, должен вернуть функцию.
 //							Функции во время выполнения будет передан мультислой карты.
 //							- javascript code that will first be eval'ed in the global context, and then executed when closing the map.
 //							Just like the previous, it should return a function.
 //							The map multilayer will be passed to the function during execution.
-// $data['noAutoScaled'] bool - запрещает показ карты масштаба меньше minZoom и масштаба больше maxZoom
+// $clientData['noAutoScaled'] bool - запрещает показ карты масштаба меньше minZoom и масштаба больше maxZoom
 //							путём графического уменьшения или увеличения карты масштаба minZoom и maxZoom соответственно.
 //							Нормально карта уменьшается до масштаба 3 и увеличивается до масштаба maxZoom + 2.
 //							- prohibits displaying a map of a scale smaller than minZoom and a scale larger than maxZoom
 //							by graphically zooming out or enlarging the minZoom and maxZoom scale maps, respectively.
 //							Normally, the map is reduced to a scale of 3 and increased to a scale of maxZoom + 2.
+// $clientData['DEMencoding']	"mapbox" or "terrarium" - если карта - тайлы DEM, то указание, в какой кодировке. Нужно только для рисования горизонталей.
+//							- if the map contains DEM tiles, then specify the encoding. It is only necessary for drawing horizontals.
 
 // Массив для передачи произвольных параметров команде $mapTiles url.
 // Массив кодируется как json, и должен клиентской программой присоединятся к url

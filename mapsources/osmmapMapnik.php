@@ -7,7 +7,9 @@ $minZoom = 0;
 $maxZoom = 19;
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
 $trueTile=array(15,19796,10302,'2010870b');	// to source check; tile number and CRC32b hash
-
+$trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
+	'bb659f2e',	// App is not following the tile usage policy, казлы.
+);
 $getURLoptions['r'] = pathinfo(__FILE__, PATHINFO_FILENAME);	// $getURLoptions будет передан в $getURL
 
 

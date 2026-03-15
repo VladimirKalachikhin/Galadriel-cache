@@ -39,8 +39,6 @@ $maxZoom = 7;
 $freshOnly = TRUE; 	// не показывать протухшие тайлы
 $bounds = array('leftTop'=>array('lat'=>61.1856,'lng'=>-23.115),'rightBottom'=>array('lat'=>20.9614,'lng'=>48.0762));
 // 
-$data = array(
-);
 $mapname = basename(__FILE__, ".php");
 $mapTiles = array(
 	"$tileCacheServerPath/tiles.php?z={z}&x={x}&y={y}&r=$mapname&options={\"layer\":0}",
