@@ -6,9 +6,11 @@ $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
 // Для контроля источника: номер правильного тайла и его CRC32b хеш
-$trueTile=array(15,19796,10302,'2010870b');	// to source check; tile number and CRC32b hash
+$trueTile=array(15,19796,10302,'57eeeb20');	// to source check; tile number and CRC32b hash
 $trash = array( 	// crc32 хеши тайлов, которые не надо сохранять: логотипы, пустые тайлы, тайлы с дурацкими надписями
 	'bb659f2e',	// App is not following the tile usage policy, казлы.
+	'17d1e948',
+	'ee225378'
 );
 $getURLoptions['r'] = pathinfo(__FILE__, PATHINFO_FILENAME);	// $getURLoptions будет передан в $getURL
 
@@ -18,7 +20,7 @@ $server = 'https://tile.openstreetmap.org';
 
 $userAgent = randomUserAgent();
 //$userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:147.0) Gecko/20100101 Firefox/147.0';
-$referer = "Referer: https://www.openstreetmap.org/\r\n";
+//$referer = "Referer: https://www.openstreetmap.org/\r\n";
 //$RequestHead = "Connection: keep-alive\r\n";
 $RequestHead .= "Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5\r\nAccept-Encoding: gzip, deflate, br, zstd\r\n";
 

@@ -133,7 +133,8 @@ $img = @file_get_contents($fileName); 	// берём тайл из кеша
 if($img === false){	// файла нет
 	$img = null;	// 
 }
-elseif(!$img) { 	// файл нулевой длины
+elseif(!$img) { 	// echo "[getTileFromFile] файл нулевой длины<br>";
+	$img = null;	// 
  	if($noTileReTry) $ttl= $noTileReTry; 	// если указан специальный срок протухания для файла нулевой длины -- им обозначается перманентная проблема скачивания
 	if(($imgFileTime+$ttl) < $now) { 	
 		// файл протух. Однако, пустым мог оказаться только что скачанный файл,

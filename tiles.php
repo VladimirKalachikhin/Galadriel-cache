@@ -5,7 +5,7 @@
 //session_start();	
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.2.0
+Version 3.2.1
 История History:
 3.2.0	- just map describe var
 3.1.5	- cloudflare must die
@@ -103,7 +103,7 @@ if($requestOptions['r']) $r = $requestOptions['r'];
 //echo "tiles.php [] z=$z; x=$x; y=$y; r=$r; requestOptions:<pre>"; print_r($requestOptions); echo "</pre><br>\n";
 extract($getTile($r,$z,$x,$y,$requestOptions),EXTR_IF_EXISTS);	// оно возвращает array('img'=>,'ContentType'=>)
 //file_put_contents('savedTiles',"tiles.php - $r,$z,$x,$y; needToRetrieve=$needToRetrieve;\n",FILE_APPEND);	
-//echo "tiles.php из хранилища: ".strlen($img)." байт<br>\n";
+//echo "tiles.php из хранилища: ".strlen($img)." байт ".gettype($img)."<br>\n";
 
 if($requestOptions['prepareTileImg']) {	// обработка картинки, если таковая указана в описании источника
 	//echo "tiles.php before prepared: ".strlen($img)."<br>\n";
@@ -148,13 +148,20 @@ header("Connection: close"); 	// Tell the client to close connection
 // тайла могло не быть в кеше, и его не удалось получить или его попортила функция prepareTile
 if($img === false){	// тайла нет по какой-то аварийной причине
 	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
-	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
+	//header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
 	header($_SERVER["SERVER_PROTOCOL"]." 400 Bad Request");
+	//header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+	//$img = 'Archive not found';
+	$img = '';
+	header("Content-Type: text/plain;charset=UTF-8");
 }
 elseif($img === null){	// тайла нет потому что
 	header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1
-	header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
+	//header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Дата в прошлом
 	header($_SERVER["SERVER_PROTOCOL"]." 404 Not Found");
+	//$img = 'Archive not found';
+	$img = '';
+	header("Content-Type: text/plain;charset=UTF-8");
 }
 else { 	
 	//$exp_gmt = gmdate("D, d M Y H:i:s", time() + 60*60) ." GMT"; 	// Тайл будет стопудово кешироваться браузером 1 час
@@ -178,7 +185,7 @@ echo $img; 	// теперь в output buffer только тайл
 $content_lenght = ob_get_length(); 	// возьмём его размер
 header("Content-Length: $content_lenght"); 	// завершающий header
 header("Access-Control-Allow-Origin: *"); 	// эта пурга их какой-то горбатой безопасности, смысл которой я так и не уловил
-//header("Access-Control-Expose-Headers: *"); 	// эта пурга должна позволить показывать заголовки запросов, но они и так показываются?
+header("Access-Control-Expose-Headers: *"); 	// эта пурга должна позволить показывать заголовки запросов, но они и так показываются?
 ob_end_flush(); 	// отправляем тело - собственно картинку и прекращаем буферизацию
 @ob_flush();
 flush(); 		// Force php-output-cache to flush to browser.
