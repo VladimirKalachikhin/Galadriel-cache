@@ -5,7 +5,7 @@
 //session_start();	
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.2.1
+Version 3.2.2
 История History:
 3.2.0	- just map describe var
 3.1.5	- cloudflare must die
@@ -116,7 +116,7 @@ if($requestOptions['prepareTileImg']) {	// обработка картинки, 
 
 //echo "X-Debug: The tile was received in ".(microtime(true)-$now)." sec.\n"; 
 //header("X-Debug: The tile was received in ".(microtime(true)-$now)." sec."); 
-showTile($img,$mime_type,$content_encoding,$ext);	// отдадим тайл клиенту
+showTile($img,$ContentType,$content_encoding,$ext);	// отдадим тайл клиенту. $ContentType,$content_encoding - из Map description
 
 if($getURL){	// если есть, чем скачивать
 	if($requestOptions['layer']) $r .= '__'.addslashes($requestOptions['layer']);
@@ -169,10 +169,10 @@ else {
 	//$mod_gmt = gmdate("D, d M Y H:i:s", filemtime($fileName)) ." GMT"; 	// слишком долго?
 	//header("Last-Modified: " . $mod_gmt);
 	//header("Cache-Control: public, max-age=3600"); 	// Тайл будет стопудово кешироваться браузером 1 час
-	if(($ext == 'pbf') or ($mime_type == 'application/x-protobuf')){
+	if($mime_type) header ("Content-Type: $mime_type");
+	elseif(($ext == 'pbf') or ($ext == 'mvt')){
 		header ("Content-Type: application/x-protobuf");
 	}
-	elseif($mime_type) header ("Content-Type: $mime_type");
 	elseif($ext) header ("Content-Type: image/$ext");
 	else{
 		$file_info = finfo_open(FILEINFO_MIME_TYPE); 	// подготовимся к определению mime-type

@@ -283,20 +283,20 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 	//echo "http_response_header:"; print_r($http_response_header); echo "\n";
 	
 	// Обработка проблем ответа
-	$http_status = trim(explode(' ',end(getResponceFiled($http_response_header,'HTTP/')))[1]);	// последняя строка типа HTTP/1.1 200 OK, их может быть много в случае redirect. Код - всегда второе слово в строке.
+	$http_status = (int)trim(explode(' ',end(getResponceFiled($http_response_header,'HTTP/')))[1]);	// последняя строка типа HTTP/1.1 200 OK, их может быть много в случае redirect. Код - всегда второе слово в строке.
 	//echo "http_status=$http_status;\n";
-	if($http_status != '200'){
-		echo "http_response_header:"; print_r($http_response_header); echo "\n";
+	if($http_status != 200){
+		echo "tilefromsource.php - http_response_header:"; print_r($http_response_header); echo "\n";
 		switch($http_status){
 		case '':	// нет связи
 			error_log("tilefromsource.php - retrieve $tries's try: no Internet connection? Retry.");
 			continue 2;
-		case '301':	// куда-то перенаправляли, по умолчанию в $opts - следовать, однако, или не сработало, или не завершилось, или оно реально Moved Permanently
+		case 301:	// куда-то перенаправляли, по умолчанию в $opts - следовать, однако, или не сработало, или не завершилось, или оно реально Moved Permanently
 			$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
 			error_log("tilefromsource.php - retrieve $tries's try: will be an enpty tile by Moved Permanently responce.");
 			break 2;
-		case '204':	// No Content
-		case '403':	// Forbidden
+		case 204:	// No Content
+		case 403:	// Forbidden
 			switch($on403){
 			case 'skip':
 				$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
@@ -312,8 +312,8 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 				exit(9);	// бессмысленно ждать, прекращаем получение тайла
 			};
 			break;	// чиста штоб не забыть
-		case '416':	// Requested Range Not Satisfiable - это затейники из ЦГКИПД
-		case '404':	// echo "файл не найден\n";
+		case 416:	// Requested Range Not Satisfiable - это затейники из ЦГКИПД
+		case 404:	// echo "файл не найден\n";
 			switch($on404){
 			case 'skip':
 				$newimg = NULL; 	// картинки не будет, сохраняем пустой тайл.
@@ -329,7 +329,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 				exit(10);	// бессмысленно ждать, прекращаем получение тайла
 			};
 			break;
-		case '503':	// Service Unavailable
+		case 503:	// Service Unavailable
 			error_log("tilefromsource.php - retrieve $tries's try: Service Unavailable responce. Retry.");
 			continue 2;
 		default:	// вернуло неизвестное
@@ -338,32 +338,35 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 	};
 
 	// Обработка проблем полученного
-	$in_length = intval(substr(end(getResponceFiled($http_response_header,'Content-Length')),15));
-	//echo "Получено ".(mb_strlen($newimg,'8bit'))." байт, дложно быть $in_length;\n";
-	if($in_length and (mb_strlen($newimg,'8bit')!=$in_length)){	// Было получено не столько (меньше, чем) должно было быть. Это делает cloudflare. При отсутствии Content-Length будет 0.
-		echo "http_response_header:"; print_r($http_response_header); echo "\n";
-		error_log("tilefromsource.php - retrieve $tries's try: Reciewed ".(mb_strlen($newimg,'8bit'))." bytes, but must be $in_length bytes.");
-		$newimg = FALSE; 	// тайл получить не удалось
-		continue;	// попытаемся получить снова?
+	$in_length = substr(end(getResponceFiled($http_response_header,'Content-Length')),15);
+	if($in_length != ''){	// оказывается, поля Content-Length может вообще не быть.
+		$in_length = intval($in_length);
+		//echo "Получено ".(mb_strlen($newimg,'8bit'))." байт, должно быть $in_length; ".substr(end(getResponceFiled($http_response_header,'Content-Length')),15)."\n";
+		if($in_length and (mb_strlen($newimg,'8bit')!=$in_length)){	// Было получено не столько (меньше, чем) должно было быть. Это делает cloudflare. При отсутствии Content-Length будет 0.
+			echo "tilefromsource.php - http_response_header:"; print_r($http_response_header); echo "\n";
+			error_log("tilefromsource.php - retrieve $tries's try: Reciewed ".(mb_strlen($newimg,'8bit'))." bytes, but must be $in_length bytes.");
+			$newimg = FALSE; 	// тайл получить не удалось
+			continue;	// попытаемся получить снова?
+		};
 	};
 	$in_mime_type = trim(substr(end(getResponceFiled($http_response_header,'Content-Type')),13)); 	// нужно последнее вхождение - после всех перенаправлений. Если Content-Type вообще нет - будет пустая строка.
 	//echo "in_mime_type=$in_mime_type;\n";
 	//echo "trash "; print_r($trash); echo "\n";
 	if($in_mime_type) { 	// mime_type присланного сообщили
-		if(isset($mime_type)) { 	// mime_type того, что должно быть, указан в конфиге источника
-			if($in_mime_type != $mime_type) { 	// mime_type присланного не совпадает с требуемым
-				echo "http_response_header:"; print_r($http_response_header); echo "\n";
-				error_log("tilefromsource.php - retrieve $tries's try: Reciewed $in_mime_type, but expected $mime_type.");
+		if(isset($ContentType)) { 	// mime_type того, что должно быть, указан в конфиге источника
+			if($in_mime_type != $ContentType) { 	// mime_type присланного не совпадает с требуемым
+				echo "tilefromsource.php - http_response_header:"; print_r($http_response_header); echo "\n";
+				error_log("tilefromsource.php - retrieve $tries's try: Reciewed $in_mime_type, but expected $ContentType.");
 				exit(13);	// прекращаем получение тайла
 			};
 			break; 	// тайл получен
 		}
 		else { 	// требуемый mime_type в конфиге не указан
 			if((substr($in_mime_type,0,5)!='image') and (substr($in_mime_type,-10)!='x-protobuf')) { 	// тайл - не картинка и не векторный тайл
-				echo "http_response_header:"; print_r($http_response_header); echo "\n";
+				echo "tilefromsource.php - http_response_header:"; print_r($http_response_header); echo "\n";
 				if (substr($in_mime_type,0,4)=='text') { 	// текст. Файла нет или не дадут. Но OpenTopo потом даёт
 					error_log("tilefromsource.php - retrieve $tries's try: server return '{$http_response_header[0]}' and text instead tile: '$newimg'");
-					//error_log("$uri: http_response_header:".implode("\n",$http_response_header));
+					//error_log("tilefromsource.php - $uri: http_response_header:".implode("\n",$http_response_header));
 				}
 				else {
 					error_log("tilefromsource.php - retrieve $tries's try: No tile and unknown responce: {$http_response_header[0]}");
