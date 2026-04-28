@@ -32,8 +32,8 @@ $ext = 'png';
 
 // mime type тайла. Указывать очень желательно!
 // mime type of the tile. Highly recommended!
-$ContentType = "image/$ext"; 	
-$content_encoding = '';
+//$ContentType = "image/$ext"; 	
+//$content_encoding = '';
 // Если карта векторная - и клиенту и серверу могут понадобится ресурсы: стиль, шрифты и спрайты
 // If the map is vector, both the client and the server may need resources: style, fonts, and sprites.
 $vectorTileStyleFile = '';	// Только для отрисовки на сервере. For server rendering only.
@@ -136,7 +136,7 @@ $requestOptions = array();
 $getURLoptions=array();	
 
 // Указание клиентскому приложению, к каким url обращаться для получения тайлов.
-// Описывает многослойную или составную карту
+// Описывает также многослойную или составную карту
 // Строка url, если карта имеет только один слой
 // или массив строк url, если карта многослойная
 // или массив вида:
@@ -144,14 +144,14 @@ $getURLoptions=array();
 //		array("mapName"=>(string)$mapName,"mapParm"=>array("key"=>$value))
 //	)
 // где mapName - имя карты в GaladrielCache, а
-// mapParm - (некоторые) переменные из описания карты
+// mapParm - (некоторые, любые) переменные из описания карты
 // , если карта составная.
 //
 // Порядок элементов массива соответствует порядку расположения слоёв от нижнего к верхнему.
 //
 // По умолчанию - строка с url вызова tiles.php в соответствии с текущей конфигурацией веб-сервера.
 // Можно указать просто исходный url карты, тем самым отключив всякое кеширование.
-// Требуется поддержка со стороны клиента, когда как просто вызов tiles.php в соответствии с
+// Требуется поддержка со стороны клиента (обращаться к API), когда как просто вызов tiles.php в соответствии с
 // текущей конфигурацией веб-сервера, не требует от клиента умения читать описание карты,
 // но позволяет, однако, получить тайлы.
 //
@@ -165,14 +165,14 @@ $getURLoptions=array();
 //		array("mapName"=>(string)$mapName,"mapParm"=>array("key"=>$value))
 //	)
 // where map - the GaladrielCache map name
-// and mapParm - (some) map description variables
+// and mapParm - (some, any) map description variables
 // for composite map.
 //
 // The order of the array elements corresponds to the order of the layers from the bottom to the top.
 //
 // This is usually a string with a call to one GaladrielCache map in the usual way: by calling tiles.php
 // However, you can simply specify the source url of the map, thereby disabling any caching.
-// Support from the client application is required. But just a call to tiles.php,
+// Support from the client application is required (API calls). But just a call to tiles.php,
 // according to the current configuration of the web server, does not require the client
 // to be able to read the map description. However, it allows them to get the tiles.
 //

@@ -1,7 +1,7 @@
 <?php
 // Все эти переменные глобальны!
 // All of this variables is global!
-$humanName = array('ru'=>'Топокарта OpenTopoMap (старая)','en'=>'OpenTopoMap (the old)');
+$humanName = array('ru'=>'Топокарта OpenTopoMap','en'=>'OpenTopoMap');
 $mapDescription = array('ru'=>'<a href="https://opentopomap.org">opentopomap.org</a>
 ','en'=>'<a href="https://opentopomap.org">opentopomap.org</a>
 ');

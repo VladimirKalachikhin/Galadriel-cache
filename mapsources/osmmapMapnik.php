@@ -2,6 +2,7 @@
 $humanName = array('ru'=>'Карта OpenStreetMap','en'=>'OpenStreetMap');
 $ttl = 86400*365; // 1 year cache timeout in seconds время, через которое тайл считается протухшим
 // $ttl = 0; 	// тайлы не протухают никогда
+$noTileReTry=60*60; 	
 $ext = 'png'; 	// tile image type/extension
 $minZoom = 0;
 $maxZoom = 19;
