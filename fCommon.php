@@ -231,7 +231,7 @@ foreach($colorsPresent as $color){
 $transparentColorS = array_unique($transparentColorS);
 rsort($transparentColorS);
 array_pop($transparentColorS);
-print_r($transparentColorS); echo "\n";
+//print_r($transparentColorS); echo "\n";
 // Теперь просто заменим найденные цвета на прозначные
 foreach($transparentColorS as $transparentColor){
 	$res = imagecolorset($gd_img,$transparentColor,0,0,0,127);
@@ -293,7 +293,7 @@ rsort($transparentColorS);
 array_pop($transparentColorS);
 // Теперь заменим найденные цвета на прозначные
 foreach($transparentColorS as $transparentColor){
-	echo "Цвет № $transparentColor "; print_r(imagecolorsforindex($gd_img,$transparentColor)); echo "\n";
+	//echo "Цвет № $transparentColor "; print_r(imagecolorsforindex($gd_img,$transparentColor)); echo "\n";
 	$res = imagecolorset($gd_img,$transparentColor,0,0,0,127);
 	if($res!==null) echo "gd_img Перекраска цвета $transparentColor обломалась\n";
 };
@@ -316,6 +316,82 @@ $img = ob_get_contents();
 ob_end_clean();
 return $img;
 }; // end function addTransparent
+
+
+function changeColorsTo($img,$colorsFrom,$colorTo){
+/* Заменяет цвета на указанный
+
+НЕ ГОДИТСЯ для картинок с прозрачностью!!!!
+Если в картинке есть прозрачность - она исчезнет.
+
+Ещё делает картинку из полноцветной в индексированную, что портит её цвета.
+
+$colorsFrom массив цветов, которые надо сделать прозрачным; цвет - это массив int чисел [r,g,b]
+*/
+global $ext,$ContentType;
+$gd_img = imagecreatefromstring($img);	// создаём полноцветную картинку 
+$colorsPresent = array();
+$indexColorsPresent = array();
+// 
+list($rTO,$gTO,$bTO) = $colorTo;
+//echo "colorTo: $rTO,$gTO,$bTO\n";
+
+// Выясним, есть ли точно требуемые цвета в исходной полноцветной картинке
+foreach($colorsFrom as $color){
+	list($r,$g,$b) = $color;
+	$ind = imagecolorexact($gd_img,$r,$g,$b);
+	//echo "ind=$ind;\n";
+	if($ind != -1) $colorsPresent[] = $color;	// цвет есть в тайле
+};
+if(!count($colorsPresent)) return $img;	// нужных цветов нет в исходном полноцветном изображении
+
+// сделаем наше изображение из полноцветного в изображение 
+// в индексированных цветах (не может быть больще 256 цветов)
+imagetruecolortopalette($gd_img,false,255);	
+
+// В результате этого деяния все цвета изменились.
+// Поэтому будем искать похожие с точностью dColor
+$dColor = 5;
+foreach($colorsPresent as $color){
+	list($r,$g,$b) = $color;
+	for($rr=$r-$dColor;$rr<=$r+$dColor;$rr++){
+		for($gg=$g-$dColor;$gg<=$g+$dColor;$gg++){
+			for($bb=$b-$dColor;$bb<=$b+$dColor;$bb++){
+				if(($rr<0)or($gg<0)or($bb<0)or($rr>255)or($gg>255)or($bb>255)){
+					continue;
+				};
+				$indexColorsPresent[] = imagecolorexact($gd_img,$rr,$gg,$bb);
+			};
+		};
+	};
+};
+$indexColorsPresent = array_unique($indexColorsPresent);
+rsort($indexColorsPresent);
+array_pop($indexColorsPresent);	// убираем -1
+print_r($indexColorsPresent); echo "\n";
+
+// Теперь просто заменим найденные цвета на указанный
+foreach($indexColorsPresent as $ind){
+	$res = imagecolorset($gd_img,$ind,$rTO,$gTO,$bTO,0);
+	//if($res === null) echo "Цвет заменён\n";
+	//elseif($res === false) echo "Цвет не заменён\n";
+	//else echo "Чё это было?\n";
+};
+
+// результат будет png, вне зависимости от формата исходного изображения, поэтому
+// поменяем глобальные сведения о формате картинки
+$ext = 'png'; 	
+$ContentType = "image/$ext";
+
+// А тепрь из gd image сделаем обратно нормальную картику
+ob_start();	// оно может быть вложенным
+ob_clean();
+imagepng($gd_img);
+imagedestroy($gd_img);
+$img = ob_get_contents();
+ob_end_clean();
+return $img;
+}; // end function changeColorsTo
 
 
 function checkInBounds($z,$x,$y,$bounds){

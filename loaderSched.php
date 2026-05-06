@@ -20,7 +20,7 @@ $umask = umask(0); 	// сменим на 0777 и запомним текущую
 umask($umask); 	// 	Вернём. Зачем? Но umask глобальна вообще для всех юзеров веб-сервера
 
 if(IRun()) {
-	error_log("loaderSched.php - I'm already ruunning, exiting.");
+	error_log("loaderSched.php - I'm already running, exiting.");
 	return;
 };
 
