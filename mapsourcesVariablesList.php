@@ -93,10 +93,18 @@ $clientData = array();
 //							Чтобы это произошло, код должен содержать функцию, которую вернёт eval,
 //							т.е., содержать конструкцию (function(mapLayer){})
 //							Функции во время выполнения будет передан мультислой карты.
+//							Однако, все, что было в строке javascript помимо последней функции - 
+//							будет, разумеется, выполнено - один раз при загрузке карты.
+//							То же касается и javascriptClose - всё, кроме последней функции, будет
+//							выполнено при _загрузке_ карты.
 //							- javascript code that will first be eval'ed in the global context, and then executed when opening the map.
 //							For this to happen, the code must contain a function that eval returns,
 //							that is, contain the construct (function(mapLayer){})
 //							The map multilayer will be passed to the function during execution.
+//							However, everything that was in the javascript string besides the last function - 
+//							will, of course, be executed - once when loading the map.
+//							The same applies to javascriptClose - everything except the last function will
+//							be executed when the map is loaded.
 // $clientData['javascriptClose']	- код javascript, который будет сперва eval в глобальном контексте, а потом последняя определённая в нём функция будет выполнена при закрытии карты.
 //							Так же как и предыдущий, должен вернуть функцию.
 //							Функции во время выполнения будет передан мультислой карты.
@@ -111,6 +119,7 @@ $clientData = array();
 //							Normally, the map is reduced to a scale of 3 and increased to a scale of maxZoom + 2.
 // $clientData['DEMencoding']	"mapbox" or "terrarium" - если карта - тайлы DEM, то указание, в какой кодировке. Нужно только для рисования горизонталей.
 //							- if the map contains DEM tiles, then specify the encoding. It is only necessary for drawing horizontals.
+// $clientData['DEMthresholds']	https://github.com/onthegomap/maplibre-contour
 
 // Массив для передачи произвольных параметров команде $mapTiles url.
 // Массив кодируется как json, и должен клиентской программой присоединятся к url
