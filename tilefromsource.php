@@ -121,7 +121,7 @@ if(array_key_exists('z',$clioptions)) $cnt++;
 if(isset($clioptions['options'])) {
 	$options = json_decode($clioptions['options'],true);
 	if($options === null){
-		error_log("tilefromsource.php - getted options, but false decode JSON. JSON set to empty.");
+		error_log("tilefromsource.php - getted options, but false decode JSON. options set to empty.");
 		$options = array();
 	};
 }
@@ -172,7 +172,7 @@ $mapSourcesDir = 'mapsources'; 	// map sources directory, in filesystem.
 
 // Параметры карты
 if(!(@include "$mapSourcesDir/$r.php")){
-	error_log("tilefromsource.php - Impossible: Map description file not found");
+	error_log("tilefromsource.php - Impossible: Map description file '$mapSourcesDir/$r.php' not found");
 	exit(33);
 };
 if(!$getURL){

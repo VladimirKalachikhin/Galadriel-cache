@@ -5,7 +5,7 @@
 //session_start();	
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.2.4
+Version 3.2.6
 История History:
 3.2.0	- just map describe var
 3.1.5	- cloudflare must die
@@ -47,8 +47,9 @@ require 'fTilesStorage.php';	// стандартные функции получ
 //	Каталог описаний источников карт, в файловой системе
 $mapSourcesDir = 'mapsources'; 	// map sources directory, in filesystem.
 
+//echo "tiles.php _REQUEST['z']={$_REQUEST['z']}; _REQUEST['x']={$_REQUEST['x']}; _REQUEST['y']={$_REQUEST['y']}; _REQUEST['r']={$_REQUEST['r']};<br>\n";
 $x = filter_var($_REQUEST['x'],FILTER_SANITIZE_NUMBER_INT);
-$y = filter_var($_REQUEST['y'],FILTER_SANITIZE_NUMBER_INT);
+$y = filter_var($_REQUEST['y'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);	// там может быть расширение
 $z = filter_var($_REQUEST['z'],FILTER_SANITIZE_NUMBER_INT);
 $r = filter_var($_REQUEST['r'],FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 $requestOptions = $_REQUEST['options'];	// оно уже urldecode
@@ -68,16 +69,18 @@ if(($x==='') OR ($y==='') OR ($z==='') OR ($r==='') OR ($x===false) OR ($y===fal
 $x = intval($x);
 list($y,$requestExt) = explode('.',$y);
 $y = intval($y); 
-if(!$ext) $ext = trim($requestExt);	// Расширение из конфига имеет преимущество!
+//if(!$ext) $ext = trim($requestExt);	// Расширение из конфига имеет преимущество!
+if($requestExt) $ext = trim($requestExt);	// Указанное расширение имеет преимущество. Тогда можно просто получить файл, если нет описания карты.
 $z = intval($z);
 //echo "z=$z; x=$x; y=$y; requestExt=$requestExt; r=$r;<br>\n";
 //echo "requestOptions:<pre>"; print_r($requestOptions); echo "</pre><br>\n";
 
+// Если описания нет - можно попробовать просто получить тайл как файл
 if(!(@include "$mapSourcesDir/$r.php")){
 	//echo "X-Debug: Map description file not found<br>\n";
 	header("X-Debug: Map description file not found");
-	showTile(false);	// 400 Bad Request
-	return;
+	//showTile(false);	// 400 Bad Request
+	//return;
 };
 
 if(($z<$minZoom)or($z>$maxZoom)){
@@ -100,12 +103,12 @@ if(($z<$minZoom)or($z>$maxZoom)){
 $img = false; $needToRetrieve = false;
 if($requestOptions['r']) $r = $requestOptions['r'];
 
-//echo "tiles.php [] z=$z; x=$x; y=$y; r=$r; requestOptions:<pre>"; print_r($requestOptions); echo "</pre><br>\n";
+//echo "tiles.php [] z=$z; x=$x; y=$y; r=$r; requestOptions:<pre>"; print_r($requestOptions); var_dump($getTile); echo "</pre><br>\n";
 extract($getTile($r,$z,$x,$y,$requestOptions),EXTR_IF_EXISTS);	// оно возвращает array('img'=>,'ContentType'=>)
 //file_put_contents('savedTiles',"tiles.php - $r,$z,$x,$y; needToRetrieve=$needToRetrieve;\n",FILE_APPEND);	
 //echo "tiles.php из хранилища: ".strlen($img)." байт ".gettype($img)."<br>\n";
 
-if($requestOptions['prepareTileImg']) {	// обработка картинки, если таковая указана в описании источника
+if($requestOptions['prepareTileImg'] and $prepareTileImgBeforeReturn) {	// обработка картинки, если таковая указана в описании источника
 	//echo "tiles.php before prepared: ".strlen($img)."<br>\n";
 	$prepared = $prepareTileImgBeforeReturn($img);
 	if(@$prepared['img']) extract($prepared);	// может быть изменён $ContentType, $ext, etc.
@@ -114,8 +117,9 @@ if($requestOptions['prepareTileImg']) {	// обработка картинки, 
 	unset($prepared);
 };
 
-//echo "X-Debug: The tile was received in ".(microtime(true)-$now)." sec.\n"; 
+//echo "tiles.php X-Debug: The tile was received in ".(microtime(true)-$now)." sec.\n"; 
 //header("X-Debug: The tile was received in ".(microtime(true)-$now)." sec."); 
+//echo "tiles.php ContentType=$ContentType; content_encoding=$content_encoding; ext=$ext;<br>\n";
 showTile($img,$ContentType,$content_encoding,$ext);	// отдадим тайл клиенту. $ContentType,$content_encoding - из Map description
 
 if($getURL){	// если есть, чем скачивать

@@ -118,7 +118,9 @@ $clientData = array();
 //							by graphically zooming out or enlarging the minZoom and maxZoom scale maps, respectively.
 //							Normally, the map is reduced to a scale of 3 and increased to a scale of maxZoom + 2.
 // $clientData['DEMencoding']	"mapbox" or "terrarium" - если карта - тайлы DEM, то указание, в какой кодировке. Нужно только для рисования горизонталей.
+//							Внимание! Горизонтали будут рисоваться только на слое типа hillshade, имеющем в id слово ContourLines! Такой слой должен быть один.
 //							- if the map contains DEM tiles, then specify the encoding. It is only necessary for drawing horizontals.
+//							Attention! Horizontals will only be drawn on a "hillshade" type layer with the word ContourLines in the id! There should be only one such layer.
 // $clientData['DEMthresholds']	https://github.com/onthegomap/maplibre-contour
 
 // Массив для передачи произвольных параметров команде $mapTiles url.

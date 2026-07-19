@@ -113,7 +113,14 @@ function y2lat($y){
 
 
 function coord2tileNum($lon,$lat,$zoom){
-/* координаты в градусах в номер тайла */
+/* координаты в градусах в номер тайла, внутри которого лежат эти координаты */
+// Приведение широты
+$maxLat = 85.0511287798;	// WGS84 не существует близ полюсов
+if ($lat > $maxLat) $lat = $maxLat;
+if ($lat < -$maxLat) $lat = -$maxLat;
+// Приведение долготы к +- 180
+while ($lon > 180) $lon -= 360;
+while ($lon < -180) $lon += 360;
 $xtile = floor((($lon + 180) / 360) * pow(2, $zoom));
 $ytile = floor((1 - log(tan(deg2rad($lat)) + 1 / cos(deg2rad($lat))) / pi()) /2 * pow(2, $zoom));
 return array($xtile,$ytile);
@@ -139,7 +146,7 @@ file_put_contents($tmpFileName,$content);
 rename($tmpFileName,$fileName);
 }
 
-function setColorsTransparent($img,$colors,$dColor=5){
+function setColorsTransparent($img,$colors,$dColor=5,$strct=true){
 /*
 Делает прозрачными указанные цвета в данном тайле. Возвращает png вне зависимости от 
 формата исходной картинки, если преобразование произошло.
@@ -151,7 +158,7 @@ Requirements: php-gd
 
 $colors массив цветов, которые надо сделать прозрачным; цвет - это массив int чисел [r,g,b]
 
-Подход с поиском цветов. ПРимерно в 10 раз быстрее наивного подхода - с перебором пикселей.
+Подход с поиском цветов. Примерно в 10 раз быстрее наивного подхода - с перебором пикселей.
 Однако делает из полноцветной картинки палитровую.
 Нельзя в полноцветной картинке иметь прозрачными два цвета, и нельзя изменить прозрачный цвет.
 Поэтому imagecolortransparent ваще не работает, если на картинке уже есть прозрачный цвет.
@@ -167,14 +174,20 @@ imagecolorset работает только для индексированны�
 */
 global $ext,$ContentType;
 $gd_img = imagecreatefromstring($img);	// создаём полноцветную картинку 
+if(!$gd_img) return $img;	// картинку не удалось распознать: левый формат, вообще нет, etc.
+if($dColor == null) $dColor = 5;
 $colorsPresent = array();
 $transparentColorS = array();
+
+//echo "[setColorsTransparent] dColor=$dColor; strct=$strct; colors:"; print_r($colors); echo "\n";
 
 // Выясним, есть ли точно требуемые цвета в исходной полноцветной картинке
 foreach($colors as $color){
 	list($r,$g,$b) = $color;
-	$transparentColor = imagecolorexact($gd_img,$r,$g,$b);
-	//echo "transparentColor=$transparentColor;\n";
+	//echo "[setColorsTransparent] $r,$g,$b ".gettype($gd_img)."\n";
+	if($strct) $transparentColor = imagecolorexact($gd_img,$r,$g,$b);
+	else $transparentColor = imagecolorclosest($gd_img,$r,$g,$b);	// вообще говоря - это дело хрен его знает, что найдёт
+	//echo "[setColorsTransparent] transparentColor=$transparentColor;\n";
 	if($transparentColor != -1) $colorsPresent[] = $color;	// цвет есть в тайле
 };
 
@@ -206,7 +219,7 @@ $gd_img = $backgroundImg;
 imagetruecolortopalette($gd_img,false,256);	
 // Беда в том, что там получилось море цветов, похожих на $linerColor, несмотря на false в imagetruecolortopalette.
 // Кроме того, картинка могла быть исходно не в чистых цветах, и там по жизни есть много похожих.
-// В результате что пиксели указанного или цвета $linerColor есть, но их мало. А осноное количество - пиксели
+// В результате что пиксели указанного или цвета $linerColor есть, но их мало. А основное количество - пиксели
 // более далёкого, хотя и весьма похожего цвета. Поэтому визуально - замена цвета "не работает".
 // Оно работает, только этого не видно.
 // Можно искать не точно этот цвет (imagecolorexact), а ближайший (imagecolorresolve), но можно 

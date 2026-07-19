@@ -1,5 +1,9 @@
 <?php
 $humanName = array('ru'=>'Карта Яндекс','en'=>'Yandex map');
+$mapDescription = array('ru'=>'Обновляется более-менее оперативно, но военных объектов нет, даже забора.
+Даже тех, что есть на Единой картографической основе.
+','en'=>'
+');
 $ttl = 60*60*24*30*6*1; //cache timeout in seconds время, через которое тайл считается протухшим, 1 год
 // $ttl = 0; 	// тайлы не протухают никогда
 $noTileReTry = 60*60; 	// no tile timeout, sec. Время, через которое переспрашивать тайлы, которые не удалось скачать. OpenTopoMap банит скачивальщиков, поэтому короткое.
@@ -38,7 +42,8 @@ $opts = array(
 //	)
 );
 
-$DefURLBase = 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&scale=1&lang=ru_RU';
+//$DefURLBase = 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&scale=1&lang=ru_RU';
+$DefURLBase = 'https://core-renderer-tiles.maps.yandex.net/tiles?l=map&scale=1&lang=ru_US&client_id=yandex-web-maps&experimental_use_metapoi=1&experimental_metapoi_combined_tiles=true&experimental_ranking_mode_name=default-web-ranking&experimental_mm_local_rubricpoi_min_zoom=13&experimental_mm_local_photopoi_min_zoom=13&experimental_mm_photopoi_min_zoom=13&experimental_mm_rubricpoi_min_zoom=13&ads=enabled&maptype=future_map';
 $DefURLBase .= "&z=$z&x=$x&y=$y";
 changeTORnode($getURLoptions['r']);
 return array($DefURLBase,$opts);

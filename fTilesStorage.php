@@ -83,7 +83,7 @@ $showTHENloading = 0;	// ничего не показывать
 $now = time();
 clearstatcache();
 $imgFileTime = @filemtime($fileName); 	// файла может не быть
-//echo "tiles.php: $r/$z/$x/$y tile exist:$imgFileTime, and expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
+//echo "tiles.php: $fileName tile exist:$imgFileTime, and expired to ".(time()-(filemtime($fileName)+$ttl))."sec. и имеет дату модификации ".date('d.m.Y H:i',$imgFileTime)."<br>\n";
 if($imgFileTime) { 	// файл есть
 	if($checkonly) return array('checkonly'=>filesize($fileName));
 	if(($imgFileTime+$ttl) < $now) { 	// файл протух. Таким образом, файлы нулевой длины могут протухнуть раньше, но не позже.
