@@ -50,6 +50,13 @@ require 'fTilesStorage.php';	// стандартные функции получ
 require('params.php'); 	// пути и параметры 
 if(!$phpCLIexec) $phpCLIexec = trim(explode(' ',trim(shell_exec("ps -p ".(getmypid())." -o command=")))[0]);	// из PID системной командой получаем командную строку и берём первый отделённый пробелом элемент. Считаем, что он - команда запуска php. Должно работать и в busybox.
 
+//$dirName = sys_get_temp_dir()."/tileproxyCacheInfo"; 	// права собственно на /tmp в системе могут быть замысловатыми
+$dirName = "tmp/tileproxyCacheInfo/";
+$umask = umask(0); 	// сменим на 0777 и запомним текущую
+@mkdir($dirName, 0777, true);
+$mapsourceControlCacheFile = "$dirName/mapsourceControlCache";
+$mapsourceControlCache = unserialize(@file_get_contents($mapsourceControlCacheFile));
+
 //$_REQUEST['getMapList'] = true;
 //$_REQUEST['getMapInfo'] = 'NAIS';
 
@@ -57,7 +64,8 @@ $result = null;
 if(array_key_exists('getMapList',$_REQUEST)){	
 // Вернуть список имеющихся карт
 	// Получаем список имён карт
-	$mapsInfo = null;
+	$mapsInfo = null; 
+	clearstatcache(); $mapsourceControlCacheChanged = false;
 	foreach(glob("$mapSourcesDir/*.php") as $name) {
 		//echo "$name<br>\n";
 		/*/ Это ооооочень медленно. Может быть, token_get_all()?
@@ -69,8 +77,7 @@ if(array_key_exists('getMapList',$_REQUEST)){
 		/*/
 		$mapName=explode('.php',end(explode('/',$name)))[0]; 	// basename не работает с неанглийскими буквами!!!! Да нормально всё работает...
 		$humanName = array();
-		require('mapsourcesVariablesList.php');	//
-		include($name);
+		require('mapsourcesVariablesList.php');	//	переписываем значения предыдущего include($name) на умолчальные
 		/*/ Это ещё боле медленно. Кроме того, eval != include? При include нет никаких warnings, а при eval - есть.
 		$src = file_get_contents($name);
 		$src = substr(substr($src,strpos($src,'<?php')+5),0,strrpos($src,'?>'));	// заведомо считаем, что оно там есть
@@ -83,6 +90,25 @@ if(array_key_exists('getMapList',$_REQUEST)){
 			continue;
 		};
 		/*/
+		$mtime = filemtime($name);
+		//echo "$name изменён $mtime<br>\n";
+		$output='';$ret=null;
+		if(@$mapsourceControlCache[$name] != $mtime){
+			$res = exec($phpCLIexec.' -l "'.$name.'"',$output,$ret);	// проверим синтаксис
+			if($ret){	// имеется синтаксическая (или другая) ошибка
+				//echo "$name имеет ошибку $res<br>\n";
+				$humanName['en'] = "Some ERROR in file \"$name\" It's impossible to use it!";
+				$mapsInfo[$mapName] = $humanName;
+				continue;
+			}
+			else {
+				$mapsourceControlCache[$name] = $mtime;	// ошибок нет, запомним время последнего изменения
+				$mapsourceControlCacheChanged = true;
+			};
+		};
+		include($name);
+		if($mapsourceControlCacheChanged) file_put_contents($mapsourceControlCacheFile,serialize($mapsourceControlCache));
+				
 		if($humanName){	// из описания источника
 			if(!$humanName['en']) $humanName['en'] = $mapName;
 		}
@@ -239,6 +265,8 @@ elseif(array_key_exists('collectMBTiles',$_REQUEST)){
 else {
 	$result = array("usage"=>$usage);
 };
+//echo "result:<pre>"; print_r($result);echo"</pre>\n";
+//exit;
 
 ob_clean(); 	// очистим, если что попало в буфер
 header("Cache-Control: no-cache, must-revalidate"); // HTTP/1.1

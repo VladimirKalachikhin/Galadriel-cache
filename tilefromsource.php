@@ -333,7 +333,7 @@ for($tries=1;$tries<=$maxTry;sleep($tryTimeout),$tries++) {
 			error_log("tilefromsource.php - retrieve $tries's try: Service Unavailable responce. Retry.");
 			continue 2;
 		default:	// вернуло неизвестное
-			continue;
+			continue 2;
 		};
 	};
 
