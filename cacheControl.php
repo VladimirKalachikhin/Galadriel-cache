@@ -56,6 +56,7 @@ $umask = umask(0); 	// сменим на 0777 и запомним текущую
 @mkdir($dirName, 0777, true);
 $mapsourceControlCacheFile = "$dirName/mapsourceControlCache";
 $mapsourceControlCache = unserialize(@file_get_contents($mapsourceControlCacheFile));
+//echo "mapsourceControlCache:<pre>"; print_r($mapsourceControlCache); echo "</pre>\n";
 
 //$_REQUEST['getMapList'] = true;
 //$_REQUEST['getMapInfo'] = 'NAIS';
@@ -93,6 +94,7 @@ if(array_key_exists('getMapList',$_REQUEST)){
 		$mtime = filemtime($name);
 		//echo "$name изменён $mtime<br>\n";
 		$output='';$ret=null;
+		//
 		if(@$mapsourceControlCache[$name] != $mtime){
 			$res = exec($phpCLIexec.' -l "'.$name.'"',$output,$ret);	// проверим синтаксис
 			if($ret){	// имеется синтаксическая (или другая) ошибка
@@ -106,6 +108,7 @@ if(array_key_exists('getMapList',$_REQUEST)){
 				$mapsourceControlCacheChanged = true;
 			};
 		};
+		//
 		include($name);
 		if($mapsourceControlCacheChanged) file_put_contents($mapsourceControlCacheFile,serialize($mapsourceControlCache));
 				

@@ -6,7 +6,7 @@ require('fIRun.php'); 	//
 require('./params.php'); 	// пути и параметры (без указания пути оно сперва ищет в include_path, а он не обязан начинаться с .)
 require 'fTilesStorage.php';	// стандартные функции получения тайла из локального источника
 
-$SocketTimeout = 60;	// демон умрёт через сек.
+$SocketTimeout = 55;	// демон умрёт через сек. Надо меньще 60, потому что умолчальный таймаут - 60 сек, и те, кто ждёт результата - отвалятся раньше без внятной диагностики.
 //$SocketTimeout = null;	// демон не умрёт никогда
 
 $r = filter_var($argv[1],FILTER_SANITIZE_FULL_SPECIAL_CHARS);	// один параметр -- имя карты без расширения
@@ -141,7 +141,7 @@ do {
 	$socksWrite = array(); 	// очистим массив 
 	foreach($outMessages as $n => $data){ 	// пишем только в сокеты, полученные от masterSock путём socket_accept
 		//echo "Заполнение socksWrite: для сокета №$n есть данные ";print_r($data);echo"\n";
-		if($data)	$socksWrite[] = $sockets[$n]; 	// если есть, что писать -- добавим этот сокет в те, в которые будем писать
+		if(isset($data))	$socksWrite[] = $sockets[$n]; 	// если есть, что писать -- добавим этот сокет в те, в которые будем писать
 	};
 	echo "Has ".(count($sockets))." client socks, and master socks. Ready ".count($socksRead)." read and ".count($socksWrite)." write socks\r";
 
@@ -197,7 +197,7 @@ do {
 			closeSock($n);	// закрываем сокет, которому всё отправили. Это сигнал для клиента, что отправили всё.
 			break;
 		}while(true);
-		$outMessages[$n] = '';
+		$outMessages[$n] = null;
 		unset($msg);
 	}
 

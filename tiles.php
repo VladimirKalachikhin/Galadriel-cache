@@ -5,7 +5,7 @@
 //session_start();	
 ob_start(); 	// попробуем перехватить любой вывод скрипта
 /*
-Version 3.2.7
+Version 3.2.8
 История History:
 3.2.0	- just map describe var
 3.1.5	- cloudflare must die

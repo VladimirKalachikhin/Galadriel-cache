@@ -435,7 +435,7 @@ do{
 // Даже если указать большой буфер, и считать, что если приняли меньше буфера - то приняли всё,
 // данные могут поступать маленькими кусками, меньше буфера.
 // Поэтому сигналом о том, что данные кончились является закрытие сокета сервером.
-$result = ''; $bufSize = 1048576;
+$result = null; $bufSize = 1048576;
 do{
 	//error_log("[SQLiteWrapper] Wait from server");
 	// socket_read штатно не прекращает чтение никаким способом, посылай ему /n или нет
@@ -450,7 +450,7 @@ do{
 	//echo "Ждём от демона\n";
 	$buf = socket_read($socket, $bufSize, PHP_BINARY_READ);
 	//$buf = socket_read($socket, $bufSize, PHP_NORMAL_READ);	// обязательно требует, чтобы строка кончалась на \n, иначе не принимает всё
-	//echo "[SQLiteWrapper] Получили от демона: ".(mb_strlen($buf,'8bit'))." байт<br>\n";// "|$result|\n";
+	//echo "[SQLiteWrapper] Получили от демона: ".(mb_strlen($buf,'8bit'))." байт<br>\n"; "|$result|\n";
 	if($buf!==false){
 		$result .= $buf;
 		//if(mb_strlen($buf,'8bit')<=$bufSize) break;	// прочли всё - не обязательно, данные могли идти маленькими кусками
@@ -458,9 +458,12 @@ do{
 }while($buf);
 @socket_close($socket); 	// он может быть уже закрыт
 
-$result = unserialize($result);
+$result = unserialize($result);	// null оно молча приведёт в false, хотя в доке ...
+if($result===false){
+	$result = array("humanName"=>array("en"=>"Some ERROR in database \"$mapName\" It's impossible to use it!"));
+};
 //error_log("[SQLiteWrapper] Request: r=$r, z=$z, x=$x, y=$y; Respoce: ".(mb_strlen($result['img'],'8bit'))." bytes of {$result['ext']}");
-//echo "[SQLiteWrapper] Декодировали img: ".(mb_strlen($result['img'],'8bit'))." байт<br>\n"; echo "<br><pre>\n"; var_dump($result); echo "</pre>\n";
+//echo "[SQLiteWrapper] Требовали $mapName; Декодировали img: ".(mb_strlen($result['img'],'8bit'))." байт<br>\n"; echo "<br><pre>\n"; var_dump($result); echo "</pre>\n";
 return $result;
 };
 
